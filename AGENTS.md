@@ -109,6 +109,11 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   executável (`EASY_NFSE_NO_BROWSER=1 EASY_NFSE_PORT=47399 dist/easy-nfse.app/Contents/MacOS/easy-nfse`) e teste as
   páginas com `curl`; o workflow de release faz essa verificação nos dois sistemas.
 - `tzdata` é dependência só no Windows (não há base de fusos no sistema para `zoneinfo`).
+- O repositório usa **releases imutáveis**: publicada, a release não aceita arquivos novos (HTTP 422). Por isso o
+  release-please cria a release como **rascunho** (`draft` + `force-tag-creation`), os builds anexam os executáveis
+  ao rascunho e o job `publicar` só publica depois que os dois terminaram. Tags no formato `easy-nfse-vX.Y.Z`
+  (não mude: o release-please usa o formato para achar a release anterior); arquivos `easy-nfse-vX.Y.Z-<plataforma>`.
+- O release-please atualiza a versão também no `uv.lock` (`extra-files`); a CI usa `uv sync --frozen`.
 - Versão: única fonte é o `pyproject.toml` (`__version__` vem de `importlib.metadata`). O release-please atualiza o
   `pyproject.toml`, o `CHANGELOG.md` e o `.release-please-manifest.json`; não edite a versão à mão.
 - Assinatura de código (Apple/Microsoft) está pendente por decisão do dono; não adicione passos que exijam secrets.
@@ -131,6 +136,9 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - Campo novo no template → `models.py`, `template_form.html`, `app.salvar`, `dps.montar`, `importers/nfse_xml.py`
   (e `danfse_pdf`/`importers/__init__.py` se aparecer no PDF), `danfse.py` se for impresso, e teste.
 - Não adicione dependências sem necessidade; prefira a biblioteca padrão. Use `uv add` (nunca pip).
+- **Sempre** passe `encoding="utf-8"` ao ler/gravar texto (`read_text`, `write_text`, `open`, `logging.basicConfig`):
+  no Windows o padrão é cp1252 e acentos quebram (foi o que derrubou o primeiro build de Windows). A CI roda com
+  `PYTHONWARNDEFAULTENCODING=1` e o pytest transforma `EncodingWarning` do pacote em erro.
 - Antes de concluir: `uv run pytest -q` verde. Para mudanças de UI, suba um servidor isolado e confira (Playwright via
   `uv run --with playwright ...` funciona) nos temas claro e escuro e em 390 px de largura (sem scroll horizontal).
 
