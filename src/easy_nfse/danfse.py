@@ -118,7 +118,7 @@ def _ctrib(v: str) -> str:
 def _municipio(cod: str, nome: str = "") -> str:
     uf = UF_POR_CODIGO.get((cod or "")[:2], "")
     if not nome and cod:
-        nome = ibge.nome(cod).split("/")[0]
+        nome = ibge.nome(cod).split("/")[0] or cod  # sem acesso ao IBGE, mostra o código
     return f"{nome} / {uf}" if nome and uf else _d(nome)
 
 
