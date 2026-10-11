@@ -41,3 +41,8 @@ dev = [
     "pytest>=9.1.1",
     "xmlsec>=1.3.17",
 ]
+
+[tool.pytest.ini_options]
+# Com PYTHONWARNDEFAULTENCODING=1 (definido na CI), abrir arquivo de texto sem `encoding` no código do app
+# vira erro: no Windows o padrão é cp1252, não UTF-8.
+filterwarnings = ["error::EncodingWarning:easy_nfse"]
