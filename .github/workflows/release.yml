@@ -1,9 +1,11 @@
 name: release
 
 # 1. release-please lê os commits (Conventional Commits) e mantém um PR de release com a próxima
-#    versão e o CHANGELOG. Ao fazer merge desse PR, ele cria a tag e a GitHub Release.
-# 2. Quando uma release é criada (ou ao rodar manualmente), os executáveis de macOS e Windows são
-#    gerados, testados e publicados como artefatos e anexados à release.
+#    versão e o CHANGELOG. Ao fazer merge desse PR, ele cria a tag e a release como RASCUNHO.
+# 2. Os executáveis de macOS e Windows são gerados, testados, publicados como artefatos e anexados
+#    ao rascunho (ao rodar manualmente, só os artefatos são gerados).
+# 3. Com os dois executáveis anexados, a release é publicada. O repositório usa releases imutáveis:
+#    depois de publicada, uma release não aceita novos arquivos.
 #
 # Assinatura de código (Apple Developer ID / Authenticode) ainda não configurada: os executáveis
 # saem sem assinatura. Ver README, seção "Aplicativo para macOS e Windows".
@@ -45,9 +47,13 @@ jobs:
             plataforma: windows-x64
             executavel: dist/easy-nfse/easy-nfse.exe
     runs-on: ${{ matrix.os }}
-    env:
-      ARQUIVO_BASE: easy-nfse-${{ needs.release-please.outputs.tag_name || github.sha }}-${{ matrix.plataforma }}
     steps:
+      - name: Nome dos arquivos
+        shell: bash
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name || 'dev' }}
+        run: echo "ARQUIVO_BASE=easy-nfse-${TAG#easy-nfse-}-${{ matrix.plataforma }}" >> "$GITHUB_ENV" # easy-nfse-v0.2.1-macos-arm64
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.release-please.outputs.tag_name || github.sha }}
@@ -57,6 +63,8 @@ jobs:
         run: uv sync --frozen --group desktop --group build
 
       - name: Testes
+        env:
+          PYTHONWARNDEFAULTENCODING: "1"
         run: uv run pytest -q
 
       - name: Gerar executável (PyInstaller)
@@ -71,7 +79,7 @@ jobs:
         run: |
           "${{ matrix.executavel }}" &
           for _ in $(seq 1 60); do
-            if curl -fsS -o /dev/null http://127.0.0.1:47399/; then echo "OK: app respondeu"; break; fi
+            if curl -fs -o /dev/null http://127.0.0.1:47399/; then echo "OK: app respondeu"; break; fi
             sleep 1
           done
           curl -fsS -o /dev/null http://127.0.0.1:47399/templates
@@ -97,9 +105,19 @@ jobs:
           path: ${{ env.PACOTE }}
           if-no-files-found: error
 
-      - name: Anexar à release
+      - name: Anexar ao rascunho da release
         if: needs.release-please.outputs.release_created == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ needs.release-please.outputs.tag_name }}" "$PACOTE" --clobber
+
+  publicar:
+    needs: [release-please, executaveis]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publicar a release (rascunho → publicada)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${{ needs.release-please.outputs.tag_name }}" --repo "${{ github.repository }}" --draft=false --latest
