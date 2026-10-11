@@ -99,7 +99,10 @@ def test_competencia_futura_rejeitada():
 
 
 def test_assinatura_valida_com_xmlsec(cert):
-    xmlsec = pytest.importorskip("xmlsec")
+    try:  # xmlsec falha no import se o libxml2 dele diferir do lxml (comum em alguns ambientes de CI)
+        import xmlsec
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"xmlsec indisponível: {exc}")
     root, ident = dps.montar(template(), dados())
     assinado = etree.fromstring(dps.serializar(cert.assinar(root, ident)))
     dps.validar_xsd(assinado)
