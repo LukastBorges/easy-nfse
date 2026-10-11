@@ -1,0 +1,18 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Dados locais (certificado, senha, templates, notas emitidas)
+data/
+samples/
+_old-nextjs/
+
+# Ferramentas
+.pytest_cache/
