@@ -212,20 +212,20 @@ def main() -> int:
         if novo.get("xsd-v1.01") and any(local.get(k) != v for k, v in novo["xsd-v1.01"].items()):
             print("Aviso: os XSDs oficiais diferem da cópia em src/easy_nfse/xsd/ — atualize-a.", file=sys.stderr)
         ESTADO.parent.mkdir(parents=True, exist_ok=True)
-        ESTADO.write_text(json.dumps(novo, ensure_ascii=False, indent=2) + "\n")
+        ESTADO.write_text(json.dumps(novo, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(f"Retrato atualizado em {ESTADO.relative_to(RAIZ)}.")
         return 0
 
-    antigo = json.loads(ESTADO.read_text()) if ESTADO.exists() else {}
+    antigo = json.loads(ESTADO.read_text(encoding="utf-8")) if ESTADO.exists() else {}
     # compara só as fontes lidas agora (fonte fora do ar não vira "mudança")
     mudancas = comparar({k: v for k, v in antigo.items() if k in novo}, novo)
     assinatura = hashlib.sha256(json.dumps(mudancas, sort_keys=True).encode()).hexdigest()[:16]
     texto = relatorio(mudancas, assinatura) if mudancas else "Nenhuma mudança na documentação oficial."
     if args.relatorio:
-        args.relatorio.write_text(texto)
+        args.relatorio.write_text(texto, encoding="utf-8")
     print(texto)
     if os.environ.get("GITHUB_OUTPUT"):
-        with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
             out.write(f"mudou={'true' if mudancas else 'false'}\nassinatura={assinatura}\n")
     return 2 if falhas else 0
 

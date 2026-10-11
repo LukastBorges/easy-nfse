@@ -16,12 +16,12 @@ def _municipios(uf: str) -> list[dict]:
     uf = uf.upper()
     cache = storage.CACHE_DIR / f"ibge_{uf}.json"
     if cache.exists():
-        return json.loads(cache.read_text())
+        return json.loads(cache.read_text(encoding="utf-8"))
     resp = httpx.get(API.format(uf=uf), timeout=15)
     resp.raise_for_status()
     data = [{"id": str(m["id"]), "nome": m["nome"]} for m in resp.json()]
     storage.ensure_dirs()
-    cache.write_text(json.dumps(data, ensure_ascii=False))
+    cache.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     return data
 
 

@@ -28,7 +28,7 @@ MOEDAS = {
 @lru_cache(maxsize=1)
 def paises() -> dict[str, str]:
     """ISO2 -> nome, conforme a tabela oficial (ANEXO_A-...-PAISES_ISO2)."""
-    return json.loads((_BASE / "paises.json").read_text())
+    return json.loads((_BASE / "paises.json").read_text(encoding="utf-8"))
 
 
 def pais_por_nome(nome: str) -> str:

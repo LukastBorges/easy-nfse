@@ -63,7 +63,7 @@ def _write_private(path: Path, data: bytes) -> None:
 
 def load_config() -> Config:
     if CONFIG_FILE.exists():
-        return Config.model_validate_json(CONFIG_FILE.read_text())
+        return Config.model_validate_json(CONFIG_FILE.read_text(encoding="utf-8"))
     return Config()
 
 
@@ -100,7 +100,7 @@ def _template_path(template_id: str) -> Path:
 def list_templates() -> list[Template]:
     if not TEMPLATES_DIR.exists():
         return []
-    items = [Template.model_validate_json(p.read_text()) for p in TEMPLATES_DIR.glob("*.json")]
+    items = [Template.model_validate_json(p.read_text(encoding="utf-8")) for p in TEMPLATES_DIR.glob("*.json")]
     return sorted(items, key=lambda t: t.atualizado_em, reverse=True)
 
 
@@ -108,7 +108,7 @@ def get_template(template_id: str) -> Template:
     path = _template_path(template_id)
     if not path.exists():
         raise KeyError(template_id)
-    return Template.model_validate_json(path.read_text())
+    return Template.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 def save_template(t: Template) -> None:
@@ -129,9 +129,9 @@ def save_emissao(e: Emissao, dps_xml: bytes, nfse_xml: bytes | None, resposta: d
     (pasta / "dps.xml").write_bytes(dps_xml)
     if nfse_xml:
         (pasta / "nfse.xml").write_bytes(nfse_xml)
-    (pasta / "resposta.json").write_text(json.dumps(resposta, indent=2, ensure_ascii=False))
+    (pasta / "resposta.json").write_text(json.dumps(resposta, indent=2, ensure_ascii=False), encoding="utf-8")
     e.pasta = str(pasta.relative_to(DATA_DIR))
-    with EMISSOES_LOG.open("a") as f:
+    with EMISSOES_LOG.open("a", encoding="utf-8") as f:
         f.write(e.model_dump_json() + "\n")
     return e
 
@@ -139,7 +139,7 @@ def save_emissao(e: Emissao, dps_xml: bytes, nfse_xml: bytes | None, resposta: d
 def list_emissoes() -> list[Emissao]:
     if not EMISSOES_LOG.exists():
         return []
-    items = [Emissao.model_validate_json(line) for line in EMISSOES_LOG.read_text().splitlines() if line.strip()]
+    items = [Emissao.model_validate_json(line) for line in EMISSOES_LOG.read_text(encoding="utf-8").splitlines() if line.strip()]
     return list(reversed(items))
 
 

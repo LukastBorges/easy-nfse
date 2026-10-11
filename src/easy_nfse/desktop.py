@@ -33,10 +33,10 @@ def _configurar_logs() -> None:
     if getattr(sys, "frozen", False):
         for nome in ("stdout", "stderr"):  # no Windows, sem console, eles são None
             if getattr(sys, nome) is None:
-                setattr(sys, nome, open(os.devnull, "w"))
+                setattr(sys, nome, open(os.devnull, "w", encoding="utf-8"))
         pasta = storage.DATA_DIR / "logs"
         pasta.mkdir(parents=True, exist_ok=True)
-        logging.basicConfig(filename=pasta / "easy-nfse.log", level=logging.INFO,
+        logging.basicConfig(filename=pasta / "easy-nfse.log", encoding="utf-8", level=logging.INFO,
                             format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     else:
         logging.basicConfig(level=logging.INFO)
