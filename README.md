@@ -9,6 +9,14 @@ a partir de uma nota já emitida.
 2. O app cria um **template** com prestador, tomador, serviço e tributação. Revise e salve.
 3. A cada nova nota, informe apenas a **data de competência** e o **valor**, revise e emita.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inicio-escuro.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/inicio-claro.png">
+  <img src="docs/screenshots/inicio-claro.png" alt="Tela inicial do easy-nfse com templates prontos para emissão e as últimas notas emitidas (dados fictícios)">
+</picture>
+
+<sub>Tela inicial em uma versão de teste, com dados fictícios. A imagem acompanha o tema (claro ou escuro) do GitHub.</sub>
+
 ## Funcionalidades
 
 - Emissão direta pela **API oficial da Sefin Nacional**, com assinatura digital e autenticação feitas com o seu
