@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.1](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.0...easy-nfse-v0.2.1) (2026-10-11)
+
+
+### Correções
+
+* ler e gravar arquivos de texto em UTF-8 em qualquer sistema ([294d01d](https://github.com/LukastBorges/easy-nfse/commit/294d01dfecd6245aa372f7f06c3d25dffee9524a))
+
+
+### Documentação
+
+* **agents:** registrar encoding UTF-8 e o fluxo de releases imutáveis ([a1aff04](https://github.com/LukastBorges/easy-nfse/commit/a1aff046cc0696620b041621c96df8a5e3ebe061))
+
+
+### Build e dependências
+
+* sincronizar a versão do projeto no uv.lock (0.2.0) ([459fbb1](https://github.com/LukastBorges/easy-nfse/commit/459fbb1e2ee3a37e6311fcec0045edd529cca0fd))
+
 ## [0.2.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.1.0...easy-nfse-v0.2.0) (2026-10-11)
 
 
