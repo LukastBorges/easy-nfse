@@ -1,0 +1,49 @@
+name: monitor-nfse
+
+# Verifica toda semana se a documentação técnica oficial da NFS-e (gov.br/nfse) mudou: novas versões de
+# XSD, Anexo I, notas técnicas, anúncios de implantação e endereços das APIs. Havendo mudança, abre (ou
+# atualiza) uma issue com o relatório e o que revisar no código. Ver scripts/monitor_nfse.py.
+
+on:
+  schedule:
+    - cron: "0 12 * * 1" # segundas-feiras, 09:00 em Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: monitor-nfse
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Comparar com o retrato salvo
+        id: monitor
+        run: uv run --no-dev python scripts/monitor_nfse.py --relatorio relatorio.md
+
+      - name: Abrir ou atualizar a issue
+        if: steps.monitor.outputs.mudou == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSINATURA: ${{ steps.monitor.outputs.assinatura }}
+        run: |
+          gh label create nfse-monitor --color D93F0B \
+            --description "Mudança na documentação oficial da NFS-e" 2>/dev/null || true
+
+          issue=$(gh issue list --label nfse-monitor --state open --json number --jq '.[0].number // empty')
+          if [ -z "$issue" ]; then
+            gh issue create --label nfse-monitor \
+              --title "Documentação da NFS-e mudou: revisar o easy-nfse" --body-file relatorio.md
+          elif gh issue view "$issue" --json body --jq .body | grep -q "nfse-monitor:$ASSINATURA"; then
+            echo "Issue #$issue já descreve estas mudanças; nada a fazer."
+          else
+            gh issue edit "$issue" --body-file relatorio.md
+            gh issue comment "$issue" --body "O relatório foi atualizado com novas mudanças na documentação ($(date -u +%F))."
+          fi
