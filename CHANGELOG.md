@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.1...easy-nfse-v0.2.2) (2026-10-11)
+
+
+### Correções
+
+* **ibge:** não quebrar quando a API do IBGE responde algo inesperado ([8ac909c](https://github.com/LukastBorges/easy-nfse/commit/8ac909c8293949f2ec18d3b935f70cd1c868f757))
+
 ## [0.2.1](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.0...easy-nfse-v0.2.1) (2026-10-11)
 
 
