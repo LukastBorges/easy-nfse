@@ -5,6 +5,7 @@ import os
 from decimal import Decimal
 from pathlib import Path
 
+import httpx
 import pytest
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -265,3 +266,28 @@ def test_danfse_pdf(tpl):
     assert "R$ 1.500,00" in texto
     if tpl == "exportacao":
         assert "Exportação de Serviço" in texto and "USD 200,00" in texto and "San Francisco" in texto
+
+
+def test_ibge_bloqueado_nao_quebra_o_pdf(monkeypatch):
+    """O firewall do IBGE às vezes responde uma página HTML no lugar do JSON (derrubou um build)."""
+    import pdfplumber
+    from easy_nfse import danfse, ibge
+
+    def bloqueado(url, *a, **k):
+        return httpx.Response(200, text="<html><title>Request Rejected</title></html>", request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(ibge.httpx, "get", bloqueado)
+    assert ibge.nome("5300108") == ""
+    assert ibge.codigo("Brasília", "DF") is None
+    assert not list(ibge.storage.CACHE_DIR.glob("ibge_*.json")) if ibge.storage.CACHE_DIR.exists() else True
+
+    root, _ = dps.montar(template(), dados())
+    with pdfplumber.open(io.BytesIO(danfse.gerar(_nfse(root)))) as p:
+        assert "5300108 / DF" in p.pages[0].extract_text()  # sem o nome, mostra o código
+
+
+def test_ibge_resolve_nome_e_codigo():
+    from easy_nfse import ibge
+
+    assert ibge.nome("4314902") == "Porto Alegre/RS"
+    assert ibge.codigo("porto alegre", "rs") == "4314902"
