@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Templates · easy-nfse{% endblock %}
+{% block content %}
+<div>
+  <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Templates</h1>
+  <p class="mt-1 max-w-2xl text-slate-600 dark:text-slate-400">Cada template guarda o que se repete numa nota: prestador, tomador, serviço e
+    tributação. Crie um a partir de uma NFS-e que você já emitiu.</p>
+</div>
+
+<section class="mt-8">
+  <h2 class="section-title">Novo template a partir de uma nota</h2>
+  {% include "_importador.html" %}
+</section>
+
+<section class="mt-12">
+  <h2 class="text-lg font-semibold tracking-tight">Seus templates</h2>
+  {% if templates %}
+  <ul class="card mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+    {% for t in templates %}{% include "_template_linha.html" %}{% endfor %}
+  </ul>
+  {% else %}
+  <div class="mt-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+    Nenhum template ainda. Importe uma nota acima para começar.
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

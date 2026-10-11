@@ -1,0 +1,37 @@
+{% macro field(name, label, value='', hint='', placeholder='', cls='', type='text', attrs='') -%}
+<div class="{{ cls }}">
+  <label class="label" for="{{ name }}">{{ label }}</label>
+  <input class="input" id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value or '' }}" placeholder="{{ placeholder }}" {{ attrs|safe }}>
+  {% if hint %}<p class="hint">{{ hint|safe }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro select(name, label, options, value='', hint='', cls='', blank=None) -%}
+<div class="{{ cls }}">
+  <label class="label" for="{{ name }}">{{ label }}</label>
+  <select class="input" id="{{ name }}" name="{{ name }}">
+    {% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+    {% for k, v in options.items() %}
+      <option value="{{ k }}" {{ 'selected' if k == value }}>{{ v }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<p class="hint">{{ hint|safe }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro alert(kind, title, items) -%}
+{% set styles = {
+  'error': 'bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-200 ring-rose-200 dark:ring-rose-500/30',
+  'warn': 'bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 ring-amber-200 dark:ring-amber-500/30',
+  'info': 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-900 dark:text-indigo-200 ring-indigo-200 dark:ring-indigo-500/30',
+  'ok': 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 ring-emerald-200 dark:ring-emerald-500/30',
+} %}
+<div class="rounded-2xl p-4 text-sm ring-1 {{ styles[kind] }}">
+  {% if title %}<p class="font-semibold">{{ title }}</p>{% endif %}
+  {% if items %}
+  <ul class="{{ 'mt-2' if title }} list-disc space-y-1 pl-5">
+    {% for i in items %}<li>{{ i }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{%- endmacro %}

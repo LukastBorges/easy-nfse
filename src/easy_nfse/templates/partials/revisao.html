@@ -1,0 +1,51 @@
+{% from "_macros.html" import alert %}
+<div class="flex items-start justify-between gap-4">
+  <div>
+    <h2 class="text-lg font-semibold">Confira antes de emitir</h2>
+    <p class="text-sm text-slate-500 dark:text-slate-400">Depois de emitida, a NFS-e só pode ser cancelada ou substituída.</p>
+  </div>
+  {% if cfg.ambiente == '1' %}
+    <span class="shrink-0 rounded-full bg-rose-50 dark:bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300 ring-1 ring-rose-200 dark:ring-rose-500/30">PRODUÇÃO</span>
+  {% else %}
+    <span class="shrink-0 rounded-full bg-amber-50 dark:bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30">TESTE</span>
+  {% endif %}
+</div>
+
+<div class="mt-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-5 ring-1 ring-slate-200 dark:ring-slate-800">
+  <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Valor do serviço</div>
+  <div class="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{{ d.valor|money }}</div>
+  {% if d.valor_moeda %}<div class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, t.com_ext.tp_moeda) }} {{ (d.valor_moeda|money)[3:] }} · exportação de serviço</div>{% endif %}
+  <dl class="kv mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+    <div><dt>Competência</dt><dd>{{ d.competencia|data }}</dd></div>
+    <div><dt>Tomador</dt><dd>{{ t.tomador.nome if t.tomador else 'Não identificado' }}</dd></div>
+    <div><dt>DPS</dt><dd>série {{ d.serie }} · nº {{ d.n_dps }}</dd></div>
+  </dl>
+  <div class="mt-4">
+    <div class="text-xs text-slate-500 dark:text-slate-400">Descrição</div>
+    <p class="mt-1 whitespace-pre-line text-sm">{{ d.descricao }}</p>
+  </div>
+</div>
+
+{% if alertas %}<div class="mt-4">{{ alert('error', 'Não é possível emitir ainda', alertas) }}</div>{% endif %}
+
+<details class="mt-4 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800">
+  <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300">Ver XML da DPS (antes da assinatura)</summary>
+  <pre class="max-h-80 overflow-auto border-t border-slate-100 dark:border-slate-800 bg-slate-950 p-4 text-[11px] leading-relaxed text-slate-100 rounded-b-xl">{{ xml }}</pre>
+</details>
+
+<form class="mt-6 flex flex-wrap items-center justify-end gap-2"
+      hx-post="/templates/{{ t.id }}/emitir" hx-target="#painel" hx-disabled-elt="find button"
+      {% if cfg.ambiente == '1' %}hx-confirm="A NFS-e de {{ d.valor|money }} será emitida em PRODUÇÃO, com validade fiscal. Depois, só é possível cancelar ou substituir."
+      data-confirm-titulo="Emitir em produção?" data-confirm-acao="Emitir NFS-e"{% endif %}>
+  <input type="hidden" name="competencia" value="{{ d.competencia.isoformat() }}">
+  <input type="hidden" name="valor" value="{{ d.valor }}">
+  <input type="hidden" name="valor_moeda" value="{{ d.valor_moeda or '' }}">
+  <input type="hidden" name="descricao" value="{{ d.descricao }}">
+  <input type="hidden" name="n_dps" value="{{ d.n_dps }}">
+  <input type="hidden" name="ambiente" value="{{ cfg.ambiente }}">
+  <a href="/templates/{{ t.id }}" class="btn-ghost">← Voltar</a>
+  <button class="btn-success" {{ 'disabled' if not pode_emitir }}>
+    <span class="htmx-indicator"><svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity=".3" stroke-width="3"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3"/></svg></span>
+    Assinar e emitir NFS-e
+  </button>
+</form>

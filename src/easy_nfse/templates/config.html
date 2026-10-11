@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% from "_macros.html" import alert, field %}
+{% block title %}Configurações · easy-nfse{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Configurações</h1>
+<div class="mt-6 space-y-4">
+  {% if ok %}{{ alert('ok', ok, []) }}{% endif %}
+  {% if erro %}{{ alert('error', erro, []) }}{% endif %}
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+  {# ------------------------------------------------------------ certificado #}
+  {% set cert_estado = ('vencido' if cert.vencido else 'valido') if cert and cert.ok else ('erro' if cert else '') %}
+  <section class="rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-sm {{ {
+      'valido': 'ring-2 ring-emerald-400 dark:ring-emerald-500/60',
+      'vencido': 'ring-2 ring-amber-400 dark:ring-amber-500/60',
+    }.get(cert_estado, 'ring-1 ring-slate-200/80 dark:ring-slate-800') }}">
+    <div class="flex items-start justify-between gap-3">
+      <h2 class="section-title">Certificado digital A1</h2>
+      {% if cert_estado == 'valido' %}
+      <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30">
+        <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg> Válido
+      </span>
+      {% elif cert_estado == 'vencido' %}
+      <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30">! Expirado</span>
+      {% endif %}
+    </div>
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Arquivo .pfx/.p12 ICP-Brasil do prestador. Ele assina a DPS e autentica na API (mTLS).</p>
+    {% if cert %}
+      {% if cert.ok %}
+      <dl class="kv mt-5 grid grid-cols-2 gap-4 rounded-xl p-4 ring-1 {{ 'bg-amber-50 dark:bg-amber-500/10 ring-amber-200 dark:ring-amber-500/30' if cert.vencido else 'bg-emerald-50 dark:bg-emerald-500/10 ring-emerald-200 dark:ring-emerald-500/30' }}">
+        <div class="col-span-2"><dt>Titular</dt><dd>{{ cert.titular }}</dd></div>
+        <div><dt>Documento</dt><dd>{{ cert.documento|doc or '—' }}</dd></div>
+        <div><dt>Validade</dt><dd class="{{ 'text-amber-700 dark:text-amber-300' if cert.vencido }}">{{ cert.validade|data }}{% if cert.vencido %} (expirado){% endif %}</dd></div>
+      </dl>
+      {% if cert.vencido %}
+      <p class="mt-3 text-sm text-amber-800 dark:text-amber-200">Este certificado expirou e a Sefin vai recusar as emissões. Renove-o com a sua
+        certificadora e envie o novo arquivo abaixo.</p>
+      {% endif %}
+      {% else %}
+      <div class="mt-5">{{ alert('error', cert.erro, []) }}</div>
+      {% endif %}
+    {% endif %}
+    <form class="mt-5 space-y-4" method="post" action="/configuracoes/certificado" enctype="multipart/form-data">
+      <div>
+        <label class="label" for="arquivo">{{ 'Substituir certificado' if cert else 'Arquivo do certificado' }}</label>
+        <input class="block w-full text-sm text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 dark:file:bg-indigo-500/10 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-500/20"
+               type="file" id="arquivo" name="arquivo" accept=".pfx,.p12" required>
+      </div>
+      {{ field('senha', 'Senha do certificado', '', type='password', attrs='autocomplete="off"') }}
+      <button class="btn-primary">Salvar certificado</button>
+      <p class="hint">Fica em <code>{{ data_dir }}</code> (permissão 600), junto com a senha. Alternativa: defina a variável de ambiente <code>EASY_NFSE_CERT_SENHA</code>.</p>
+    </form>
+    {% if cert and cert.ok %}
+    <div class="mt-6 flex items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-5">
+      <button class="btn-ghost" hx-post="/configuracoes/testar" hx-target="#teste-resultado" hx-disabled-elt="this">
+        <span class="htmx-indicator"><svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity=".3" stroke-width="3"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3"/></svg></span>
+        Testar conexão com a Sefin
+      </button>
+      <div id="teste-resultado"></div>
+    </div>
+    {% endif %}
+  </section>
+
+  {# ------------------------------------------------------------ ambiente #}
+  <section class="card p-6">
+    <h2 class="section-title">Emissão</h2>
+    <form class="mt-5 space-y-5" method="post" action="/configuracoes">
+      <fieldset>
+        <legend class="label">Ambiente</legend>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label class="flex cursor-pointer gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-amber-50 dark:has-[:checked]:bg-amber-500/10 has-[:checked]:ring-2 has-[:checked]:ring-amber-400">
+            <input type="radio" name="ambiente" value="2" {{ 'checked' if cfg.ambiente == '2' }} class="mt-0.5 text-amber-500 focus:ring-amber-500">
+            <span><span class="block text-sm font-semibold">Produção restrita</span><span class="text-xs text-slate-500 dark:text-slate-400">Para testes. Notas sem validade jurídica.</span></span>
+          </label>
+          <label class="flex cursor-pointer gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-rose-50 dark:has-[:checked]:bg-rose-500/10 has-[:checked]:ring-2 has-[:checked]:ring-rose-400">
+            <input type="radio" name="ambiente" value="1" {{ 'checked' if cfg.ambiente == '1' }} class="mt-0.5 text-rose-600 dark:text-rose-400 focus:ring-rose-600">
+            <span><span class="block text-sm font-semibold">Produção</span><span class="text-xs text-slate-500 dark:text-slate-400">Notas reais, com validade fiscal.</span></span>
+          </label>
+        </div>
+      </fieldset>
+      <div>
+        <div class="label">Numeração da DPS <span class="font-normal">· {{ 'produção' if cfg.ambiente == '1' else 'produção restrita' }}, série {{ cfg.serie }}</span></div>
+        {% if numeracao_atual %}
+        <div class="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800">
+          {% for n in numeracao_atual %}
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm">
+            <div class="min-w-0 flex-1">
+              <div class="font-medium">Próxima DPS: <span class="tabular-nums">nº {{ n.proximo }}</span></div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">{{ n.doc|doc }}</div>
+            </div>
+            <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">último usado
+              <input form="num-{{ loop.index }}" name="ultimo" type="number" min="0" value="{{ n.ultimo }}" class="input w-24 py-1.5">
+            </label>
+            <button form="num-{{ loop.index }}" class="btn-ghost px-3 py-1.5">Ajustar</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800">
+          Configure o certificado ou crie um template para ver a numeração. A primeira DPS será a nº 1.</p>
+        {% endif %}
+        <p class="hint">Avança sozinha a cada nota aceita pela Sefin (e quando ela avisa que o número já foi usado, E0014).
+          Nota rejeitada não consome número. Ajuste só se este CNPJ já usou esta série em outro sistema.</p>
+        {% if numeracao_outros %}
+        <details class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <summary>Outros ambientes/séries ({{ numeracao_outros|length }})</summary>
+          <ul class="mt-2 space-y-1">
+            {% for chave, ultimo in numeracao_outros %}{% set pt = chave.split('|') %}
+            <li>{{ 'Produção' if pt[0] == '1' else 'Produção restrita' }} · {{ pt[1]|doc }} · série {{ pt[2] }}: último nº {{ ultimo }}</li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+      {{ field('serie', 'Série da DPS', cfg.serie, hint='Faixa de aplicativo próprio: 1 a 49999. O Emissor Web usa outra faixa, então a numeração deste app não colide com a dele.') }}
+      <label class="flex items-start gap-3 text-sm">
+        <input type="checkbox" name="verificar_tls" value="1" {{ 'checked' if cfg.verificar_tls }} class="mt-0.5 size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
+        <span>Verificar o certificado TLS do servidor da Sefin <span class="block text-xs text-slate-500 dark:text-slate-400">Desative só se a conexão falhar por cadeia de certificado desconhecida.</span></span>
+      </label>
+      <button class="btn-primary">Salvar</button>
+    </form>
+    {% for n in numeracao_atual %}
+    <form id="num-{{ loop.index }}" method="post" action="/configuracoes/numeracao" class="hidden">
+      <input type="hidden" name="chave" value="{{ n.chave }}">
+    </form>
+    {% endfor %}
+  </section>
+
+</div>
+{% endblock %}
