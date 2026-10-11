@@ -16,3 +16,7 @@ _old-nextjs/
 
 # Ferramentas
 .pytest_cache/
+
+# Empacotamento (PyInstaller)
+build/
+dist/
