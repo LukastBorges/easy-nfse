@@ -10,7 +10,13 @@ permissions:
 
 jobs:
   testes:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONWARNDEFAULTENCODING: "1" # acusa leitura/escrita de texto sem encoding (ver pyproject.toml)
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
