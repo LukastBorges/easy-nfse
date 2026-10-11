@@ -142,6 +142,10 @@ com a próxima versão e o `CHANGELOG.md`. Ao fazer merge desse PR, a tag e a re
 gera, testa e anexa os executáveis de macOS e Windows. Também é possível gerar os executáveis sem criar release
 (*Actions → release → Run workflow*); eles ficam disponíveis como artefatos da execução.
 
+Um workflow semanal (*monitor-nfse*) compara a documentação técnica oficial da NFS-e com o retrato salvo em
+`.github/nfse-monitor/estado.json` e abre uma issue quando algo muda (novos esquemas XSD, regras, notas técnicas ou
+endereços das APIs), indicando o que revisar no código.
+
 Para gerar localmente (no sistema de destino):
 
 ```bash

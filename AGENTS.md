@@ -113,6 +113,16 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `pyproject.toml`, o `CHANGELOG.md` e o `.release-please-manifest.json`; não edite a versão à mão.
 - Assinatura de código (Apple/Microsoft) está pendente por decisão do dono; não adicione passos que exijam secrets.
 
+## Monitor da documentação oficial
+
+- `monitor-nfse.yml` roda toda segunda-feira e compara gov.br/nfse (documentação atual, RTC, notas técnicas, anúncios
+  de implantação, APIs e o conteúdo dos XSDs v1.01) com `.github/nfse-monitor/estado.json`. Mudou → abre/atualiza uma
+  issue com o rótulo `nfse-monitor`, contendo o relatório e o que revisar.
+- Ao resolver uma issue dessas: ajuste o código, rode `uv run python scripts/monitor_nfse.py --atualizar` e commite o
+  retrato (`chore(monitor): ...`). Não atualize o retrato sem revisar: ele é o registro do que o código já cobre.
+- Mudança anunciada a acompanhar: **CNPJ alfanumérico**. O XSD v1.01 ainda exige `[0-9]{14}` e o app trata CNPJ como
+  dígitos (`util.digits`, `cnpj_valido`); quando o esquema mudar, isso precisará ser revisto.
+
 ## Convenções de código
 
 - Português para UI, mensagens, docstrings e nomes de domínio (`prestador`, `tomador`, `competencia`); siga o estilo existente.
