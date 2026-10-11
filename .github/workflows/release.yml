@@ -1,0 +1,105 @@
+name: release
+
+# 1. release-please lê os commits (Conventional Commits) e mantém um PR de release com a próxima
+#    versão e o CHANGELOG. Ao fazer merge desse PR, ele cria a tag e a GitHub Release.
+# 2. Quando uma release é criada (ou ao rodar manualmente), os executáveis de macOS e Windows são
+#    gerados, testados e publicados como artefatos e anexados à release.
+#
+# Assinatura de código (Apple Developer ID / Authenticode) ainda não configurada: os executáveis
+# saem sem assinatura. Ver README, seção "Aplicativo para macOS e Windows".
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # gera os executáveis como artefatos, sem criar release
+
+permissions:
+  contents: write # criar tag/release e anexar arquivos
+  pull-requests: write # abrir/atualizar o PR de release
+
+jobs:
+  release-please:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  executaveis:
+    needs: release-please
+    if: ${{ !cancelled() && (github.event_name == 'workflow_dispatch' || needs.release-please.outputs.release_created == 'true') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest # Apple Silicon (arm64)
+            plataforma: macos-arm64
+            executavel: dist/easy-nfse.app/Contents/MacOS/easy-nfse
+          - os: windows-latest
+            plataforma: windows-x64
+            executavel: dist/easy-nfse/easy-nfse.exe
+    runs-on: ${{ matrix.os }}
+    env:
+      ARQUIVO_BASE: easy-nfse-${{ needs.release-please.outputs.tag_name || github.sha }}-${{ matrix.plataforma }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name || github.sha }}
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Instalar dependências
+        run: uv sync --frozen --group desktop --group build
+
+      - name: Testes
+        run: uv run pytest -q
+
+      - name: Gerar executável (PyInstaller)
+        run: uv run pyinstaller packaging/easy-nfse.spec --noconfirm
+
+      - name: Verificar o executável (sobe o servidor e abre a página inicial)
+        shell: bash
+        env:
+          EASY_NFSE_NO_BROWSER: "1"
+          EASY_NFSE_PORT: "47399"
+          EASY_NFSE_DATA: ${{ runner.temp }}/easy-nfse-dados
+        run: |
+          "${{ matrix.executavel }}" &
+          for _ in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:47399/; then echo "OK: app respondeu"; break; fi
+            sleep 1
+          done
+          curl -fsS -o /dev/null http://127.0.0.1:47399/templates
+          kill %1 2>/dev/null || taskkill //F //IM easy-nfse.exe || true
+
+      - name: Empacotar (.dmg)
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil create -volname "easy-nfse" -srcfolder dist/easy-nfse.app -ov -format UDZO "$ARQUIVO_BASE.dmg"
+          echo "PACOTE=$ARQUIVO_BASE.dmg" >> "$GITHUB_ENV"
+
+      - name: Empacotar (.zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/easy-nfse -DestinationPath "$env:ARQUIVO_BASE.zip"
+          "PACOTE=$env:ARQUIVO_BASE.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publicar como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: easy-nfse-${{ matrix.plataforma }}
+          path: ${{ env.PACOTE }}
+          if-no-files-found: error
+
+      - name: Anexar à release
+        if: needs.release-please.outputs.release_created == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" "$PACOTE" --clobber

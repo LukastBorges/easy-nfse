@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "easy-nfse",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": false,
+      "include-v-in-tag": true,
+      "changelog-sections": [
+        { "type": "feat", "section": "Funcionalidades" },
+        { "type": "fix", "section": "Correções" },
+        { "type": "perf", "section": "Desempenho" },
+        { "type": "revert", "section": "Reversões" },
+        { "type": "docs", "section": "Documentação", "hidden": false },
+        { "type": "build", "section": "Build e dependências", "hidden": false },
+        { "type": "refactor", "section": "Refatoração", "hidden": true },
+        { "type": "test", "section": "Testes", "hidden": true },
+        { "type": "ci", "section": "CI", "hidden": true },
+        { "type": "chore", "section": "Manutenção", "hidden": true },
+        { "type": "style", "section": "Estilo", "hidden": true }
+      ]
+    }
+  }
+}
