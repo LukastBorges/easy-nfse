@@ -35,13 +35,30 @@ a partir de uma nota já emitida.
 - Município do prestador aderente à NFS-e de padrão nacional.
 - Conexão com a internet para emitir notas.
 
-## Instalação e execução
+## Aplicativo para macOS e Windows
+
+Baixe a versão mais recente em [Releases](https://github.com/LukastBorges/easy-nfse/releases): o arquivo
+`.dmg` para macOS (Apple Silicon) ou o `.zip` para Windows. O app abre em uma janela própria; não é preciso instalar
+Python nem usar o terminal.
+
+Os executáveis ainda **não são assinados** pela Apple nem pela Microsoft, então o sistema avisa na primeira abertura:
+
+- **macOS:** abra o app, feche o aviso e vá em *Ajustes do Sistema → Privacidade e Segurança → Abrir Mesmo Assim*.
+- **Windows:** na tela azul do SmartScreen, clique em *Mais informações → Executar assim mesmo*.
+
+No app, os dados ficam na pasta do usuário: `~/Library/Application Support/easy-nfse` (macOS) ou
+`%APPDATA%\easy-nfse` (Windows). Para levar os dados de uma instalação a partir do código-fonte, copie o conteúdo
+da pasta `data/` para essa pasta com o app fechado.
+
+## Instalação a partir do código-fonte
 
 ```bash
 git clone https://github.com/LukastBorges/easy-nfse.git
 cd easy-nfse
 uv run easy-nfse          # instala as dependências na primeira vez e abre http://127.0.0.1:8000
 ```
+
+Para usar a janela própria em vez do navegador: `uv run --group desktop easy-nfse-desktop`.
 
 ## Primeiros passos
 
@@ -53,8 +70,9 @@ uv run easy-nfse          # instala as dependências na primeira vez e abre http
 
 ## Dados e segurança
 
-- Tudo fica no seu computador, na pasta `./data` (ou na indicada por `$EASY_NFSE_DATA`): certificado, senha,
-  templates, numeração e XMLs das notas emitidas. No macOS e no Linux, os arquivos podem ser lidos apenas pelo seu
+- Tudo fica no seu computador: na pasta `./data` ao rodar pelo código-fonte, na pasta do usuário no app para macOS
+  e Windows, ou na indicada por `$EASY_NFSE_DATA`. Ela guarda certificado, senha, templates, numeração e XMLs das
+  notas emitidas. No macOS e no Linux, os arquivos podem ser lidos apenas pelo seu
   usuário.
 - A pasta `data/` está no `.gitignore` e **nunca deve ser versionada nem compartilhada**.
 - O servidor escuta apenas em `127.0.0.1`. Não o exponha na rede, pois ele guarda o seu certificado.
@@ -72,10 +90,10 @@ uv run easy-nfse          # instala as dependências na primeira vez e abre http
 
 | Variável de ambiente | Uso |
 |---|---|
-| `EASY_NFSE_DATA` | Pasta de dados (padrão: `./data`) |
+| `EASY_NFSE_DATA` | Pasta de dados (padrão: `./data` pelo código-fonte; pasta do usuário no app) |
 | `EASY_NFSE_CERT_SENHA` | Senha do certificado, em vez de gravá-la em disco |
-| `EASY_NFSE_HOST` / `EASY_NFSE_PORT` | Endereço e porta do servidor (padrão: `127.0.0.1:8000`) |
-| `EASY_NFSE_NO_BROWSER` | Não abre o navegador ao iniciar |
+| `EASY_NFSE_HOST` / `EASY_NFSE_PORT` | Endereço e porta do servidor (padrão: `127.0.0.1:8000`; no app, porta `47318`) |
+| `EASY_NFSE_NO_BROWSER` | Não abre o navegador nem a janela ao iniciar (só o servidor) |
 
 ## Tomador do exterior e exportação
 
@@ -103,6 +121,7 @@ venda do Banco Central. Confirme com o seu contador qual taxa usar.
 
 - Não há suporte a intermediário, deduções/reduções, tributação federal nem ao grupo IBS/CBS.
 - Apenas certificado A1 (arquivo); certificados A3 ainda não são suportados.
+- Executáveis sem assinatura de código (Apple/Microsoft) e apenas para macOS Apple Silicon e Windows x64.
 - A leitura de PDF é heurística: revise sempre o template importado. Notas dos sistemas municipais antigos
   (anteriores ao padrão nacional) não são reconhecidas.
 - Na cópia local do XSD, os caracteres `^` e `$` foram removidos dos padrões (*patterns*), porque em XSD eles são
@@ -113,6 +132,21 @@ venda do Banco Central. Confirme com o seu contador qual taxa usar.
 ```bash
 uv run pytest                                   # testes unitários (assinatura verificada com libxmlsec1)
 EASY_NFSE_SAMPLES=pasta/com/pdfs uv run pytest  # inclui a leitura de PDFs reais (não versionados)
+```
+
+## Versões e executáveis
+
+As versões seguem o padrão **Conventional Commits** e são geradas pelo
+[release-please](https://github.com/googleapis/release-please): a cada push na `main`, ele mantém um PR de release
+com a próxima versão e o `CHANGELOG.md`. Ao fazer merge desse PR, a tag e a release são criadas, e o GitHub Actions
+gera, testa e anexa os executáveis de macOS e Windows. Também é possível gerar os executáveis sem criar release
+(*Actions → release → Run workflow*); eles ficam disponíveis como artefatos da execução.
+
+Para gerar localmente (no sistema de destino):
+
+```bash
+uv run --group desktop --group build pyinstaller packaging/easy-nfse.spec --noconfirm
+# macOS: dist/easy-nfse.app · Windows: dist/easy-nfse/easy-nfse.exe
 ```
 
 ## Desenvolvimento

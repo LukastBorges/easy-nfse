@@ -41,6 +41,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `ibge.py`, `ptax.py` | Códigos IBGE (API do IBGE, cache em `data/cache`) e cotação PTAX (BCB) |
 | `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `emissoes/` + `emissoes.jsonl`, `certificado.pfx` |
 | `xsd/` | XSDs oficiais **v1.01** (com um patch, ver abaixo) |
+| `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
+| `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
 | `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema) |
 | Páginas | `/` home (boas-vindas sem templates; com templates: alerta "Antes de emitir" (sempre visível) + cards de emissão + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão), `/templates/{id}/editar`, `/historico`, `/configuracoes` |
 | Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html` |
@@ -97,6 +99,19 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   com "NFS-e SEM VALIDADE JURÍDICA" quando `tpAmb=2`.
 - Endpoints da Sefin: produção `https://sefin.nfse.gov.br/SefinNacional`, restrita
   `https://sefin.producaorestrita.nfse.gov.br/SefinNacional`. Corpo: `{"dpsXmlGZipB64": ...}` com **mTLS**.
+
+## Empacotamento e releases
+
+- Pasta de dados (`storage._pasta_de_dados`): `$EASY_NFSE_DATA` > pasta do usuário se `sys.frozen` (app do PyInstaller)
+  > `./data`. Não mude o padrão do código-fonte (`./data`): o dono usa assim no dia a dia.
+- O `.spec` precisa de `collect_submodules("reportlab.graphics.barcode")`: o reportlab importa os módulos de código de
+  barras via `exec()` e, sem isso, o app empacotado não inicia. Ao adicionar dependências com import dinâmico, rode o
+  executável (`EASY_NFSE_NO_BROWSER=1 EASY_NFSE_PORT=47399 dist/easy-nfse.app/Contents/MacOS/easy-nfse`) e teste as
+  páginas com `curl`; o workflow de release faz essa verificação nos dois sistemas.
+- `tzdata` é dependência só no Windows (não há base de fusos no sistema para `zoneinfo`).
+- Versão: única fonte é o `pyproject.toml` (`__version__` vem de `importlib.metadata`). O release-please atualiza o
+  `pyproject.toml`, o `CHANGELOG.md` e o `.release-please-manifest.json`; não edite a versão à mão.
+- Assinatura de código (Apple/Microsoft) está pendente por decisão do dono; não adicione passos que exijam secrets.
 
 ## Convenções de código
 
