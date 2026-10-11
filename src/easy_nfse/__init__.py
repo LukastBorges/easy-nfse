@@ -1,4 +1,9 @@
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:  # fonte única da versão: o pyproject.toml (atualizado pelo release-please)
+    __version__ = version("easy-nfse")
+except PackageNotFoundError:  # pragma: no cover
+    __version__ = "0.0.0"
 
 
 def main() -> None:

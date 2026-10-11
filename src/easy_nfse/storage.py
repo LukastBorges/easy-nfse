@@ -1,4 +1,8 @@
-"""Persistência simples em arquivos JSON dentro de ./data (ou $EASY_NFSE_DATA)."""
+"""Persistência simples em arquivos JSON.
+
+Pasta de dados: `$EASY_NFSE_DATA`, se definida; senão a pasta do usuário no app empacotado
+(PyInstaller) ou `./data` ao rodar a partir do código-fonte (`uv run easy-nfse`).
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,30 @@ import json
 import os
 import re
 import secrets
+import sys
 from pathlib import Path
 
 from .models import Config, Emissao, Template
 
-DATA_DIR = Path(os.environ.get("EASY_NFSE_DATA", Path.cwd() / "data")).resolve()
+
+def pasta_do_usuario() -> Path:
+    """Pasta de dados do app instalado, conforme a convenção de cada sistema."""
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "easy-nfse"
+    if os.name == "nt":
+        return Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "easy-nfse"
+    return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "easy-nfse"
+
+
+def _pasta_de_dados() -> Path:
+    if os.environ.get("EASY_NFSE_DATA"):
+        return Path(os.environ["EASY_NFSE_DATA"])
+    if getattr(sys, "frozen", False):  # executável gerado pelo PyInstaller
+        return pasta_do_usuario()
+    return Path.cwd() / "data"
+
+
+DATA_DIR = _pasta_de_dados().resolve()
 TEMPLATES_DIR = DATA_DIR / "templates"
 EMISSOES_DIR = DATA_DIR / "emissoes"
 CACHE_DIR = DATA_DIR / "cache"
