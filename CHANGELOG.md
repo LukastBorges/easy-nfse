@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.2...easy-nfse-v0.2.3) (2026-10-23)
+
+
+### Correções
+
+* **desktop:** desbloquear DLLs do pythonnet e cair para o navegador se a janela falhar ([e162756](https://github.com/LukastBorges/easy-nfse/commit/e1627565b9991d820329e42cc834655e48958a52))
+* **desktop:** desbloquear DLLs do pythonnet e cair para o navegador se a janela falhar ([4fd19dd](https://github.com/LukastBorges/easy-nfse/commit/4fd19ddc72323baad44a5493b97607c69e9eeb47))
+
 ## [0.2.2](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.1...easy-nfse-v0.2.2) (2026-10-11)
 
 
