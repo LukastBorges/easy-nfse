@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 import webbrowser
+from pathlib import Path
 
 HOST = "127.0.0.1"
 # Porta fixa: se já estiver em uso, o app já está aberto (evita duas instâncias gravando os mesmos dados).
@@ -42,15 +43,36 @@ def _configurar_logs() -> None:
         logging.basicConfig(level=logging.INFO)
 
 
+def _desbloquear_dlls() -> None:
+    """Remove a marca "baixado da internet" (stream Zone.Identifier) das DLLs do app no Windows.
+
+    O Explorer copia essa marca para todos os arquivos ao extrair o .zip, e o .NET Framework se recusa
+    a carregar o Python.Runtime.dll do pythonnet ("Failed to resolve Python.Runtime.Loader.Initialize"),
+    o que derruba o backend WinForms do pywebview.
+    """
+    if sys.platform != "win32" or not getattr(sys, "frozen", False):
+        return
+    for dll in Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent)).rglob("*.dll"):
+        try:
+            os.remove(f"{dll}:Zone.Identifier")
+        except OSError:  # sem a marca (o caso normal) ou sem permissão
+            pass
+
+
 def _abrir_janela(url: str) -> bool:
-    """Abre a janela nativa. Retorna False se o pywebview não estiver disponível."""
+    """Abre a janela nativa. Retorna False se o pywebview não estiver disponível ou falhar ao iniciar."""
     try:
         import webview
     except ImportError:
         return False
+    _desbloquear_dlls()
     webview.settings["ALLOW_DOWNLOADS"] = True  # "Baixar PDF/XML"
-    webview.create_window(TITULO, url, width=1280, height=860, min_size=(420, 600))
-    webview.start()  # bloqueia até a janela ser fechada
+    try:
+        webview.create_window(TITULO, url, width=1280, height=860, min_size=(420, 600))
+        webview.start()  # bloqueia até a janela ser fechada
+    except Exception:  # ex.: pythonnet/.NET indisponível no Windows; o navegador é o plano B
+        logging.exception("Falha ao abrir a janela nativa")
+        return False
     return True
 
 
