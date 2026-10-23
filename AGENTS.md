@@ -108,6 +108,10 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   barras via `exec()` e, sem isso, o app empacotado não inicia. Ao adicionar dependências com import dinâmico, rode o
   executável (`EASY_NFSE_NO_BROWSER=1 EASY_NFSE_PORT=47399 dist/easy-nfse.app/Contents/MacOS/easy-nfse`) e teste as
   páginas com `curl`; o workflow de release faz essa verificação nos dois sistemas.
+- No Windows, o pywebview (WinForms) carrega o `Python.Runtime.dll` do pythonnet via .NET Framework, que **recusa DLLs
+  com a marca "baixado da internet"** (Zone.Identifier, herdada ao extrair o .zip pelo Explorer) → "Failed to resolve
+  Python.Runtime.Loader.Initialize". `desktop._desbloquear_dlls` remove a marca ao iniciar e, se a janela nativa falhar
+  mesmo assim, o app abre no navegador (não deixe exceção do `webview.start()` escapar).
 - `tzdata` é dependência só no Windows (não há base de fusos no sistema para `zoneinfo`).
 - O repositório usa **releases imutáveis**: publicada, a release não aceita arquivos novos (HTTP 422). Por isso o
   release-please cria a release como **rascunho** (`draft` + `force-tag-creation`), os builds anexam os executáveis
