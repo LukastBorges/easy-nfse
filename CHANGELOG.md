@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.3.0...easy-nfse-v0.4.0) (2026-10-29)
+
+
+### Funcionalidades
+
+* **desktop:** atualização automática e menu com ajuda, notas e sobre ([274bea3](https://github.com/LukastBorges/easy-nfse/commit/274bea3ebd24dd1954d45855d7248450b515b394))
+* **desktop:** atualizar o app automaticamente pelas releases do GitHub ([d578347](https://github.com/LukastBorges/easy-nfse/commit/d5783472abf51cbbb81cad28ceeb49e967ad5da6))
+* **ui:** menu com ajuda, notas de atualização, reportar problema e sobre ([e68d442](https://github.com/LukastBorges/easy-nfse/commit/e68d4420fe0221c58a075fc973ee3bc7d68a23f7))
+* **ui:** mover a opção de atualização automática para o Sobre ([7b1e156](https://github.com/LukastBorges/easy-nfse/commit/7b1e1567ee36e3fc4a2835ca1f69b1a71a87d932))
+
+
+### Documentação
+
+* atualizar a captura da tela inicial e citar a atualização automática ([ed4c54a](https://github.com/LukastBorges/easy-nfse/commit/ed4c54aedac5f429307746c4fea885ae7590c3ea))
+
 ## [0.3.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.4...easy-nfse-v0.3.0) (2026-10-29)
 
 
