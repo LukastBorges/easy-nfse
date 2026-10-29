@@ -28,7 +28,7 @@ jobs:
       tag_name: ${{ steps.rp.outputs.tag_name }}
     steps:
       - id: rp
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
@@ -54,10 +54,10 @@ jobs:
           TAG: ${{ needs.release-please.outputs.tag_name || 'dev' }}
         run: echo "ARQUIVO_BASE=easy-nfse-${TAG#easy-nfse-}-${{ matrix.plataforma }}" >> "$GITHUB_ENV" # easy-nfse-v0.2.1-macos-arm64
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name || github.sha }}
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.3.3 # sem tags vX desde a v8; use a versão exata
 
       - name: Instalar dependências
         run: uv sync --frozen --group desktop --group build
@@ -99,7 +99,7 @@ jobs:
           "PACOTE=$env:ARQUIVO_BASE.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Publicar como artefato
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: easy-nfse-${{ matrix.plataforma }}
           path: ${{ env.PACOTE }}

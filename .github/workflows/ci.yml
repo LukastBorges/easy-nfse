@@ -18,7 +18,7 @@ jobs:
     env:
       PYTHONWARNDEFAULTENCODING: "1" # acusa leitura/escrita de texto sem encoding (ver pyproject.toml)
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3 # sem tags vX desde a v8; use a versão exata
       - run: uv sync --frozen
       - run: uv run pytest -q
