@@ -17,6 +17,47 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// Lista filtrável: [data-filtro] com [data-filtro-busca] (texto), [data-filtro-estado] (select) e itens
+// <li data-busca="..." data-estado="a b">. Mostra [data-filtro-vazio] quando nada sobra.
+function filtrarLista(box) {
+  const sem = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const termos = sem(box.querySelector("[data-filtro-busca]")?.value || "").split(/\s+/).filter(Boolean);
+  const estado = box.querySelector("[data-filtro-estado]")?.value || "";
+  const itens = [...box.querySelectorAll("[data-busca]")];
+  let visiveis = 0;
+  itens.forEach((li) => {
+    const texto = sem(li.dataset.busca);
+    const ok = termos.every((t) => texto.includes(t)) && (!estado || li.dataset.estado.split(" ").includes(estado));
+    li.classList.toggle("hidden", !ok);
+    visiveis += ok;
+  });
+  box.querySelector("[data-filtro-vazio]")?.classList.toggle("hidden", visiveis > 0);
+  box.querySelectorAll("[data-max-linhas]").forEach(limitarLinhas);
+  const contagem = box.querySelector("[data-filtro-contagem]");
+  if (contagem) contagem.textContent = visiveis === itens.length ? "" : `${visiveis} de ${itens.length}`;
+}
+document.addEventListener("input", (e) => {
+  const box = e.target.closest && e.target.closest("[data-filtro]");
+  if (box && e.target.matches("[data-filtro-busca], [data-filtro-estado]")) filtrarLista(box);
+});
+
+// Grade com no máximo N linhas visíveis (data-max-linhas="N"); o resto rola. A altura depende das colunas
+// e do tamanho dos cards, então é medida: vai até o início da linha N+1, deixando uma ponta dela à mostra.
+function limitarLinhas(grade) {
+  grade.style.maxHeight = "";
+  const max = Number(grade.dataset.maxLinhas);
+  const topos = [...new Set([...grade.children].filter((el) => el.offsetParent).map((el) => el.offsetTop))].sort((a, b) => a - b);
+  if (topos.length > max) grade.style.maxHeight = `${topos[max] - topos[0] + 40}px`;
+  marcarMais(grade);
+}
+// Esmaece a borda de baixo enquanto houver cards abaixo para rolar.
+const marcarMais = (g) => g.toggleAttribute("data-mais", g.scrollTop + g.clientHeight < g.scrollHeight - 2);
+document.addEventListener("scroll", (e) => e.target.matches?.("[data-max-linhas]") && marcarMais(e.target), true);
+const limitarTodas = () => document.querySelectorAll("[data-max-linhas]").forEach(limitarLinhas);
+document.addEventListener("DOMContentLoaded", limitarTodas);
+addEventListener("load", limitarTodas); // depois das fontes, que mudam a altura dos cards
+addEventListener("resize", limitarTodas);
+
 // Campo de dinheiro: formata "1500" -> "1.500,00" ao sair do campo.
 document.addEventListener("focusout", (e) => {
   const el = e.target;
@@ -42,9 +83,9 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest && e.target.closest("[data-copy]");
   if (!btn) return;
   navigator.clipboard.writeText(btn.dataset.copy);
-  const old = btn.textContent;
+  const old = btn.innerHTML;
   btn.textContent = "Copiado!";
-  setTimeout(() => (btn.textContent = old), 1200);
+  setTimeout(() => (btn.innerHTML = old), 1200);
 });
 
 // Campos condicionais: data-show-if="campo:v1|v2;outro:v3" (mostra se QUALQUER condição valer).

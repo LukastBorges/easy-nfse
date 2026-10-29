@@ -54,9 +54,10 @@
       & dt { @apply text-xs text-slate-500 dark:text-slate-400; }
       & dd { @apply text-sm font-medium break-words text-slate-900 dark:text-slate-100; }
     }
-    [data-tema] #tema-btn svg { display: none; }
+    [data-tema] #tema-btn [data-icone] { display: none; }
     [data-tema=sistema] #tema-btn [data-icone=sistema], [data-tema=claro] #tema-btn [data-icone=claro],
     [data-tema=escuro] #tema-btn [data-icone=escuro] { display: block; }
+    [data-max-linhas][data-mais] { mask-image: linear-gradient(to bottom, #000 calc(100% - 3.5rem), transparent); }
     .htmx-indicator { display: none; }
     .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline-flex; }
     .htmx-request .htmx-hide-on-request { display: none; }
@@ -72,24 +73,24 @@
       <nav class="flex min-w-0 items-center gap-0.5 overflow-x-auto text-[13px] sm:gap-1 sm:text-sm">
         {% set path = request.url.path %}
         {% set em_templates = path == '/templates' or path.endswith('/editar') %}
-        <a href="/" class="hidden shrink-0 rounded-lg px-2 py-1.5 font-medium sm:inline sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path == '/' or (path.startswith('/templates/') and not em_templates) else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">Início</a>
-        <a href="/templates" class="shrink-0 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if em_templates else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">Templates</a>
-        <a href="/historico" class="shrink-0 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/historico') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">Histórico</a>
-        <a href="/configuracoes" class="shrink-0 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/configuracoes') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}"><span class="sm:hidden">Ajustes</span><span class="hidden sm:inline">Configurações</span></a>
+        <a href="/" class="hidden shrink-0 rounded-lg px-2 py-1.5 font-medium sm:inline-flex sm:items-center sm:gap-1.5 sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path == '/' or (path.startswith('/templates/') and not em_templates) else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('home', 'size-4 shrink-0') }}Início</a>
+        <a href="/templates" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if em_templates else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('template', 'hidden size-4 shrink-0 sm:block') }}Templates</a>
+        <a href="/historico" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/historico') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('history', 'hidden size-4 shrink-0 sm:block') }}Histórico</a>
+        <a href="/configuracoes" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/configuracoes') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('settings', 'hidden size-4 shrink-0 sm:block') }}<span class="sm:hidden">Ajustes</span><span class="hidden sm:inline">Configurações</span></a>
       </nav>
       <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Alternar tema">
-        <svg data-icone="sistema" viewBox="0 0 24 24" class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-        <svg data-icone="claro" viewBox="0 0 24 24" class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <svg data-icone="escuro" viewBox="0 0 24 24" class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <span data-icone="sistema">{{ icone('device-desktop', 'size-[18px]') }}</span>
+        <span data-icone="claro">{{ icone('sun', 'size-[18px]') }}</span>
+        <span data-icone="escuro">{{ icone('moon', 'size-[18px]') }}</span>
       </button>
       <a href="/configuracoes" class="shrink-0">
         {% if cfg.ambiente == '1' %}
           <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 bg-rose-50 dark:bg-rose-500/10 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300 ring-1 ring-rose-200 dark:ring-rose-500/30">
-            <span class="hidden size-1.5 rounded-full bg-rose-500 sm:block"></span> Produção
+            {{ icone('alert-triangle', 'hidden size-3.5 sm:block') }} Produção
           </span>
         {% else %}
           <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 bg-amber-50 dark:bg-amber-500/10 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30">
-            <span class="hidden size-1.5 rounded-full bg-amber-500 sm:block"></span> <span class="sm:hidden">Teste</span><span class="hidden sm:inline">Produção restrita (testes)</span>
+            {{ icone('flask', 'hidden size-3.5 sm:block') }} <span class="sm:hidden">Teste</span><span class="hidden sm:inline">Produção restrita (testes)</span>
           </span>
         {% endif %}
       </a>
@@ -105,7 +106,7 @@
     <form method="dialog" class="p-6">
       <div class="flex gap-4">
         <span data-icone-perigo class="grid size-10 shrink-0 place-items-center rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
-          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+          {{ icone('alert-triangle', 'size-5') }}
         </span>
         <div class="min-w-0">
           <h2 id="confirmar-titulo" class="text-base font-semibold">Confirmar</h2>

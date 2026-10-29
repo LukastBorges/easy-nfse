@@ -13,7 +13,7 @@ import secrets
 import sys
 from pathlib import Path
 
-from .models import Config, Emissao, Template
+from .models import CertificadoSalvo, Config, Emissao, Template
 
 
 def pasta_do_usuario() -> Path:
@@ -38,12 +38,13 @@ TEMPLATES_DIR = DATA_DIR / "templates"
 EMISSOES_DIR = DATA_DIR / "emissoes"
 CACHE_DIR = DATA_DIR / "cache"
 CONFIG_FILE = DATA_DIR / "config.json"
-CERT_FILE = DATA_DIR / "certificado.pfx"
+CERTS_DIR = DATA_DIR / "certificados"
+CERT_FILE = DATA_DIR / "certificado.pfx"  # legado: certificado único das versões até 0.2
 EMISSOES_LOG = DATA_DIR / "emissoes.jsonl"
 
 
 def ensure_dirs() -> None:
-    for d in (DATA_DIR, TEMPLATES_DIR, EMISSOES_DIR, CACHE_DIR):
+    for d in (DATA_DIR, TEMPLATES_DIR, EMISSOES_DIR, CACHE_DIR, CERTS_DIR):
         d.mkdir(parents=True, exist_ok=True)
     try:
         DATA_DIR.chmod(0o700)
@@ -62,9 +63,10 @@ def _write_private(path: Path, data: bytes) -> None:
 # --- configuração -----------------------------------------------------------------
 
 def load_config() -> Config:
-    if CONFIG_FILE.exists():
-        return Config.model_validate_json(CONFIG_FILE.read_text(encoding="utf-8"))
-    return Config()
+    cfg = Config.model_validate_json(CONFIG_FILE.read_text(encoding="utf-8")) if CONFIG_FILE.exists() else Config()
+    if CERT_FILE.exists():
+        _migrar_certificado_unico(cfg)
+    return cfg
 
 
 def save_config(cfg: Config) -> None:
@@ -72,17 +74,40 @@ def save_config(cfg: Config) -> None:
     _write_private(CONFIG_FILE, cfg.model_dump_json(indent=2).encode())
 
 
-def cert_password(cfg: Config) -> str:
-    return os.environ.get("EASY_NFSE_CERT_SENHA") or cfg.certificado_senha
+# --- certificados -----------------------------------------------------------------
+
+def _migrar_certificado_unico(cfg: Config) -> None:
+    """Versões anteriores guardavam um só certificado em `certificado.pfx`: vira o primeiro da lista."""
+    salvo = CertificadoSalvo(id=new_id(), arquivo=CERT_FILE.name, senha=cfg.certificado_senha)
+    save_certificate(salvo.id, CERT_FILE.read_bytes())
+    cfg.certificados.append(salvo)
+    cfg.certificado_senha = ""
+    save_config(cfg)
+    CERT_FILE.unlink()
 
 
-def save_certificate(data: bytes) -> None:
+def cert_password(c: CertificadoSalvo) -> str:
+    return c.senha or os.environ.get("EASY_NFSE_CERT_SENHA", "")
+
+
+def _cert_path(cert_id: str) -> Path:
+    if not re.fullmatch(r"[a-f0-9]{8}", cert_id):
+        raise KeyError(cert_id)
+    return CERTS_DIR / f"{cert_id}.pfx"
+
+
+def save_certificate(cert_id: str, data: bytes) -> None:
     ensure_dirs()
-    _write_private(CERT_FILE, data)
+    _write_private(_cert_path(cert_id), data)
 
 
-def load_certificate() -> bytes | None:
-    return CERT_FILE.read_bytes() if CERT_FILE.exists() else None
+def load_certificate(cert_id: str) -> bytes | None:
+    path = _cert_path(cert_id)
+    return path.read_bytes() if path.exists() else None
+
+
+def delete_certificate(cert_id: str) -> None:
+    _cert_path(cert_id).unlink(missing_ok=True)
 
 
 # --- templates --------------------------------------------------------------------

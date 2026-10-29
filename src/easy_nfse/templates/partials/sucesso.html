@@ -1,7 +1,7 @@
 {% from "_macros.html" import alert %}
 <div class="text-center">
   <div class="mx-auto grid size-14 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-    <svg viewBox="0 0 24 24" class="size-7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+    {{ icone('check', 'size-7') }}
   </div>
   <h2 class="mt-4 text-xl font-semibold">NFS-e emitida{% if e.numero_nfse %} · nº {{ e.numero_nfse }}{% endif %}</h2>
   <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ e.valor|money }}{% if e.valor_moeda %} ({{ e.moeda }} {{ (e.valor_moeda|money)[3:] }}){% endif %} · competência {{ e.competencia[8:10] }}/{{ e.competencia[5:7] }}/{{ e.competencia[:4] }}
@@ -12,7 +12,7 @@
   <div class="text-xs text-slate-500 dark:text-slate-400">Chave de acesso</div>
   <div class="mt-1 flex items-center gap-2">
     <code class="min-w-0 flex-1 break-all text-sm">{{ e.chave_acesso }}</code>
-    <button type="button" class="btn-ghost px-3 py-1.5 text-xs" data-copy="{{ e.chave_acesso }}">Copiar</button>
+    <button type="button" class="btn-ghost px-3 py-1.5 text-xs" data-copy="{{ e.chave_acesso }}">{{ icone('copy') }}Copiar</button>
   </div>
 </div>
 
@@ -20,13 +20,13 @@
 
 <div class="mt-6 flex flex-wrap justify-center gap-2">
   <a class="btn-success" href="/emissoes/{{ e.chave_acesso }}/danfse.pdf?download=1">
-    <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0-4-4m4 4 4-4"/><path d="M4 20h16"/></svg>
+    {{ icone('download') }}
     Baixar PDF
   </a>
-  <a class="btn-ghost" href="/emissoes/{{ e.chave_acesso }}/danfse.pdf" target="_blank" rel="noopener">Abrir PDF</a>
-  <a class="btn-ghost" href="/emissoes/{{ e.chave_acesso }}/nfse.xml">Baixar XML</a>
+  <a class="btn-ghost" href="/emissoes/{{ e.chave_acesso }}/danfse.pdf" target="_blank" rel="noopener">{{ icone('file-type-pdf') }}Abrir PDF</a>
+  <a class="btn-ghost" href="/emissoes/{{ e.chave_acesso }}/nfse.xml">{{ icone('file-code') }}Baixar XML</a>
   {% if e.ambiente == '1' %}
-  <a class="btn-ghost" href="{{ consulta_publica(e.chave_acesso) }}" target="_blank" rel="noopener">Ver/imprimir no portal ↗</a>
+  <a class="btn-ghost" href="{{ consulta_publica(e.chave_acesso) }}" target="_blank" rel="noopener">Ver/imprimir no portal{{ icone('external-link') }}</a>
   {% endif %}
-  <a class="btn-primary" href="/templates/{{ t.id }}">Emitir outra</a>
+  <a class="btn-primary" href="/templates/{{ t.id }}">{{ icone('plus') }}Emitir outra</a>
 </div>

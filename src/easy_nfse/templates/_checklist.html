@@ -1,11 +1,15 @@
-{# Checklist "Antes de emitir". Precisa de: cert, templates, cfg #}
+{# Checklist "Antes de emitir". Precisa de: certs, templates, cfg #}
+{% set validos = certs|selectattr('ok')|rejectattr('vencido')|list %}
 <div class="card p-5">
   <h2 class="section-title">Antes de emitir</h2>
   <ol class="mt-4 space-y-3 text-sm">
     <li class="flex gap-3">
-      {% if cert and cert.ok and not cert.vencido %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">✓</span>
-        <span>Certificado de <b>{{ cert.titular }}</b> <span class="text-slate-500 dark:text-slate-400">· válido até {{ cert.validade|data }}</span></span>
+      {% if validos|length == 1 %}
+        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{{ icone('check', 'size-3.5') }}</span>
+        <span>Certificado de <b>{{ validos[0].titular }}</b> <span class="text-slate-500 dark:text-slate-400">· válido até {{ validos[0].validade|data }}</span></span>
+      {% elif validos %}
+        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{{ icone('check', 'size-3.5') }}</span>
+        <span>{{ validos|length }} certificados válidos: <b>{{ validos|map(attribute='titular')|join(', ') }}</b></span>
       {% else %}
         <span class="grid size-6 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">1</span>
         <span><a href="/configuracoes" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Configure o certificado A1</a> (.pfx) do prestador. Ele é exigido pela API da Sefin.</span>
@@ -13,7 +17,7 @@
     </li>
     <li class="flex gap-3">
       {% if templates %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">✓</span>
+        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{{ icone('check', 'size-3.5') }}</span>
         <span>{{ templates|length }} template{{ 's' if templates|length > 1 }} salvo{{ 's' if templates|length > 1 }}</span>
       {% else %}
         <span class="grid size-6 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">2</span>
@@ -21,7 +25,7 @@
       {% endif %}
     </li>
     <li class="flex gap-3">
-      <span class="grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300' if cfg.ambiente == '2' else 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300' }}">!</span>
+      <span class="grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300' if cfg.ambiente == '2' else 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300' }}">{{ icone('flask' if cfg.ambiente == '2' else 'alert-triangle', 'size-3.5') }}</span>
       <span>{% if cfg.ambiente == '2' %}Você está em <b>produção restrita</b>: as notas são de teste, sem validade jurídica.{% else %}Você está em <b>produção</b>: as notas emitidas têm validade fiscal.{% endif %}</span>
     </li>
   </ol>

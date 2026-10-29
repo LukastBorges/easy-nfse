@@ -84,6 +84,10 @@ class Certificado:
         return self.cert.not_valid_after_utc
 
     @property
+    def impressao(self) -> str:
+        return self.cert.fingerprint(hashes.SHA256()).hex()
+
+    @property
     def vencido(self) -> bool:
         return self.validade < datetime.now(timezone.utc)
 

@@ -120,6 +120,7 @@ class Template(BaseModel):
     tributacao: Tributacao = Field(default_factory=Tributacao)
     com_ext: ComercioExterior = Field(default_factory=ComercioExterior)
     origem: Origem = Field(default_factory=Origem)
+    certificado_id: str = ""  # vazio = automático: o certificado do CNPJ/CPF do prestador
     ultimo_valor: str = ""
     ultimo_valor_moeda: str = ""
     avisos: list[str] = Field(default_factory=list)
@@ -134,12 +135,27 @@ class Template(BaseModel):
         return self.tomador_exterior or bool(self.servico.pais_prestacao) or self.tributacao.trib_issqn == "3"
 
 
+class CertificadoSalvo(BaseModel):
+    """Certificado A1 guardado em `certificados/<id>.pfx`; a senha fica aqui, no config.json."""
+
+    id: str
+    arquivo: str = ""  # nome do arquivo enviado (só exibição)
+    senha: str = ""
+    adicionado_em: datetime = Field(default_factory=datetime.now)
+    # lidos do certificado ao salvar, para as páginas não precisarem abrir (decifrar) cada .pfx
+    titular: str = ""
+    documento: str = ""
+    validade: datetime | None = None
+    impressao: str = ""  # SHA-256 do certificado (reenvio do mesmo arquivo substitui em vez de duplicar)
+
+
 class Config(BaseModel):
     ambiente: Ambiente = "2"
     serie: str = "1"
     # último nDPS usado, por ambiente + documento do prestador + série
     numeracao: dict[str, int] = Field(default_factory=dict)
-    certificado_senha: str = ""
+    certificados: list[CertificadoSalvo] = Field(default_factory=list)
+    certificado_senha: str = ""  # legado: senha do certificado único (migrada para `certificados`)
     verificar_tls: bool = True
 
     @staticmethod
