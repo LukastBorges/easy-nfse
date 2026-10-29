@@ -5,6 +5,7 @@ import tempfile
 
 # Precisa vir antes de importar easy_nfse: storage.DATA_DIR é calculado no import.
 os.environ.setdefault("EASY_NFSE_DATA", tempfile.mkdtemp(prefix="easy-nfse-testes-"))
+os.environ["EASY_NFSE_SEM_ATUALIZACAO"] = "1"  # nada de consultar o GitHub nos testes
 
 import httpx  # noqa: E402
 import pytest  # noqa: E402

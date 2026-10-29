@@ -96,6 +96,7 @@
       </a>
     </div>
   </header>
+  {% if atualizacao %}{% include "_aviso_atualizacao.html" %}{% endif %}
 
   <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
     {% block content %}{% endblock %}

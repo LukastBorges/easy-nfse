@@ -24,7 +24,8 @@ uv run pytest -q                     # testes (assinatura verificada com libxmls
 EASY_NFSE_SAMPLES=pasta/com/pdfs uv run pytest -q   # inclui leitura de PDFs reais (não versionados)
 ```
 
-Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA`, `EASY_NFSE_HOST`, `EASY_NFSE_PORT`, `EASY_NFSE_NO_BROWSER`.
+Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA`, `EASY_NFSE_HOST`, `EASY_NFSE_PORT`, `EASY_NFSE_NO_BROWSER`,
+`EASY_NFSE_SEM_ATUALIZACAO` (não consulta releases; os testes ligam no `conftest.py`), `EASY_NFSE_UPDATE_URL` (URL da "última release", para testar com um servidor falso).
 
 ## Mapa do código (`src/easy_nfse/`)
 
@@ -41,6 +42,7 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `ibge.py`, `ptax.py` | Códigos IBGE (API do IBGE, cache em `data/cache`) e cotação PTAX (BCB) |
 | `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `emissoes/` + `emissoes.jsonl`, `certificados/<id>.pfx` |
 | `xsd/` | XSDs oficiais **v1.01** (com um patch, ver abaixo) |
+| `atualizacao.py` | Atualização do app empacotado: checa a release mais recente (6 h), baixa o pacote da plataforma, confere o SHA-256 (`digest` da API do GitHub) e instala por troca de pastas |
 | `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
 | `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
 | `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema) |
@@ -137,6 +139,13 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   com a marca "baixado da internet"** (Zone.Identifier, herdada ao extrair o .zip pelo Explorer) → "Failed to resolve
   Python.Runtime.Loader.Initialize". `desktop._desbloquear_dlls` remove a marca ao iniciar e, se a janela nativa falhar
   mesmo assim, o app abre no navegador (não deixe exceção do `webview.start()` escapar).
+- **Atualização automática** (`atualizacao.py`): só o app empacotado se atualiza (código-fonte só avisa). Baixa sozinho,
+  mas **instala só com clique** ("Reiniciar e atualizar") **ou ao abrir o app** (`desktop.main` → `ao_abrir`), nunca no
+  meio de uma emissão (`app._emissao_em_andamento` bloqueia). Instalação: extrai ao lado da pasta do app (`.novo`, mesmo
+  disco), um script (sh/PowerShell, saída em `<dados>/atualizacao/trocar.log`) espera o processo sair, troca com volta
+  atrás (`.antigo`) e reabre. Tenta instalar na abertura **uma vez por versão** (evita laço se falhar). Depende dos nomes
+  `easy-nfse-vX.Y.Z-<plataforma>.(dmg|zip)` e do `.zip` do Windows conter a pasta `easy-nfse/`: se mudar o empacotamento,
+  ajuste `atualizacao.plataforma`/`_extrair`. O script sh limita a espera (~2 min): `kill -0` responde para processo zumbi.
 - `tzdata` é dependência só no Windows (não há base de fusos no sistema para `zoneinfo`).
 - O repositório usa **releases imutáveis**: publicada, a release não aceita arquivos novos (HTTP 422). Por isso o
   release-please cria a release como **rascunho** (`draft` + `force-tag-creation`), os builds anexam os executáveis

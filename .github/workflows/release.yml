@@ -76,6 +76,7 @@ jobs:
           EASY_NFSE_NO_BROWSER: "1"
           EASY_NFSE_PORT: "47399"
           EASY_NFSE_DATA: ${{ runner.temp }}/easy-nfse-dados
+          EASY_NFSE_SEM_ATUALIZACAO: "1" # não consultar as releases durante a verificação do build
         run: |
           "${{ matrix.executavel }}" &
           for _ in $(seq 1 60); do

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import threading
+from contextlib import asynccontextmanager, contextmanager
 from datetime import date, datetime, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -16,14 +20,20 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 from pydantic import ValidationError
 
-from . import danfse, dominios, dps, ibge, importers, ptax, storage
+from . import atualizacao, danfse, dominios, dps, ibge, importers, ptax, storage
 from .certificado import Certificado, CertificadoError
 from .models import CertificadoSalvo, Config, Emissao, Template
 from .sefin import CONSULTA_PUBLICA, SefinClient, SefinError
 from .util import digits, fmt_doc, fmt_money, parse_money, split_municipio_uf, strip_accents
 
 BASE = Path(__file__).parent
-app = FastAPI(title="easy-nfse", docs_url=None, redoc_url=None)
+@asynccontextmanager
+async def _ciclo_de_vida(_app):
+    atualizacao.iniciar_em_segundo_plano()
+    yield
+
+
+app = FastAPI(title="easy-nfse", docs_url=None, redoc_url=None, lifespan=_ciclo_de_vida)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 views = Jinja2Templates(directory=BASE / "templates")
 views.env.filters["money"] = fmt_money
@@ -164,7 +174,24 @@ def problema_certificado(certs: list[dict], t: Template, cert: dict | None) -> s
 
 def render(request: Request, nome: str, status_code: int = 200, **ctx: Any) -> HTMLResponse:
     cfg = ctx.pop("cfg", None) or storage.load_config()
-    return views.TemplateResponse(request, nome, {"cfg": cfg, **ctx}, status_code=status_code)
+    return views.TemplateResponse(request, nome, {"cfg": cfg, "atualizacao": atualizacao.status(), **ctx},
+                                  status_code=status_code)
+
+
+_emitindo = 0  # emissões em andamento: a atualização não pode reiniciar o app no meio de uma
+_emitindo_trava = threading.Lock()
+
+
+@contextmanager
+def _emissao_em_andamento():
+    global _emitindo
+    with _emitindo_trava:
+        _emitindo += 1
+    try:
+        yield
+    finally:
+        with _emitindo_trava:
+            _emitindo -= 1
 
 
 def hx_redirect(url: str) -> Response:
@@ -464,7 +491,7 @@ def emitir(request: Request, template_id: str, competencia: str = Form(""), valo
 
     chave_num = Config.chave_numeracao(cfg.ambiente, digits(t.prestador.documento), cfg.serie)
     try:
-        with SefinClient(cert, cfg.ambiente, cfg.verificar_tls) as cli:
+        with _emissao_em_andamento(), SefinClient(cert, cfg.ambiente, cfg.verificar_tls) as cli:
             try:
                 res = cli.emitir(xml)
             except SefinError as exc:
@@ -633,7 +660,7 @@ def configuracoes(request: Request):
 
 @app.post("/configuracoes", response_class=HTMLResponse)
 def salvar_configuracoes(request: Request, ambiente: str = Form(...), serie: str = Form("1"),
-                         verificar_tls: str = Form("")):
+                         verificar_tls: str = Form(""), verificar_atualizacoes: str = Form("")):
     cfg = storage.load_config()
     serie_d = digits(serie)
     if not serie_d or not 1 <= int(serie_d) <= 49999:
@@ -641,6 +668,7 @@ def salvar_configuracoes(request: Request, ambiente: str = Form(...), serie: str
     if ambiente not in ("1", "2"):
         return _pagina_config(request, cfg, erro="Ambiente inválido.")
     cfg.ambiente, cfg.serie, cfg.verificar_tls = ambiente, str(int(serie_d)), verificar_tls == "1"
+    cfg.verificar_atualizacoes = verificar_atualizacoes == "1"
     storage.save_config(cfg)
     return _pagina_config(request, cfg, ok="Configurações salvas.")
 
@@ -705,3 +733,37 @@ def testar_conexao(request: Request, cert_id: str):
         return render(request, "partials/teste.html", ok=True, msg=f"Conexão mTLS OK (HTTP {status}).")
     return render(request, "partials/teste.html", ok=False,
                   msg=f"A Sefin respondeu HTTP {status}. Verifique se o certificado é ICP-Brasil válido.")
+
+
+# --------------------------------------------------------------------------------------
+# atualização do app
+# --------------------------------------------------------------------------------------
+
+@app.post("/atualizacao/verificar", response_class=HTMLResponse)
+def verificar_atualizacao(request: Request):
+    try:
+        atualizacao.verificar(forcar=True)
+    except (httpx.HTTPError, atualizacao.AtualizacaoError, ValueError) as exc:
+        return render(request, "partials/atualizacao.html", erro=f"Não consegui consultar as versões: {exc}")
+    st = atualizacao.status()
+    if st["nova"] and st["instalavel"] and not st["pronta"]:  # baixa em segundo plano (~50 MB)
+        threading.Thread(target=atualizacao.verificar_e_baixar, kwargs={"forcar": True}, daemon=True).start()
+    return render(request, "partials/atualizacao.html")
+
+
+@app.post("/atualizacao/instalar", response_class=HTMLResponse)
+def instalar_atualizacao(request: Request):
+    if _emitindo:
+        return render(request, "partials/atualizacao.html", erro="Há uma emissão em andamento. Tente de novo quando terminar.")
+    try:
+        atualizacao.instalar()
+    except (atualizacao.AtualizacaoError, OSError, subprocess.SubprocessError) as exc:
+        return render(request, "partials/atualizacao.html", erro=f"Não foi possível instalar: {exc}")
+    threading.Timer(1.5, os._exit, [0]).start()  # dá tempo de a resposta chegar; o script reabre o app
+    return render(request, "partials/atualizacao.html", instalando=True)
+
+
+@app.post("/atualizacao/dispensar")
+def dispensar_aviso_atualizacao():
+    atualizacao.dispensar_aviso()
+    return Response("")
