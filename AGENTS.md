@@ -118,6 +118,10 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   (depende das colunas e da altura dos cards), não fixe em CSS.
 - **Salvar sozinho** (campo fora de formulário com botão, ex.: opção de atualização no Sobre): `hx-post` + `hx-trigger="change"`
   + `data-salva-sozinho`; a rota responde a confirmação. Se a gravação falhar, `app.js` desfaz a mudança e avisa.
+- **WKWebView (janela do app no macOS)** não recalcula a altura de um `<dialog>` em coluna flex (`max-h` + filho
+  `flex-1`) quando o conteúdo é trocado depois de aberto (htmx): o diálogo de Notas ficava com a altura do "Carregando…".
+  Diálogo com conteúdo dinâmico rolável precisa de **altura definida** (`h-[min(...,100dvh-...)]`). O WebKit do Playwright
+  **não reproduz**; para conferir, abra uma janela pywebview (`uv run --group desktop`) e meça com `evaluate_js`.
 - **Confirmações**: nunca use `confirm()`/`onclick`. Use `hx-confirm="texto"` (htmx) ou `data-confirm="texto"` (botão
   de formulário comum), com `data-confirm-titulo`, `data-confirm-acao` e `data-confirm-perigo` opcionais. O diálogo
   `#confirmar` fica em `base.html` e a lógica em `app.js`.
