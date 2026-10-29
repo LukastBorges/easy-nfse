@@ -1,6 +1,6 @@
 [project]
 name = "easy-nfse"
-version = "0.3.0"
+version = "0.4.0"
 description = "Emite NFS-e do padrão nacional a partir de uma nota anterior"
 authors = [
     { name = "Lucas Borges", email = "lucas@lukasborges.me" }
