@@ -31,7 +31,7 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | Arquivo | Responsabilidade |
 |---|---|
 | `app.py` | Rotas FastAPI, fluxo importar → editar → revisar → emitir, histórico, configurações, `/cotacao`, `/danfse` |
-| `models.py` | Pydantic: `Template` (prestador, tomador, serviço, tributação, `com_ext`), `Config`, `Emissao` |
+| `models.py` | Pydantic: `Template` (prestador, tomador, serviço, tributação, `com_ext`, `certificado_id`), `Config` (com a lista `certificados`), `CertificadoSalvo`, `Emissao` |
 | `dps.py` | `validar_template`, `montar` (DPS v1.01) e validação XSD. **Regras de negócio da Sefin ficam aqui** |
 | `certificado.py` | Leitura do .pfx, CNPJ/CPF pelas OIDs ICP-Brasil, **XMLDSig feito à mão**, contexto mTLS |
 | `sefin.py` | Cliente da API (`POST /nfse`, `GET /nfse/{chave}`, `GET/HEAD /dps/{id}`), parse de erros |
@@ -39,12 +39,12 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `importers/` | `nfse_xml.py` (fiel), `danfse_pdf.py` (heurístico: grade v1/v2 + lista da Consulta Pública), `__init__.py` (campos → Template) |
 | `dominios.py` | Países ISO2 (`paises.json`, do Anexo A oficial), moedas BACEN, enums lidos do XSD |
 | `ibge.py`, `ptax.py` | Códigos IBGE (API do IBGE, cache em `data/cache`) e cotação PTAX (BCB) |
-| `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `emissoes/` + `emissoes.jsonl`, `certificado.pfx` |
+| `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `emissoes/` + `emissoes.jsonl`, `certificados/<id>.pfx` |
 | `xsd/` | XSDs oficiais **v1.01** (com um patch, ver abaixo) |
 | `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
 | `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
 | `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema) |
-| Páginas | `/` home (boas-vindas sem templates; com templates: alerta "Antes de emitir" (sempre visível) + cards de emissão + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão), `/templates/{id}/editar`, `/historico`, `/configuracoes` |
+| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + cards de emissão, cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão), `/templates/{id}/editar`, `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
 | Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html` |
 
 ## Regras que NÃO podem ser quebradas
@@ -55,6 +55,20 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - O servidor escuta só em `127.0.0.1`. Não mude o padrão.
 - **Nunca emita nota em Produção (`tpAmb=1`) em testes ou automações.** Ambiente padrão é Produção restrita (`2`).
   Emissão em produção é irreversível (só cancelamento/substituição).
+
+### Certificados (vários, um por prestador)
+- Biblioteca em Configurações: cada `.pfx` fica em `data/certificados/<id>.pfx` e a senha em `config.certificados[]`.
+  Reenviar o mesmo certificado (mesma `impressao` SHA-256) substitui o registro em vez de duplicar.
+- Titular, documento e validade são **guardados no `config.json` ao salvar**: as páginas usam esses dados e o `.pfx` só
+  é decifrado para assinar/conectar (`app.abrir_certificado`). Decifrar todos a cada página custava ~36 ms por
+  certificado. Registros sem esses dados (antigos/migrados) são abertos uma vez por `info_certificados` e completados.
+- O template usa `certificado_id` se escolhido; senão (**automático**) o certificado do CNPJ/CPF do prestador,
+  preferindo o não vencido de validade mais longa (renovar = adicionar o novo, sem mexer nos templates).
+  Lógica em `app.certificado_do_template` / `app.problema_certificado`; a Sefin exige o certificado do emitente (E0718).
+- Remover um certificado volta ao automático os templates que o tinham escolhido.
+- `data/certificado.pfx` + `config.certificado_senha` (até a 0.2.x) são migrados sozinhos em `storage.load_config`.
+- `EASY_NFSE_CERT_SENHA` agora é só **fallback** para certificado salvo sem senha (antes sobrepunha a senha salva).
+- Importar pela chave tenta todos os certificados válidos, primeiro os cujo documento aparece na chave.
 
 ### Numeração da DPS
 - O `nDPS` **só avança quando a Sefin aceita** a nota. Reenviar o mesmo número é seguro: duplicata → **E0014**, e o app
@@ -94,6 +108,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `uv run python scripts/icones_tabler.py` (baixa os usados da versão fixada, apaga os sem uso). O script só enxerga nomes
   em linhas que contêm `icone`: ao escolher o ícone por variável/dicionário, nomeie-a `icone_*`/`icones_*`.
   `test_icones_dos_templates_existem` confere os nomes literais.
+- **Aviso da home** é só para o que é global (ambiente). Estado de certificado vai no card do template (e na página de
+  emissão), nunca numa lista no alerta.
 - **Confirmações**: nunca use `confirm()`/`onclick`. Use `hx-confirm="texto"` (htmx) ou `data-confirm="texto"` (botão
   de formulário comum), com `data-confirm-titulo`, `data-confirm-acao` e `data-confirm-perigo` opcionais. O diálogo
   `#confirmar` fica em `base.html` e a lógica em `app.js`.

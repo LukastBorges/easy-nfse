@@ -8,162 +8,196 @@
   {% if erro %}{{ alert('error', erro, []) }}{% endif %}
 </div>
 
-<div class="mt-6 grid gap-6 lg:grid-cols-2">
-  {# ------------------------------------------------------------ certificado #}
-  {% set cert_estado = ('vencido' if cert.vencido else 'valido') if cert and cert.ok else ('erro' if cert else '') %}
-  <section class="rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-800">
-    <div class="flex items-start justify-between gap-3">
-      <h2 class="section-title">Certificado digital A1</h2>
-      {% if cert_estado == 'valido' %}
-      <span
-        class="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-500/30">
-        <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="3"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="m5 12 5 5L20 7" />
-        </svg> Válido
-      </span>
-      {% elif cert_estado == 'vencido' %}
-      <span
-        class="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30">!
-        Expirado</span>
-      {% endif %}
+{# ------------------------------------------------------------ emissão (global) #}
+<section class="card mt-6 p-6">
+  <h2 class="section-title flex items-center gap-2">{{ icone('adjustments-horizontal', 'size-5 text-slate-400 dark:text-slate-500') }}Emissão</h2>
+  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Valem para todos os templates e certificados.</p>
+  <form class="mt-5" method="post" action="/configuracoes">
+    <div class="grid gap-6 lg:grid-cols-2">
+      <fieldset>
+        <legend class="label">Ambiente</legend>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label
+            class="flex cursor-pointer items-start gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-amber-50 dark:has-[:checked]:bg-amber-500/10 has-[:checked]:ring-2 has-[:checked]:ring-amber-400">
+            <input type="radio" name="ambiente" value="2" {{ 'checked' if cfg.ambiente=='2' }}
+              class="mt-0.5 text-amber-500 focus:ring-amber-500">
+            <span><span class="flex items-center gap-1.5 text-sm font-semibold">{{ icone('flask', 'size-4 text-amber-600 dark:text-amber-400') }}Produção restrita</span><span
+                class="text-xs text-slate-500 dark:text-slate-400">Para testes. Notas sem validade jurídica.</span></span>
+          </label>
+          <label
+            class="flex cursor-pointer items-start gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-rose-50 dark:has-[:checked]:bg-rose-500/10 has-[:checked]:ring-2 has-[:checked]:ring-rose-400">
+            <input type="radio" name="ambiente" value="1" {{ 'checked' if cfg.ambiente=='1' }}
+              class="mt-0.5 text-rose-600 dark:text-rose-400 focus:ring-rose-600">
+            <span><span class="flex items-center gap-1.5 text-sm font-semibold">{{ icone('building-bank', 'size-4 text-rose-600 dark:text-rose-400') }}Produção</span><span
+                class="text-xs text-slate-500 dark:text-slate-400">Notas reais, com validade fiscal.</span></span>
+          </label>
+        </div>
+      </fieldset>
+      <div class="space-y-5">
+        {{ field('serie', 'Série da DPS', cfg.serie, hint='Faixa de aplicativo próprio: 1 a 49999. O Emissor Web usa outra faixa, então a numeração deste app não colide com a dele.') }}
+        <label class="flex items-start gap-3 text-sm">
+          <input type="checkbox" name="verificar_tls" value="1" {{ 'checked' if cfg.verificar_tls }}
+            class="mt-0.5 size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
+          <span>Verificar o certificado TLS do servidor da Sefin <span
+              class="block text-xs text-slate-500 dark:text-slate-400">Desative só se a conexão falhar por cadeia de
+              certificado desconhecida.</span></span>
+        </label>
+      </div>
     </div>
-    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Arquivo .pfx/.p12 ICP-Brasil do prestador. Ele assina a
-      DPS e autentica na API (mTLS).</p>
-    {% if cert %}
-    {% if cert.ok %}
-    <dl
-      class="kv mt-5 grid grid-cols-2 gap-4 rounded-xl p-4 ring-1 {{ 'bg-amber-50 dark:bg-amber-500/10 ring-amber-200 dark:ring-amber-500/30' if cert.vencido else 'bg-emerald-50 dark:bg-emerald-500/10 ring-emerald-200 dark:ring-emerald-500/30' }}">
-      <div class="col-span-2">
-        <dt>Titular</dt>
-        <dd>{{ cert.titular }}</dd>
-      </div>
-      <div>
-        <dt>Documento</dt>
-        <dd>{{ cert.documento|doc or '—' }}</dd>
-      </div>
-      <div>
-        <dt>Validade</dt>
-        <dd class="{{ 'text-amber-700 dark:text-amber-300' if cert.vencido }}">{{ cert.validade|data }}{% if
-          cert.vencido %} (expirado){% endif %}</dd>
-      </div>
-    </dl>
-    {% if cert.vencido %}
-    <p class="mt-3 text-sm text-amber-800 dark:text-amber-200">Este certificado expirou e a Sefin vai recusar as
-      emissões. Renove-o com a sua
-      certificadora e envie o novo arquivo abaixo.</p>
-    {% endif %}
-    {% else %}
-    <div class="mt-5">{{ alert('error', cert.erro, []) }}</div>
-    {% endif %}
-    {% endif %}
-    <form class="mt-5 space-y-4" method="post" action="/configuracoes/certificado" enctype="multipart/form-data">
-      <div>
-        <label class="label" for="arquivo">{{ 'Substituir certificado' if cert else 'Arquivo do certificado' }}</label>
+    <div class="mt-5 flex justify-end border-t border-slate-100 dark:border-slate-800 pt-5">
+      <button class="btn-primary">{{ icone('device-floppy') }}Salvar</button>
+    </div>
+  </form>
+</section>
+
+{# ------------------------------------------------------------ certificados #}
+{% set icones_estado = {'valido': 'certificate', 'vencendo': 'clock-exclamation', 'vencido': 'alert-triangle', 'erro': 'alert-circle'} %}
+{% set cores_estado = {
+  'valido': 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-500/30',
+  'vencendo': 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-200 dark:ring-amber-500/30',
+  'vencido': 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-200 dark:ring-rose-500/30',
+  'erro': 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-200 dark:ring-rose-500/30',
+} %}
+<section class="card mt-6 min-w-0">
+  <div class="p-6">
+    <h2 class="section-title flex items-center gap-2">{{ icone('certificate', 'size-5 text-slate-400 dark:text-slate-500') }}Certificados digitais A1
+      {% if linhas %}<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">{{ linhas|length }}</span>{% endif %}</h2>
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Arquivos .pfx/.p12 ICP-Brasil dos prestadores. Cada
+      template usa o certificado do CNPJ/CPF do seu prestador (o de validade mais longa, se houver mais de um) ou o
+      escolhido no template. A numeração da DPS é de cada CNPJ/CPF, no ambiente e na série atuais.</p>
+
+    <form class="mt-5 grid gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-4 ring-1 ring-slate-200 dark:ring-slate-800 sm:grid-cols-[1fr_14rem_auto] sm:items-end"
+          method="post" action="/configuracoes/certificados" enctype="multipart/form-data">
+      <div class="min-w-0">
+        <label class="label" for="arquivo">Adicionar certificado</label>
         <input
           class="block w-full text-sm text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 dark:file:bg-indigo-500/10 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-500/20"
           type="file" id="arquivo" name="arquivo" accept=".pfx,.p12" required>
       </div>
       {{ field('senha', 'Senha do certificado', '', type='password', attrs='autocomplete="off"') }}
-      <button class="btn-primary">Salvar certificado</button>
-      <p class="hint">Fica em <code>{{ data_dir }}</code> (permissão 600), junto com a senha. Alternativa: defina a
-        variável de ambiente <code>EASY_NFSE_CERT_SENHA</code>.</p>
+      <button class="btn-primary">{{ icone('upload') }}Adicionar</button>
     </form>
-    {% if cert and cert.ok %}
-    <div class="mt-6 flex items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-5">
-      <button class="btn-ghost" hx-post="/configuracoes/testar" hx-target="#teste-resultado" hx-disabled-elt="this">
-        <span class="htmx-indicator"><svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity=".3" stroke-width="3" />
-            <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" />
-          </svg></span>
-        Testar conexão com a Sefin
-      </button>
-      <div id="teste-resultado"></div>
+  </div>
+
+  {% if linhas %}
+  <div data-filtro class="border-t border-slate-100 dark:border-slate-800">
+    {% if linhas|length > 1 %}
+    <div class="flex flex-wrap items-center gap-3 px-6 py-4">
+      <label class="relative min-w-48 flex-1">
+        <span class="sr-only">Buscar certificado</span>
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
+        <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por titular, CNPJ/CPF ou template">
+      </label>
+      <label class="flex items-center gap-2">
+        <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar por estado</span></span>
+        <select data-filtro-estado class="input w-auto py-2">
+          <option value="">Todos</option>
+          <option value="valido">Válidos</option>
+          <option value="vencendo">Vencem em 30 dias</option>
+          <option value="vencido">Expirados</option>
+          <option value="erro">Com erro</option>
+          <option value="sem-uso">Sem template</option>
+        </select>
+      </label>
+      <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
     </div>
     {% endif %}
-  </section>
-
-  {# ------------------------------------------------------------ ambiente #}
-  <section class="card p-6">
-    <h2 class="section-title">Emissão</h2>
-    <form class="mt-5 space-y-5" method="post" action="/configuracoes">
-      <fieldset>
-        <legend class="label">Ambiente</legend>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label
-            class="flex cursor-pointer gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-amber-50 dark:has-[:checked]:bg-amber-500/10 has-[:checked]:ring-2 has-[:checked]:ring-amber-400">
-            <input type="radio" name="ambiente" value="2" {{ 'checked' if cfg.ambiente=='2' }}
-              class="mt-0.5 text-amber-500 focus:ring-amber-500">
-            <span><span class="block text-sm font-semibold">Produção restrita</span><span
-                class="text-xs text-slate-500 dark:text-slate-400">Para testes. Notas sem validade
-                jurídica.</span></span>
-          </label>
-          <label
-            class="flex cursor-pointer gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-rose-50 dark:has-[:checked]:bg-rose-500/10 has-[:checked]:ring-2 has-[:checked]:ring-rose-400">
-            <input type="radio" name="ambiente" value="1" {{ 'checked' if cfg.ambiente=='1' }}
-              class="mt-0.5 text-rose-600 dark:text-rose-400 focus:ring-rose-600">
-            <span><span class="block text-sm font-semibold">Produção</span><span
-                class="text-xs text-slate-500 dark:text-slate-400">Notas reais, com validade fiscal.</span></span>
-          </label>
-        </div>
-      </fieldset>
-      <div>
-        <div class="label">Numeração da DPS <span class="font-normal">· {{ 'produção' if cfg.ambiente == '1' else
-            'produção restrita' }}, série {{ cfg.serie }}</span></div>
-        {% if numeracao_atual %}
-        <div
-          class="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800">
-          {% for n in numeracao_atual %}
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm">
-            <div class="min-w-0 flex-1">
-              <div class="font-medium">Próxima DPS: <span class="tabular-nums">nº {{ n.proximo }}</span></div>
-              <div class="text-xs text-slate-500 dark:text-slate-400">{{ n.doc|doc }}</div>
-            </div>
-            <label class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">último usado
-              <input form="num-{{ loop.index }}" name="ultimo" type="number" min="0" value="{{ n.ultimo }}"
-                class="input w-24 py-1.5">
-            </label>
-            <button form="num-{{ loop.index }}" class="btn-ghost px-3 py-1.5">Ajustar</button>
+    <ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
+      {% for c in linhas %}
+      {% set cor = cores_estado[c.estado] %}
+      <li data-busca="{{ c.titular }} {{ c.documento }} {{ c.documento|doc }} {{ c.arquivo }} {{ c.usos|join(' ') }}"
+          data-estado="{{ c.estado }}{{ ' sem-uso' if not c.usos }}"
+          class="flex flex-wrap items-center gap-x-5 gap-y-3 px-6 py-4">
+        <span class="grid size-10 shrink-0 place-items-center rounded-xl ring-1 {{ cor }}">{{ icone(icones_estado[c.estado], 'size-5') }}</span>
+        <div class="min-w-0 flex-1 basis-56">
+          <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
+            <p class="min-w-0 break-words font-semibold sm:truncate" title="{{ c.titular if c.ok else c.arquivo }}">{{ c.titular if c.ok else c.arquivo }}</p>
+            {% if c.estado == 'vencendo' %}<span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">vence em {{ c.dias }} dia{{ 's' if c.dias != 1 }}</span>
+            {% elif c.estado == 'vencido' %}<span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">expirado</span>
+            {% elif c.estado == 'erro' %}<span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">não abre</span>{% endif %}
           </div>
-          {% endfor %}
+          {% if c.ok %}
+          <p class="text-sm text-slate-600 dark:text-slate-400">{{ c.documento|doc or 'Documento não identificado' }} ·
+            {{ 'expirou em' if c.vencido else 'válido até' }} {{ c.validade|data }}</p>
+          {% else %}
+          <p class="text-sm text-rose-700 dark:text-rose-300">{{ c.erro }}</p>
+          {% endif %}
+          <p class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+            {{ icone('template', 'size-3.5 shrink-0') }}<span class="truncate">{{ c.usos|join(', ') if c.usos else 'Nenhum template usa' }}</span></p>
         </div>
-        {% else %}
-        <p
-          class="rounded-xl px-4 py-3 text-sm text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800">
-          Configure o certificado ou crie um template para ver a numeração. A primeira DPS será a nº 1.</p>
+        {% if c.numeracao %}
+        <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2"
+              title="Avança sozinha a cada nota aceita. Ajuste só se este CNPJ/CPF já usou esta série em outro sistema.">
+          <input type="hidden" name="chave" value="{{ c.numeracao.chave }}">
+          <div class="text-right text-xs leading-tight text-slate-500 dark:text-slate-400">Próxima DPS<br>
+            <b class="text-sm tabular-nums text-slate-900 dark:text-slate-100">nº {{ c.numeracao.proximo }}</b></div>
+          <label class="sr-only" for="ultimo-{{ c.id }}">Último número usado</label>
+          <input id="ultimo-{{ c.id }}" name="ultimo" type="number" min="0" value="{{ c.numeracao.ultimo }}" class="input w-20 py-1.5" title="Último número usado">
+          <button class="btn-ghost px-3 py-1.5">Ajustar</button>
+        </form>
         {% endif %}
-        <p class="hint">Avança sozinha a cada nota aceita pela Sefin (e quando ela avisa que o número já foi usado,
-          E0014).
-          Nota rejeitada não consome número. Ajuste só se este CNPJ já usou esta série em outro sistema.</p>
-        {% if numeracao_outros %}
-        <details class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          <summary>Outros ambientes/séries ({{ numeracao_outros|length }})</summary>
-          <ul class="mt-2 space-y-1">
-            {% for chave, ultimo in numeracao_outros %}{% set pt = chave.split('|') %}
-            <li>{{ 'Produção' if pt[0] == '1' else 'Produção restrita' }} · {{ pt[1]|doc }} · série {{ pt[2] }}: último
-              nº {{ ultimo }}</li>
-            {% endfor %}
-          </ul>
-        </details>
-        {% endif %}
-      </div>
-      {{ field('serie', 'Série da DPS', cfg.serie, hint='Faixa de aplicativo próprio: 1 a 49999. O Emissor Web usa outra
-      faixa, então a numeração deste app não colide com a dele.') }}
-      <label class="flex items-start gap-3 text-sm">
-        <input type="checkbox" name="verificar_tls" value="1" {{ 'checked' if cfg.verificar_tls }}
-          class="mt-0.5 size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
-        <span>Verificar o certificado TLS do servidor da Sefin <span
-            class="block text-xs text-slate-500 dark:text-slate-400">Desative só se a conexão falhar por cadeia de
-            certificado desconhecida.</span></span>
-      </label>
-      <button class="btn-primary">Salvar</button>
-    </form>
-    {% for n in numeracao_atual %}
-    <form id="num-{{ loop.index }}" method="post" action="/configuracoes/numeracao" class="hidden">
-      <input type="hidden" name="chave" value="{{ n.chave }}">
-    </form>
-    {% endfor %}
-  </section>
+        <div class="flex shrink-0 items-center gap-1.5">
+          {% if c.ok %}
+          <button class="btn-ghost px-2.5 py-1.5" hx-post="/configuracoes/certificados/{{ c.id }}/testar" hx-target="#teste-{{ c.id }}"
+                  hx-disabled-elt="this" title="Testar conexão com a Sefin" aria-label="Testar conexão com a Sefin">
+            <span class="htmx-hide-on-request inline-flex">{{ icone('plug-connected') }}</span>
+            <span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>
+          </button>
+          {% endif %}
+          <form method="post" action="/configuracoes/certificados/{{ c.id }}/excluir">
+            <button class="btn-ghost px-2.5 py-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
+                    title="Remover certificado" aria-label="Remover certificado"
+                    data-confirm="O certificado {{ c.titular if c.ok else c.arquivo }} será apagado da pasta de dados.{% if c.usos %} Os templates que o usam ficarão sem certificado até você adicionar outro do mesmo prestador.{% endif %}"
+                    data-confirm-titulo="Remover certificado?" data-confirm-acao="Remover" data-confirm-perigo>{{ icone('trash') }}</button>
+          </form>
+        </div>
+        <div id="teste-{{ c.id }}" class="basis-full empty:hidden"></div>
+      </li>
+      {% endfor %}
+    </ul>
+    <p data-filtro-vazio class="hidden border-t border-slate-100 dark:border-slate-800 px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum certificado encontrado.</p>
+  </div>
+  {% else %}
+  <p class="border-t border-slate-100 dark:border-slate-800 px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+    Nenhum certificado ainda. Adicione o A1 de cada prestador que vai emitir.</p>
+  {% endif %}
 
-</div>
+  {% if sem_cert %}
+  <div class="border-t border-slate-100 dark:border-slate-800 px-6 py-4">
+    <p class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">{{ icone('certificate-off', 'size-4') }}Prestadores de templates sem certificado</p>
+    <ul class="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
+      {% for n in sem_cert %}
+      <li class="flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
+        <span>{{ n.doc|doc }}</span>
+        <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2">
+          <input type="hidden" name="chave" value="{{ n.chave }}">
+          <span class="text-xs text-slate-500 dark:text-slate-400">Próxima DPS <b class="tabular-nums text-slate-900 dark:text-slate-100">nº {{ n.proximo }}</b></span>
+          <input name="ultimo" type="number" min="0" value="{{ n.ultimo }}" class="input w-20 py-1.5" aria-label="Último número usado">
+          <button class="btn-ghost px-3 py-1.5">Ajustar</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="space-y-2 border-t border-slate-100 dark:border-slate-800 px-6 py-4">
+    <p class="hint mt-0">Numeração ({{ 'produção' if cfg.ambiente == '1' else 'produção restrita' }}, série {{ cfg.serie }}):
+      avança sozinha a cada nota aceita pela Sefin (e quando ela avisa que o número já foi usado, E0014). Nota rejeitada
+      não consome número.</p>
+    {% if numeracao_outros %}
+    <details class="text-xs text-slate-500 dark:text-slate-400">
+      <summary>Outros ambientes/séries ({{ numeracao_outros|length }})</summary>
+      <ul class="mt-2 space-y-1">
+        {% for chave, ultimo in numeracao_outros %}{% set pt = chave.split('|') %}
+        <li>{{ 'Produção' if pt[0] == '1' else 'Produção restrita' }} · {{ pt[1]|doc }} · série {{ pt[2] }}: último
+          nº {{ ultimo }}</li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    <p class="hint">Certificados ficam em <code class="break-all">{{ data_dir }}</code> (permissão 600), junto com as senhas.
+      Alternativa: deixe a senha vazia e defina a variável de ambiente <code>EASY_NFSE_CERT_SENHA</code>.</p>
+  </div>
+</section>
 {% endblock %}

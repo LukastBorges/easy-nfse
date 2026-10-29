@@ -17,6 +17,29 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// Lista filtrável: [data-filtro] com [data-filtro-busca] (texto), [data-filtro-estado] (select) e itens
+// <li data-busca="..." data-estado="a b">. Mostra [data-filtro-vazio] quando nada sobra.
+function filtrarLista(box) {
+  const sem = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const termos = sem(box.querySelector("[data-filtro-busca]")?.value || "").split(/\s+/).filter(Boolean);
+  const estado = box.querySelector("[data-filtro-estado]")?.value || "";
+  const itens = [...box.querySelectorAll("[data-busca]")];
+  let visiveis = 0;
+  itens.forEach((li) => {
+    const texto = sem(li.dataset.busca);
+    const ok = termos.every((t) => texto.includes(t)) && (!estado || li.dataset.estado.split(" ").includes(estado));
+    li.classList.toggle("hidden", !ok);
+    visiveis += ok;
+  });
+  box.querySelector("[data-filtro-vazio]")?.classList.toggle("hidden", visiveis > 0);
+  const contagem = box.querySelector("[data-filtro-contagem]");
+  if (contagem) contagem.textContent = visiveis === itens.length ? "" : `${visiveis} de ${itens.length}`;
+}
+document.addEventListener("input", (e) => {
+  const box = e.target.closest && e.target.closest("[data-filtro]");
+  if (box && e.target.matches("[data-filtro-busca], [data-filtro-estado]")) filtrarLista(box);
+});
+
 // Campo de dinheiro: formata "1500" -> "1.500,00" ao sair do campo.
 document.addEventListener("focusout", (e) => {
   const el = e.target;

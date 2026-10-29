@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -18,9 +18,9 @@ from pydantic import ValidationError
 
 from . import danfse, dominios, dps, ibge, importers, ptax, storage
 from .certificado import Certificado, CertificadoError
-from .models import Config, Emissao, Template
+from .models import CertificadoSalvo, Config, Emissao, Template
 from .sefin import CONSULTA_PUBLICA, SefinClient, SefinError
-from .util import digits, fmt_doc, fmt_money, parse_money, split_municipio_uf
+from .util import digits, fmt_doc, fmt_money, parse_money, split_municipio_uf, strip_accents
 
 BASE = Path(__file__).parent
 app = FastAPI(title="easy-nfse", docs_url=None, redoc_url=None)
@@ -84,21 +84,82 @@ views.env.globals.update(
 # helpers
 # --------------------------------------------------------------------------------------
 
-def carregar_certificado(cfg: Config) -> Certificado | None:
-    data = storage.load_certificate()
+def _abrir_certificado(s: CertificadoSalvo) -> Certificado:
+    data = storage.load_certificate(s.id)
     if not data:
-        return None
-    return Certificado.load(data, storage.cert_password(cfg))
+        raise CertificadoError(f"O arquivo {s.arquivo or 'do certificado'} não está mais na pasta de dados. "
+                               "Remova-o e envie de novo.")
+    return Certificado.load(data, storage.cert_password(s))
 
 
-def info_certificado(cfg: Config) -> dict | None:
-    try:
-        c = carregar_certificado(cfg)
-    except CertificadoError as exc:
-        return {"ok": False, "erro": str(exc)}
-    if not c:
-        return None
-    return {"ok": True, "titular": c.titular, "documento": c.documento, "validade": c.validade, "vencido": c.vencido}
+DIAS_AVISO_VALIDADE = 30  # avisa que o certificado vai vencer com esta antecedência
+
+
+def _guardar_dados(s: CertificadoSalvo, c: Certificado) -> None:
+    s.titular, s.documento, s.validade, s.impressao = c.titular, c.documento, c.validade, c.impressao
+
+
+def info_certificados(cfg: Config) -> list[dict]:
+    """Certificados salvos, com os dados guardados no config.json (sem decifrar os .pfx).
+
+    Certificado salvo antes de existirem esses dados (ou migrado da versão de um certificado só) é aberto uma vez
+    e os dados ficam guardados; se não abrir, vem com `ok` falso e o motivo em `erro`.
+    """
+    infos, mudou = [], False
+    for s in cfg.certificados:
+        base = {"id": s.id, "arquivo": s.arquivo, "documento": s.documento, "vencido": False}
+        try:
+            if not s.validade:
+                _guardar_dados(s, _abrir_certificado(s))
+                mudou = True
+            elif not storage.load_certificate(s.id):
+                raise CertificadoError(f"O arquivo {s.arquivo or 'do certificado'} não está mais na pasta de dados. "
+                                       "Remova-o e envie de novo.")
+        except CertificadoError as exc:
+            infos.append({**base, "ok": False, "erro": str(exc)})
+            continue
+        dias = (s.validade - datetime.now(timezone.utc)).days
+        infos.append({**base, "ok": True, "titular": s.titular, "documento": s.documento, "validade": s.validade,
+                      "vencido": dias < 0, "dias": dias, "vence_em_breve": 0 <= dias <= DIAS_AVISO_VALIDADE})
+    if mudou:
+        storage.save_config(cfg)
+    return infos
+
+
+def abrir_certificado(cfg: Config, cert_id: str) -> Certificado:
+    """Abre o .pfx para assinar ou conectar à Sefin."""
+    salvo = next((c for c in cfg.certificados if c.id == cert_id), None)
+    if not salvo:
+        raise CertificadoError("Certificado não encontrado.")
+    return _abrir_certificado(salvo)
+
+
+def certificado_do_template(certs: list[dict], t: Template) -> dict | None:
+    """O certificado escolhido no template ou, no automático, o mais novo do CNPJ/CPF do prestador."""
+    if t.certificado_id:
+        escolhido = next((c for c in certs if c["id"] == t.certificado_id), None)
+        if escolhido:
+            return escolhido
+    doc = digits(t.prestador.documento)
+    candidatos = [c for c in certs if c["ok"] and doc and c["documento"] == doc]
+    return max(candidatos, key=lambda c: (not c["vencido"], c["validade"]), default=None)
+
+
+def problema_certificado(certs: list[dict], t: Template, cert: dict | None) -> str:
+    """Por que o template não pode emitir com esse certificado ("" se pode)."""
+    if not certs:
+        return "Nenhum certificado digital configurado."
+    if not cert:
+        return (f"Nenhum certificado de {fmt_doc(t.prestador.documento) or 'prestador'} (prestador do template). "
+                "Adicione o certificado A1 dele em Configurações.")
+    if not cert["ok"]:
+        return cert["erro"]
+    if cert["vencido"]:
+        return f"O certificado de {cert['titular']} está vencido."
+    if cert["documento"] and digits(t.prestador.documento) != cert["documento"]:
+        return (f"O certificado é de {fmt_doc(cert['documento'])}, mas o prestador do template é "
+                f"{fmt_doc(t.prestador.documento)}. A Sefin exige o certificado do emitente (E0718).")
+    return ""
 
 
 def render(request: Request, nome: str, status_code: int = 200, **ctx: Any) -> HTMLResponse:
@@ -111,19 +172,23 @@ def hx_redirect(url: str) -> Response:
 
 
 def baixar_xml(cfg: Config):
-    """Função que baixa o XML de uma NFS-e pela chave (produção; se falhar, produção restrita)."""
-    cert = carregar_certificado(cfg)
-    if not cert:
+    """Função que baixa o XML de uma NFS-e pela chave (produção; se falhar, produção restrita).
+
+    Tenta cada certificado, primeiro os do emitente (o CNPJ/CPF dele faz parte da chave).
+    """
+    certs = [c for c in info_certificados(cfg) if c["ok"]]
+    if not certs:
         return None
 
     def baixar(chave: str) -> bytes:
         ultimo: Exception | None = None
-        for amb in ("1", "2"):
-            try:
-                with SefinClient(cert, amb, cfg.verificar_tls, timeout=30) as cli:
-                    return cli.consultar_nfse(chave)
-            except (SefinError, httpx.HTTPError) as exc:
-                ultimo = exc
+        for c in sorted(certs, key=lambda c: not (c["documento"] and c["documento"] in chave)):
+            for amb in ("1", "2"):
+                try:
+                    with SefinClient(abrir_certificado(cfg, c["id"]), amb, cfg.verificar_tls, timeout=30) as cli:
+                        return cli.consultar_nfse(chave)
+                except (SefinError, CertificadoError, httpx.HTTPError) as exc:
+                    ultimo = exc
         raise ultimo or RuntimeError("falha ao consultar")
 
     return baixar
@@ -177,15 +242,20 @@ def index(request: Request):
     templates = storage.list_templates()
     # templates usados recentemente primeiro
     templates.sort(key=lambda t: ultimas[t.id].emitida_em if t.id in ultimas else t.atualizado_em, reverse=True)
-    return render(request, "index.html", cfg=cfg, templates=templates, ultimas=ultimas,
-                  emissoes=emissoes[:5], cert=info_certificado(cfg))
+    certs = info_certificados(cfg)
+    cert_templates = {}  # id do template → (certificado, problema que impede emitir)
+    for t in templates:
+        c = certificado_do_template(certs, t)
+        cert_templates[t.id] = (c, problema_certificado(certs, t, c))
+    return render(request, "index.html", cfg=cfg, templates=templates, ultimas=ultimas, emissoes=emissoes[:5],
+                  certs=certs, cert_templates=cert_templates)
 
 
 @app.get("/templates", response_class=HTMLResponse)
 def lista_templates(request: Request):
     """Importação de notas e gestão dos templates."""
     cfg = storage.load_config()
-    return render(request, "templates.html", cfg=cfg, templates=storage.list_templates(), cert=info_certificado(cfg))
+    return render(request, "templates.html", cfg=cfg, templates=storage.list_templates(), certs=info_certificados(cfg))
 
 
 @app.post("/importar")
@@ -197,11 +267,7 @@ async def importar(request: Request, arquivo: UploadFile):
     if len(data) > 15 * 1024 * 1024:
         return render(request, "partials/erro.html", mensagens=["Arquivo grande demais (máx. 15 MB)."])
     try:
-        baixar = baixar_xml(cfg)
-    except CertificadoError:
-        baixar = None
-    try:
-        t = importers.de_arquivo(data, arquivo.filename or "nota", baixar_xml=baixar)
+        t = importers.de_arquivo(data, arquivo.filename or "nota", baixar_xml=baixar_xml(cfg))
     except importers.ImportacaoError as exc:
         return render(request, "partials/erro.html", mensagens=[str(exc)])
     return hx_redirect(f"/templates/{t.id}/editar?importado=1")
@@ -215,15 +281,23 @@ def importar_chave(request: Request, chave: str = Form(...)):
         if not baixar:
             raise importers.ImportacaoError("Configure o certificado digital para importar pela chave.")
         t = importers.de_chave(chave, baixar)
-    except (importers.ImportacaoError, CertificadoError, SefinError, httpx.HTTPError) as exc:
+    except (importers.ImportacaoError, SefinError, CertificadoError, httpx.HTTPError) as exc:
         return render(request, "partials/erro.html", mensagens=[f"Não foi possível importar: {exc}"])
     return hx_redirect(f"/templates/{t.id}/editar?importado=1")
+
+
+def _form_template(request: Request, t: Template, status_code: int = 200, **ctx) -> HTMLResponse:
+    cfg = storage.load_config()
+    certs = info_certificados(cfg)
+    automatico = certificado_do_template(certs, t.model_copy(update={"certificado_id": ""}))
+    return render(request, "template_form.html", status_code, cfg=cfg, t=t, certs=certs, cert_automatico=automatico,
+                  **ctx)
 
 
 @app.get("/templates/{template_id}/editar", response_class=HTMLResponse)
 def editar(request: Request, template_id: str, importado: int = 0):
     t = get_template_or_404(template_id)
-    return render(request, "template_form.html", t=t, importado=bool(importado), erros=dps.validar_template(t))
+    return _form_template(request, t, importado=bool(importado), erros=dps.validar_template(t))
 
 
 @app.post("/templates/{template_id}")
@@ -232,7 +306,10 @@ async def salvar(request: Request, template_id: str):
     dados = _unflatten(await request.form())
     tem_tomador = dados.pop("tem_tomador", "") == "1"
     base = atual.model_dump()
-    base.update(nome=dados.get("nome") or atual.nome, ultimo_valor=atual.ultimo_valor)
+    certificado_id = dados.get("certificado_id", atual.certificado_id)
+    if certificado_id not in {c.id for c in storage.load_config().certificados}:
+        certificado_id = ""
+    base.update(nome=dados.get("nome") or atual.nome, ultimo_valor=atual.ultimo_valor, certificado_id=certificado_id)
     for secao in ("prestador", "servico", "tributacao", "com_ext"):
         base[secao].update(dados.get(secao, {}))
     if dados.get("servico", {}).get("local_tipo") == "brasil":
@@ -249,7 +326,7 @@ async def salvar(request: Request, template_id: str):
         t = Template.model_validate(base)
     except ValidationError as exc:
         erros = [f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()]
-        return render(request, "template_form.html", t=atual, erros=erros, status_code=422)
+        return _form_template(request, atual, 422, erros=erros)
 
     p, s = t.prestador, t.servico
     p.cod_municipio, p.municipio = _resolver_municipio(p.cod_municipio, p.municipio)
@@ -290,7 +367,7 @@ async def salvar(request: Request, template_id: str):
 
     erros = dps.validar_template(t)
     if erros:
-        return render(request, "template_form.html", t=t, erros=erros, salvo=True)
+        return _form_template(request, t, erros=erros, salvo=True)
     return RedirectResponse(f"/templates/{t.id}", status_code=303)
 
 
@@ -319,8 +396,10 @@ def duplicar(template_id: str):
 def pagina_emissao(request: Request, template_id: str):
     cfg = storage.load_config()
     t = get_template_or_404(template_id)
+    certs = info_certificados(cfg)
+    cert = certificado_do_template(certs, t)
     return render(request, "emitir.html", cfg=cfg, t=t, n_dps=proximo_numero(cfg, t), hoje=date.today(),
-                  erros=dps.validar_template(t), cert=info_certificado(cfg),
+                  erros=dps.validar_template(t), cert=cert, problema_cert=problema_certificado(certs, t, cert),
                   emissoes=[e for e in storage.list_emissoes() if e.template_id == t.id][:5])
 
 
@@ -352,22 +431,12 @@ def revisar(request: Request, template_id: str, competencia: str = Form(""), val
         root, ident = dps.montar(t, d)
     except dps.DPSError as exc:
         return render(request, "partials/erro.html", t=t, mensagens=exc.erros)
-    cert = info_certificado(cfg)
-    alertas = []
-    if not cert:
-        alertas.append("Nenhum certificado digital configurado: não será possível emitir.")
-    elif not cert["ok"]:
-        alertas.append(cert["erro"])
-    elif cert["vencido"]:
-        alertas.append("O certificado digital está vencido.")
-    elif cert["documento"] and digits(t.prestador.documento) != cert["documento"]:
-        alertas.append(
-            f"O certificado é de {fmt_doc(cert['documento'])}, mas o prestador do template é "
-            f"{fmt_doc(t.prestador.documento)}. A Sefin exige o certificado do emitente (E0718)."
-        )
+    certs = info_certificados(cfg)
+    cert = certificado_do_template(certs, t)
+    alertas = [p] if (p := problema_certificado(certs, t, cert)) else []
     xml = dps.serializar(root).decode()
     return render(request, "partials/revisao.html", cfg=cfg, t=t, d=d, id_dps=ident, xml=xml, alertas=alertas,
-                  pode_emitir=not alertas)
+                  cert=cert, pode_emitir=not alertas)
 
 
 @app.post("/templates/{template_id}/emitir", response_class=HTMLResponse)
@@ -380,9 +449,11 @@ def emitir(request: Request, template_id: str, competencia: str = Form(""), valo
         return render(request, "partials/erro.html",
                       mensagens=["O ambiente mudou desde a revisão. Revise a emissão novamente."])
     try:
-        cert = carregar_certificado(cfg)
-        if not cert:
-            raise CertificadoError("Configure o certificado digital antes de emitir.")
+        certs = info_certificados(cfg)
+        info = certificado_do_template(certs, t)
+        if not (info and info["ok"]):
+            raise CertificadoError(problema_certificado(certs, t, info))
+        cert = abrir_certificado(cfg, info["id"])
         d = _dados_emissao(cfg, t, competencia, valor, descricao, n_dps=n_dps, valor_moeda=valor_moeda)
         root, ident = dps.montar(t, d)
         assinado = cert.assinar(root, ident)
@@ -515,23 +586,43 @@ async def danfse_de_xml(request: Request, arquivo: UploadFile):
 # configurações
 # --------------------------------------------------------------------------------------
 
+def _numeracao(cfg: Config, doc: str) -> dict:
+    chave = Config.chave_numeracao(cfg.ambiente, doc, cfg.serie)
+    ultimo = cfg.numeracao.get(chave, 0)
+    return {"chave": chave, "doc": doc, "ultimo": ultimo, "proximo": ultimo + 1}
+
+
+def _estado_certificado(c: dict) -> str:
+    if not c["ok"]:
+        return "erro"
+    return "vencido" if c["vencido"] else ("vencendo" if c["vence_em_breve"] else "valido")
+
+
 def _pagina_config(request: Request, cfg: Config | None = None, **ctx):
     cfg = cfg or storage.load_config()
-    cert = info_certificado(cfg)
-    # prestadores conhecidos: o do certificado e os dos templates
-    docs = [cert["documento"]] if cert and cert.get("ok") and cert.get("documento") else []
-    for t in storage.list_templates():
+    certs = info_certificados(cfg)
+    templates = storage.list_templates()
+    usos: dict[str, list[str]] = {}  # id do certificado → templates que o usam
+    for t in templates:
+        if c := certificado_do_template(certs, t):
+            usos.setdefault(c["id"], []).append(t.nome)
+    ordem = {"erro": 0, "vencido": 1, "vencendo": 2, "valido": 3}
+    linhas = []  # um certificado por linha, com a numeração da DPS do CNPJ/CPF dele
+    for c in certs:
+        estado = _estado_certificado(c)
+        linhas.append({**c, "estado": estado, "usos": usos.get(c["id"], []),
+                       "numeracao": _numeracao(cfg, c["documento"]) if c["documento"] else None})
+    linhas.sort(key=lambda c: (ordem[c["estado"]], strip_accents(c.get("titular") or c["arquivo"]).casefold()))
+    # prestadores de templates sem certificado também têm numeração (ajustável antes de adicionar o certificado)
+    docs_cert = {c["documento"] for c in certs if c["documento"]}
+    sem_cert = []
+    for t in templates:
         d = digits(t.prestador.documento)
-        if d and d not in docs:
-            docs.append(d)
-    atuais = []
-    for d in docs:
-        chave = Config.chave_numeracao(cfg.ambiente, d, cfg.serie)
-        ultimo = cfg.numeracao.get(chave, 0)
-        atuais.append({"chave": chave, "doc": d, "ultimo": ultimo, "proximo": ultimo + 1})
-    chaves_atuais = {a["chave"] for a in atuais}
-    outros = sorted((k, v) for k, v in cfg.numeracao.items() if k not in chaves_atuais)
-    return render(request, "config.html", cfg=cfg, cert=cert, numeracao_atual=atuais, numeracao_outros=outros,
+        if d and d not in docs_cert and d not in {n["doc"] for n in sem_cert}:
+            sem_cert.append(_numeracao(cfg, d))
+    chaves = {c["numeracao"]["chave"] for c in linhas if c["numeracao"]} | {n["chave"] for n in sem_cert}
+    outros = sorted((k, v) for k, v in cfg.numeracao.items() if k not in chaves)
+    return render(request, "config.html", cfg=cfg, linhas=linhas, sem_cert=sem_cert, numeracao_outros=outros,
                   data_dir=storage.DATA_DIR, **ctx)
 
 
@@ -554,19 +645,42 @@ def salvar_configuracoes(request: Request, ambiente: str = Form(...), serie: str
     return _pagina_config(request, cfg, ok="Configurações salvas.")
 
 
-@app.post("/configuracoes/certificado", response_class=HTMLResponse)
-async def salvar_certificado(request: Request, arquivo: UploadFile, senha: str = Form("")):
+@app.post("/configuracoes/certificados", response_class=HTMLResponse)
+async def adicionar_certificado(request: Request, arquivo: UploadFile, senha: str = Form("")):
     cfg = storage.load_config()
     data = await arquivo.read()
     try:
-        c = Certificado.load(data, senha)
+        c = Certificado.load(data, storage.cert_password(CertificadoSalvo(id="", senha=senha)))
     except CertificadoError as exc:
         return _pagina_config(request, cfg, erro=str(exc))
-    storage.save_certificate(data)
-    cfg.certificado_senha = senha
+    # o mesmo certificado enviado de novo (ex.: senha trocada) substitui o anterior em vez de duplicar
+    info_certificados(cfg)  # garante a impressão digital dos certificados antigos
+    salvo = next((s for s in cfg.certificados if s.impressao == c.impressao), None)
+    if not salvo:
+        salvo = CertificadoSalvo(id=storage.new_id())
+        cfg.certificados.append(salvo)
+    salvo.arquivo, salvo.senha = arquivo.filename or "certificado.pfx", senha
+    _guardar_dados(salvo, c)
+    storage.save_certificate(salvo.id, data)
     storage.save_config(cfg)
     aviso = " Atenção: este certificado está vencido." if c.vencido else ""
     return _pagina_config(request, cfg, ok=f"Certificado de {c.titular} salvo.{aviso}")
+
+
+@app.post("/configuracoes/certificados/{cert_id}/excluir", response_class=HTMLResponse)
+def excluir_certificado(request: Request, cert_id: str):
+    try:
+        storage.delete_certificate(cert_id)
+    except KeyError:
+        raise HTTPException(404)
+    cfg = storage.load_config()
+    cfg.certificados = [c for c in cfg.certificados if c.id != cert_id]
+    storage.save_config(cfg)
+    for t in storage.list_templates():  # templates que o escolheram voltam ao automático
+        if t.certificado_id == cert_id:
+            t.certificado_id = ""
+            storage.save_template(t)
+    return _pagina_config(request, cfg, ok="Certificado removido.")
 
 
 @app.post("/configuracoes/numeracao", response_class=HTMLResponse)
@@ -579,14 +693,11 @@ def salvar_numeracao(request: Request, chave: str = Form(...), ultimo: int = For
     return _pagina_config(request, cfg, ok=f"Numeração atualizada: a próxima DPS será a nº {ultimo + 1}.")
 
 
-@app.post("/configuracoes/testar", response_class=HTMLResponse)
-def testar_conexao(request: Request):
+@app.post("/configuracoes/certificados/{cert_id}/testar", response_class=HTMLResponse)
+def testar_conexao(request: Request, cert_id: str):
     cfg = storage.load_config()
     try:
-        cert = carregar_certificado(cfg)
-        if not cert:
-            raise CertificadoError("Nenhum certificado configurado.")
-        with SefinClient(cert, cfg.ambiente, cfg.verificar_tls, timeout=20) as cli:
+        with SefinClient(abrir_certificado(cfg, cert_id), cfg.ambiente, cfg.verificar_tls, timeout=20) as cli:
             status = cli.testar()
     except (CertificadoError, httpx.HTTPError) as exc:
         return render(request, "partials/teste.html", ok=False, msg=f"{type(exc).__name__}: {exc}")

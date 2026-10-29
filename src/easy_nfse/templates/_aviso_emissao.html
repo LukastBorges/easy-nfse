@@ -1,31 +1,10 @@
-{# Alerta "Antes de emitir" da home: certificado numa linha, ambiente na outra. Precisa de: cert, cfg #}
-{% set cert_ok = cert and cert.ok and not cert.vencido %}
-<div role="alert" class="mt-6 flex gap-3 rounded-2xl bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-200 ring-1 ring-amber-200 dark:ring-amber-500/30">
-  <svg viewBox="0 0 24 24" class="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
-  <div class="min-w-0 flex-1">
-    <p class="font-semibold">Antes de emitir</p>
-    <ul class="mt-1.5 space-y-1.5">
-      <li class="flex items-start gap-2">
-        {% if cert_ok %}
-          <span class="text-emerald-600 dark:text-emerald-400">✓</span>
-          <span>Certificado de <b>{{ cert.titular }}</b>, válido até {{ cert.validade|data }}</span>
-        {% else %}
-          <span class="font-bold text-amber-600 dark:text-amber-400">!</span>
-          <span>{% if cert and cert.vencido %}O certificado digital está vencido.{% elif cert %}{{ cert.erro }}{% else %}Nenhum certificado A1 configurado.{% endif %}
-            <a href="/configuracoes" class="font-semibold underline underline-offset-2">Configurar</a></span>
-        {% endif %}
-      </li>
-      <li class="flex items-start gap-2">
-        {% if cfg.ambiente == '2' %}
-          <span class="font-bold text-amber-600 dark:text-amber-400">!</span>
-          <span><b>Produção restrita:</b> as notas são de teste, sem validade jurídica.
-            <a href="/configuracoes" class="font-semibold underline underline-offset-2">Alterar ambiente</a></span>
-        {% else %}
-          <span class="font-bold text-rose-600 dark:text-rose-400">!</span>
-          <span><b>Produção:</b> as notas emitidas têm validade fiscal.
-            <a href="/configuracoes" class="font-semibold underline underline-offset-2">Alterar ambiente</a></span>
-        {% endif %}
-      </li>
-    </ul>
-  </div>
+{# Aviso global da home: o ambiente de emissão. O estado do certificado fica no card de cada template. Precisa de: cfg #}
+{% set producao = cfg.ambiente == '1' %}
+<div role="alert" class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl p-4 text-sm ring-1 {{ 'bg-rose-50 dark:bg-rose-500/10 text-rose-900 dark:text-rose-200 ring-rose-200 dark:ring-rose-500/30' if producao else 'bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 ring-amber-200 dark:ring-amber-500/30' }}">
+  {{ icone('alert-triangle' if producao else 'flask', 'size-5 shrink-0 ' ~ ('text-rose-600 dark:text-rose-400' if producao else 'text-amber-600 dark:text-amber-400')) }}
+  <p class="min-w-0 flex-1">
+    {% if producao %}<b>Produção:</b> as notas emitidas têm validade fiscal.
+    {% else %}<b>Produção restrita:</b> as notas são de teste, sem validade jurídica.{% endif %}
+  </p>
+  <a href="/configuracoes" class="inline-flex items-center gap-1 font-semibold underline underline-offset-2">{{ icone('settings', 'size-4') }}Alterar ambiente</a>
 </div>
