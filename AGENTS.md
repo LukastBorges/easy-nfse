@@ -129,6 +129,10 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   issue com o rótulo `nfse-monitor`, contendo o relatório e o que revisar.
 - Ao resolver uma issue dessas: ajuste o código, rode `uv run python scripts/monitor_nfse.py --atualizar` e commite o
   retrato (`chore(monitor): ...`). Não atualize o retrato sem revisar: ele é o registro do que o código já cobre.
+- **NT 009** (leiaute RTC, Anexo VI v1.04): em Produção restrita desde 20/10/2026, ainda não em Produção.
+  O app não emite os grupos afetados (`IBSCBS`, `vDedRed`/`gReeRepRes` → `vAjusteBC`, códigos 99.02–99.04);
+  só **lê** notas de outros emissores, aceitando os dois nomes (`vDedRed`/`vAjusteBC`, `vCalcDR`/`vCalcAjusteBCISSQN`).
+  Quando o novo leiaute chegar à Produção com XSD de versão nova, a DPS (`dps.montar`, `xsd/`) precisará ser revista.
 - Mudança anunciada a acompanhar: **CNPJ alfanumérico**. O XSD v1.01 ainda exige `[0-9]{14}` e o app trata CNPJ como
   dígitos (`util.digits`, `cnpj_valido`); quando o esquema mudar, isso precisará ser revisto.
 
