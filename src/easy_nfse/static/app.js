@@ -234,3 +234,15 @@ document.addEventListener("click", (e) => {
   dlg.showModal();
   htmx.ajax("GET", "/notas", "#notas-conteudo");
 });
+
+// Campos que salvam sozinhos (data-salva-sozinho + hx-post): se a gravação falhar, desfaz a mudança e avisa,
+// em vez de deixar parecer que salvou.
+function falhaAoSalvar(e) {
+  const el = e.detail.elt;
+  if (!el.matches || !el.matches("[data-salva-sozinho]")) return;
+  if (el.type === "checkbox") el.checked = !el.checked;
+  const alvo = document.querySelector(el.getAttribute("hx-target"));
+  if (alvo) alvo.innerHTML = '<span class="text-rose-700 dark:text-rose-300">Não foi possível salvar. Feche e abra o easy-nfse e tente de novo.</span>';
+}
+document.addEventListener("htmx:responseError", falhaAoSalvar);
+document.addEventListener("htmx:sendError", falhaAoSalvar);

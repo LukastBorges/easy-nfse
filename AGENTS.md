@@ -116,6 +116,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-estado` (vários estados separados por espaço);
   a busca ignora acentos. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
   (depende das colunas e da altura dos cards), não fixe em CSS.
+- **Salvar sozinho** (campo fora de formulário com botão, ex.: opção de atualização no Sobre): `hx-post` + `hx-trigger="change"`
+  + `data-salva-sozinho`; a rota responde a confirmação. Se a gravação falhar, `app.js` desfaz a mudança e avisa.
 - **Confirmações**: nunca use `confirm()`/`onclick`. Use `hx-confirm="texto"` (htmx) ou `data-confirm="texto"` (botão
   de formulário comum), com `data-confirm-titulo`, `data-confirm-acao` e `data-confirm-perigo` opcionais. O diálogo
   `#confirmar` fica em `base.html` e a lógica em `app.js`.
@@ -147,7 +149,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `easy-nfse-vX.Y.Z-<plataforma>.(dmg|zip)` e do `.zip` do Windows conter a pasta `easy-nfse/`: se mudar o empacotamento,
   ajuste `atualizacao.plataforma`/`_extrair`. O script sh limita a espera (~2 min): `kill -0` responde para processo zumbi.
 - **Menu ⋮ do cabeçalho** (`base.html`): Ajuda (README), Notas de atualização, Reportar um problema (issues) e, por último,
-  Sobre (versão, "Verificar agora" e link do código-fonte; o item mostra a versão nova quando houver). As notas vêm de `atualizacao.notas()`, um leitor do formato do
+  Sobre (versão, "Verificar agora", a opção de checagem automática, que salva sozinha via `/atualizacao/automatica`, e
+  o link do código-fonte; o item mostra a versão nova quando houver). Essa opção não fica no formulário de Configurações. As notas vêm de `atualizacao.notas()`, um leitor do formato do
   release-please que mostra só Funcionalidades/Correções/Desempenho: o `CHANGELOG.md` (versões até a instalada; vai no
   app pelo `.spec`) e o corpo da release nova (guardado em `estado.json`). Se mudar as seções do release-please
   (`release-please-config.json`), ajuste `SECOES_VISIVEIS`.

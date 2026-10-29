@@ -660,7 +660,7 @@ def configuracoes(request: Request):
 
 @app.post("/configuracoes", response_class=HTMLResponse)
 def salvar_configuracoes(request: Request, ambiente: str = Form(...), serie: str = Form("1"),
-                         verificar_tls: str = Form(""), verificar_atualizacoes: str = Form("")):
+                         verificar_tls: str = Form("")):
     cfg = storage.load_config()
     serie_d = digits(serie)
     if not serie_d or not 1 <= int(serie_d) <= 49999:
@@ -668,7 +668,6 @@ def salvar_configuracoes(request: Request, ambiente: str = Form(...), serie: str
     if ambiente not in ("1", "2"):
         return _pagina_config(request, cfg, erro="Ambiente inválido.")
     cfg.ambiente, cfg.serie, cfg.verificar_tls = ambiente, str(int(serie_d)), verificar_tls == "1"
-    cfg.verificar_atualizacoes = verificar_atualizacoes == "1"
     storage.save_config(cfg)
     return _pagina_config(request, cfg, ok="Configurações salvas.")
 
@@ -749,6 +748,18 @@ def verificar_atualizacao(request: Request):
     if st["nova"] and st["instalavel"] and not st["pronta"]:  # baixa em segundo plano (~50 MB)
         threading.Thread(target=atualizacao.verificar_e_baixar, kwargs={"forcar": True}, daemon=True).start()
     return render(request, "partials/atualizacao.html")
+
+
+@app.post("/atualizacao/automatica", response_class=HTMLResponse)
+def atualizacao_automatica(ativa: str = Form("")):
+    """Liga/desliga a checagem automática (caixa no diálogo Sobre; salva ao marcar/desmarcar)."""
+    cfg = storage.load_config()
+    cfg.verificar_atualizacoes = ativa == "1"
+    storage.save_config(cfg)
+    if cfg.verificar_atualizacoes:  # ligou: já verifica, sem esperar o próximo ciclo
+        threading.Thread(target=atualizacao.verificar_e_baixar, daemon=True).start()
+    texto = "Ligada. Preferência salva." if cfg.verificar_atualizacoes else "Desligada. Preferência salva."
+    return HTMLResponse(f'<span class="text-emerald-700 dark:text-emerald-300">{texto}</span>')
 
 
 @app.post("/atualizacao/instalar", response_class=HTMLResponse)

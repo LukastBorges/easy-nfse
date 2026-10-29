@@ -178,18 +178,32 @@ def test_ao_abrir_instala_uma_vez_e_depois_avisa(amb, monkeypatch):
 def test_interface(amb, monkeypatch):
     monkeypatch.setattr(webapp.atualizacao, "status", atualizacao.status)
     cli = TestClient(webapp.app)
-    assert "Verificar e baixar atualizações automaticamente" in cli.get("/configuracoes").text
-    assert "Reiniciar e atualizar" not in cli.get("/").text
+    assert 'name="verificar_atualizacoes"' not in cli.get("/configuracoes").text  # saiu do formulário de Configurações
+    assert 'hx-post="/atualizacao/instalar"' not in cli.get("/").text
 
     atualizacao.verificar_e_baixar()
     pagina = cli.get("/historico").text  # a faixa aparece em qualquer página
-    assert "Versão <b>0.4.0</b>" in pagina and "Reiniciar e atualizar" in pagina
+    assert "Versão <b>0.4.0</b>" in pagina and 'hx-post="/atualizacao/instalar"' in pagina
 
     monkeypatch.setattr(webapp, "_emitindo", 1)
     assert "emissão em andamento" in cli.post("/atualizacao/instalar").text
     monkeypatch.setattr(webapp, "_emitindo", 0)
     monkeypatch.setattr(atualizacao, "pasta_do_app", lambda: None)
     assert "git pull" in cli.post("/atualizacao/instalar").text
+
+
+def test_opcao_de_checagem_automatica_no_sobre(amb, monkeypatch):
+    chamadas = []
+    monkeypatch.setattr(atualizacao, "verificar_e_baixar", lambda **kw: chamadas.append(kw))
+    cli = TestClient(webapp.app)
+    assert "Verificar e baixar atualizações automaticamente" in cli.get("/historico").text  # no Sobre, em toda página
+    assert "Desligada" in cli.post("/atualizacao/automatica").text  # caixa desmarcada não envia o campo
+    assert not storage.load_config().verificar_atualizacoes
+    cli.post("/configuracoes", data={"ambiente": "2", "serie": "1"})  # salvar Configurações não mexe nela
+    assert not storage.load_config().verificar_atualizacoes
+    assert "Ligada" in cli.post("/atualizacao/automatica", data={"ativa": "1"}).text
+    assert storage.load_config().verificar_atualizacoes
+    assert len(chamadas) == 1  # ao ligar, já verifica (em segundo plano)
 
 
 CHANGELOG = """# Changelog
