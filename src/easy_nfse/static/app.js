@@ -32,6 +32,7 @@ function filtrarLista(box) {
     visiveis += ok;
   });
   box.querySelector("[data-filtro-vazio]")?.classList.toggle("hidden", visiveis > 0);
+  box.querySelectorAll("[data-max-linhas]").forEach(limitarLinhas);
   const contagem = box.querySelector("[data-filtro-contagem]");
   if (contagem) contagem.textContent = visiveis === itens.length ? "" : `${visiveis} de ${itens.length}`;
 }
@@ -39,6 +40,23 @@ document.addEventListener("input", (e) => {
   const box = e.target.closest && e.target.closest("[data-filtro]");
   if (box && e.target.matches("[data-filtro-busca], [data-filtro-estado]")) filtrarLista(box);
 });
+
+// Grade com no máximo N linhas visíveis (data-max-linhas="N"); o resto rola. A altura depende das colunas
+// e do tamanho dos cards, então é medida: vai até o início da linha N+1, deixando uma ponta dela à mostra.
+function limitarLinhas(grade) {
+  grade.style.maxHeight = "";
+  const max = Number(grade.dataset.maxLinhas);
+  const topos = [...new Set([...grade.children].filter((el) => el.offsetParent).map((el) => el.offsetTop))].sort((a, b) => a - b);
+  if (topos.length > max) grade.style.maxHeight = `${topos[max] - topos[0] + 40}px`;
+  marcarMais(grade);
+}
+// Esmaece a borda de baixo enquanto houver cards abaixo para rolar.
+const marcarMais = (g) => g.toggleAttribute("data-mais", g.scrollTop + g.clientHeight < g.scrollHeight - 2);
+document.addEventListener("scroll", (e) => e.target.matches?.("[data-max-linhas]") && marcarMais(e.target), true);
+const limitarTodas = () => document.querySelectorAll("[data-max-linhas]").forEach(limitarLinhas);
+document.addEventListener("DOMContentLoaded", limitarTodas);
+addEventListener("load", limitarTodas); // depois das fontes, que mudam a altura dos cards
+addEventListener("resize", limitarTodas);
 
 // Campo de dinheiro: formata "1500" -> "1.500,00" ao sair do campo.
 document.addEventListener("focusout", (e) => {

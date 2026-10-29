@@ -44,7 +44,7 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
 | `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
 | `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema) |
-| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + cards de emissão, cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão), `/templates/{id}/editar`, `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
+| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão), `/templates/{id}/editar`, `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
 | Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html` |
 
 ## Regras que NÃO podem ser quebradas
@@ -110,6 +110,10 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `test_icones_dos_templates_existem` confere os nomes literais.
 - **Aviso da home** é só para o que é global (ambiente). Estado de certificado vai no card do template (e na página de
   emissão), nunca numa lista no alerta.
+- **Busca/filtro de listas** (home e Configurações): `[data-filtro]` com `[data-filtro-busca]`, `[data-filtro-estado]`,
+  `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-estado` (vários estados separados por espaço);
+  a busca ignora acentos. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
+  (depende das colunas e da altura dos cards), não fixe em CSS.
 - **Confirmações**: nunca use `confirm()`/`onclick`. Use `hx-confirm="texto"` (htmx) ou `data-confirm="texto"` (botão
   de formulário comum), com `data-confirm-titulo`, `data-confirm-acao` e `data-confirm-perigo` opcionais. O diálogo
   `#confirmar` fica em `base.html` e a lógica em `app.js`.

@@ -129,7 +129,9 @@ def test_rotas_de_certificados(dados):
     linha_b = pagina[pagina.index(f'id="ultimo-{id_b}"') - 3000:pagina.index(f'id="ultimo-{id_b}"')]
     assert "OUTRA LTDA" in linha_b and '<span class="truncate">t</span>' in linha_b  # usado pelo template
     assert pagina.count('name="ultimo"') == 2  # numeração da DPS em cada certificado
-    assert "Certificado de outro CNPJ (11.222.333/0001-81)" in cli.get("/").text
+    home = cli.get("/").text
+    assert "Certificado de outro CNPJ (11.222.333/0001-81)" in home
+    assert 'data-estado="problema"' in home and "data-max-linhas" in home  # filtro e grade limitada da home
     assert "E0718" in cli.get(f"/templates/{t.id}").text
     form = cli.get(f"/templates/{t.id}/editar").text
     assert f'value="{id_b}" selected' in form and "Automático" in form

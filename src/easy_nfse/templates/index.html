@@ -86,10 +86,51 @@
 
 {% include "_aviso_emissao.html" %}
 
-<div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<div data-filtro class="mt-6">
+  {% if templates|length > 1 %}
+  <div class="mb-4 flex flex-wrap items-center gap-3">
+    <label class="relative min-w-48 flex-1">
+      <span class="sr-only">Buscar template</span>
+      <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
+      <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por template, tomador ou CNPJ/CPF do prestador">
+    </label>
+    <label class="flex items-center gap-2">
+      <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar templates</span></span>
+      <select data-filtro-estado class="input w-auto py-2">
+        <option value="">Todos</option>
+        <option value="problema">Certificado com problema</option>
+        <option value="vencendo">Certificado vence em 30 dias</option>
+        <option value="valido">Certificado válido</option>
+        <option value="exportacao">Exportação</option>
+      </select>
+    </label>
+    <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
+  </div>
+  {% endif %}
+  {# até 3 linhas de cards; passando disso, rola (app.js ajusta a altura conforme as colunas) #}
+  <div data-max-linhas="3" class="-m-2 grid gap-4 overflow-y-auto overscroll-contain p-2 sm:grid-cols-2 lg:grid-cols-3">
   {% for t in templates %}
   {% set ult = ultimas.get(t.id) %}
-  <a href="/templates/{{ t.id }}" class="card group flex min-w-0 flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-300">
+  {% set c, problema = cert_templates[t.id] %}
+  {% if problema %}
+    {% set estado_cert = 'problema' %}
+    {% set tom, icone_cert = 'text-rose-700 dark:text-rose-300', 'certificate-off' %}
+    {% if not c %}{% set texto = 'Sem certificado para ' ~ (t.prestador.documento|doc or 'o prestador') %}
+    {% elif not c.ok %}{% set texto = 'O certificado não abre: veja Configurações' %}
+    {% elif c.vencido %}{% set texto = 'Certificado vencido em ' ~ c.validade|data %}{% set icone_cert = 'alert-triangle' %}
+    {% else %}{% set texto = 'Certificado de outro CNPJ (' ~ c.documento|doc ~ ')' %}{% set icone_cert = 'alert-triangle' %}{% endif %}
+  {% elif c.vence_em_breve %}
+    {% set estado_cert = 'vencendo' %}
+    {% set tom, icone_cert = 'text-amber-700 dark:text-amber-300', 'clock-exclamation' %}
+    {% set texto = 'Certificado vence em ' ~ c.dias ~ (' dia' if c.dias == 1 else ' dias') ~ ' (' ~ c.validade|data ~ ')' %}
+  {% else %}
+    {% set estado_cert = 'valido' %}
+    {% set tom, icone_cert = 'text-slate-500 dark:text-slate-400', 'certificate' %}
+    {% set texto = 'Certificado válido até ' ~ c.validade|data %}
+  {% endif %}
+  <a href="/templates/{{ t.id }}" data-busca="{{ t.nome }} {{ t.tomador.nome if t.tomador else '' }} {{ t.prestador.documento }} {{ t.prestador.documento|doc }}"
+     data-estado="{{ estado_cert }}{{ ' exportacao' if t.exige_com_ext }}"
+     class="card group flex min-w-0 flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-300">
     <div class="flex items-start gap-3">
       <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-lg font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">
         {% if t.tomador_exterior %}{{ icone('world', 'size-5') }}{% else %}{{ ((t.tomador.nome if t.tomador else '') or t.nome)[:1]|upper }}{% endif %}
@@ -117,20 +158,6 @@
       </div>
     </dl>
 
-    {% set c, problema = cert_templates[t.id] %}
-    {% if problema %}
-      {% set tom, icone_cert = 'text-rose-700 dark:text-rose-300', 'certificate-off' %}
-      {% if not c %}{% set texto = 'Sem certificado para ' ~ (t.prestador.documento|doc or 'o prestador') %}
-      {% elif not c.ok %}{% set texto = 'O certificado não abre: veja Configurações' %}
-      {% elif c.vencido %}{% set texto = 'Certificado vencido em ' ~ c.validade|data %}{% set icone_cert = 'alert-triangle' %}
-      {% else %}{% set texto = 'Certificado de outro CNPJ (' ~ c.documento|doc ~ ')' %}{% set icone_cert = 'alert-triangle' %}{% endif %}
-    {% elif c.vence_em_breve %}
-      {% set tom, icone_cert = 'text-amber-700 dark:text-amber-300', 'clock-exclamation' %}
-      {% set texto = 'Certificado vence em ' ~ c.dias ~ (' dia' if c.dias == 1 else ' dias') ~ ' (' ~ c.validade|data ~ ')' %}
-    {% else %}
-      {% set tom, icone_cert = 'text-slate-500 dark:text-slate-400', 'certificate' %}
-      {% set texto = 'Certificado válido até ' ~ c.validade|data %}
-    {% endif %}
     <p class="mt-4 flex items-start gap-1.5 text-xs font-medium {{ tom }}" {% if c and c.ok %}title="{{ c.titular }} · {{ c.documento|doc }}"{% endif %}>
       {{ icone(icone_cert, 'mt-px size-4 shrink-0') }}<span class="min-w-0">{{ texto }}</span>
     </p>
@@ -141,6 +168,8 @@
     </span>
   </a>
   {% endfor %}
+  </div>
+  <p data-filtro-vazio class="hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum template encontrado.</p>
 </div>
 
 {% include "_emissoes.html" %}
