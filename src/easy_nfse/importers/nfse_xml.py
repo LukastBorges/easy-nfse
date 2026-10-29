@@ -128,7 +128,8 @@ def parse(data: bytes, arquivo: str = "") -> dict:
     avisos = []
     if _find(inf, "interm") is not None:
         avisos.append("A nota original tem intermediário; ele não será repetido nas novas emissões.")
-    if _find(inf, "valores/trib/tribFed") is not None or _find(inf, "valores/vDedRed") is not None:
+    ajuste_bc = _find(inf, "valores/vDedRed") is not None or _find(inf, "valores/vAjusteBC") is not None  # NT 009
+    if _find(inf, "valores/trib/tribFed") is not None or ajuste_bc:
         avisos.append("A nota original tem tributação federal/deduções; esses grupos não são copiados.")
     if _find(inf, "IBSCBS") is not None:
         avisos.append("A nota original tem grupo IBS/CBS; ele não é copiado (opcional em 2026).")

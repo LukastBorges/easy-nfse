@@ -268,6 +268,24 @@ def test_danfse_pdf(tpl):
         assert "Exportação de Serviço" in texto and "USD 200,00" in texto and "San Francisco" in texto
 
 
+@pytest.mark.parametrize("grupo,calc", [("vDedRed", "vCalcDR"), ("vAjusteBC", "vCalcAjusteBCISSQN")])
+def test_le_ajuste_bc_nos_dois_leiautes(grupo, calc):
+    """NT 009 (2.3): vDedRed/vCalcDR viraram vAjusteBC/vCalcAjusteBCISSQN; o app só lê esses grupos."""
+    import pdfplumber
+    from easy_nfse import danfse
+
+    root, _ = dps.montar(template(), dados())
+    ns = {"n": dps.NS}
+    root.find(".//n:valores", ns).append(etree.Element(f"{{{dps.NS}}}{grupo}"))
+    nfse = etree.fromstring(_nfse(root))
+    etree.SubElement(nfse.find("n:infNFSe/n:valores", ns), f"{{{dps.NS}}}{calc}").text = "123.45"
+
+    kw = nfse_xml.parse(etree.tostring(nfse))
+    assert any("deduções" in a for a in kw["avisos"])
+    with pdfplumber.open(io.BytesIO(danfse.gerar(etree.tostring(nfse)))) as p:
+        assert "R$ 123,45" in p.pages[0].extract_text()
+
+
 def test_ibge_bloqueado_nao_quebra_o_pdf(monkeypatch):
     """O firewall do IBGE às vezes responde uma página HTML no lugar do JSON (derrubou um build)."""
     import pdfplumber
