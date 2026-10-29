@@ -12,15 +12,18 @@ a partir de uma nota já emitida.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inicio-escuro.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/inicio-claro.png">
-  <img src="docs/screenshots/inicio-claro.png" alt="Tela inicial do easy-nfse com templates prontos para emissão e as últimas notas emitidas (dados fictícios)">
+  <img src="docs/screenshots/inicio-claro.png" alt="Tela inicial do easy-nfse com templates de dois prestadores, cada um com o estado do seu certificado digital, e as últimas notas emitidas (dados fictícios)">
 </picture>
 
-<sub>Tela inicial em uma versão de teste, com dados fictícios. A imagem acompanha o tema (claro ou escuro) do GitHub.</sub>
+<sub>Tela inicial em uma versão de teste, com dados fictícios: cada template mostra o certificado do seu prestador e avisa
+quando ele está perto de vencer. A imagem acompanha o tema (claro ou escuro) do GitHub.</sub>
 
 ## Funcionalidades
 
 - Emissão direta pela **API oficial da Sefin Nacional**, com assinatura digital e autenticação feitas com o seu
   certificado A1, sem intermediários.
+- **Vários certificados A1**, um por prestador: cada template usa automaticamente o certificado do CNPJ/CPF do seu
+  prestador (ou um escolhido), com aviso de validade e numeração da DPS por CNPJ. Para renovar, basta adicionar o novo.
 - Importação de notas anteriores em PDF ou XML (ou pela chave de acesso, se houver certificado configurado).
 - **Tomador do exterior e exportação de serviço**, com conversão do valor em moeda estrangeira pela PTAX.
 - Geração do **PDF da nota (DANFSe v2.0)** e histórico das emissões, com download do PDF e do XML.
