@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.4](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.3...easy-nfse-v0.2.4) (2026-10-29)
+
+
+### Correções
+
+* ler vAjusteBC da NT 009 e atualizar retrato do monitor ([a22f33f](https://github.com/LukastBorges/easy-nfse/commit/a22f33f03b7377d718a94b0149c0bf64f657a3a1))
+* ler vAjusteBC e vCalcAjusteBCISSQN da NT 009 no importador e no DANFSe ([8ee6a5d](https://github.com/LukastBorges/easy-nfse/commit/8ee6a5d9d3bed08d11515513e4042069c9188154)), closes [#6](https://github.com/LukastBorges/easy-nfse/issues/6)
+
+
+### Documentação
+
+* **agents:** registrar a situação da NT 009 (leiaute RTC) ([30ddea1](https://github.com/LukastBorges/easy-nfse/commit/30ddea187f4f1992119ef846f38813cf6f24090f))
+
 ## [0.2.3](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.2...easy-nfse-v0.2.3) (2026-10-23)
 
 
