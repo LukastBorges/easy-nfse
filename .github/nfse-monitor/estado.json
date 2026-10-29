@@ -19,6 +19,8 @@
     "NFSe-ESQUEMAS_XSD-v1.01-20260209 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/nfse-esquemas_xsd-v1-01-20260209.zip"
   ],
   "reforma-tributaria-rtc": [
+    "Anexo VIII versão 1.01.00 - Correlação entre Item de Serv., NBS, cClassTrib e cIndOp (AnexoVII) — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexoviii-correlacaoitemnbsindopcclasstrib_ibscbs_v1-00-00.xlsx",
+    "Anexo VIII versão 1.02.00 (26/10/2026) - Correlação entre Item de Serv., NBS, cClassTrib e cIndOp (AnexoVII) — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexo_viii-tabela-correlacao-v01-02-00-20261026.xlsx",
     "AnexoVI-LeiautesRN_RTC_IBSCBS-V1.01.03 - NT004 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita/anexovi-leiautesrn_rtc_ibscbs-v1-01-03-nt004.xlsx",
     "AnexoVI-LeiautesRN_RTC_IBSCBS-V1.02.01 - NT005 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovi-leiautesrn_rtc_ibscbs-v1-02-00.xlsx",
     "AnexoVI-LeiautesRN_RTC_IBSCBS-V1.03.00 – NT007 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovi-leiautesrn_rtc_ibscbs-v1-03-00-2013-nt007.xlsx",
@@ -26,8 +28,7 @@
     "AnexoVII-IndOp_IBSCBS_V1.00.00 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovii-indop_ibscbs_v1-00-00.xlsx",
     "AnexoVII-IndOp_IBSCBS_V1.01.00 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovii-indop_ibscbs_v1-01-00.xlsx",
     "AnexoVII-IndOp_IBSCBS_v1.03.00 - NT009 v1.01 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovii-indop_ibscbs_v1-03-00-nt009.xlsx",
-    "AnexoVIII versão 1.00.00 - Correlação entre Item de Serv., NBS, cClassTrib e cIndOp (AnexoVII) — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexoviii-correlacaoitemnbsindopcclasstrib_ibscbs_v1-00-00.xlsx",
-    "AnexoVIII versão 1.01.00 - Correlação entre Item de Serv., NBS, cClassTrib e cIndOp (AnexoVII) — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexoviii-correlacaoitemnbsindopcclasstrib_ibscbs_v1-01-00.xlsx",
+    "AnexoVIII versão 1.00.00 - Correlação entre Item de Serviço, NBS, cClassTrib e cIndOp (AnexoVII) — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexoviii-correlacaoitemnbsindopcclasstrib_ibscbs_v1-01-00.xlsx",
     "Esquemas XSD - AnexoVI-LeiautesRN_RTC_IBSCBS-V1.01.03 - NT004 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita/nfse-esquemas_xsd-rtc-v1-00-20251210.zip",
     "Nota Técnica 010 SE/CGNFS-e nº 010 versão 1.00 — https://www.gov.br/nfse/pt-br/nfs-e-via/documentacao-tecnica/notas-tecnicas/nt-010-se-cgnfse-leiaute-nfse-via-v-1.00.pdf",
     "Nota Técnica SE/CGNFS-e nº 001 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nota-tecnica-001-se-cgnfse-novo-layout-rtc.pdf",
@@ -40,6 +41,7 @@
     "Nota Técnica SE/CGNFS-e nº 008 — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nt-008-se-cgnfse-danfse-20260714-v1-02.pdf",
     "Nota Técnica SE/CGNFS-e nº 009 versão 1.01 (01/10/2026) — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/nota-tecnica-009-se-cgnfs-e-v-1-01.pdf",
     "aqui — https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita",
+    "https://www.gov.br/nfse/pt-br/nfs-e-via/documentacao-tecnica/notas-tecnicas/nt-010-se-cgnfse-leiaute-nfse-via-v-1.00.pdf",
     "link — https://www.gov.br/nfse/pt-br/nfs-e-via/documentacao-tecnica"
   ],
   "notas-tecnicas": [
@@ -51,7 +53,9 @@
     "03/08/2026 Consulta Pública com exibição dos grupos IBS/CBS; Geração do DANFSe atualizada em conformidade com a Nota Técnica 008 (NT008), por meio da Consulta Pública, do Portal do Contribuinte e do Painel Administrativo Municipal; Evolução do DANFSE e da Consulta Pública: Novos grupos IBS/CBS; Evolução Sefin - Endereço no Exterior do Prestador/Fornecedor; e Desativação da API do DANFSe do ADN (versão 1.0).",
     "10/08/2026 Evolução para tratamento do CNPJ alfanumérico; Emissor Nacional Web - Evolução para destaque de IBS/CBS - NT 004; Emissor Nacional Web para Decisões Administrativas e Judiciais com grupos IBS/CBS; Emissor Nacional Web - Ajustes na Consulta e Ordenação por Datas (Notas emitidas e recebidas); Ajuste no enquadramento e desenquadramento do Simples Nacional na funcionalidade de Substituição de Notas; SEFIN Nacional - Tratamento de casos de enquadramento e desenquadramento de emitente no Simples Nacional; e Evolução no Controle de Acesso ao Portal do Contribuinte.",
     "13/03/2026 - Desligamento da regras E1543, E1547 e E1552 que causavam conflito com demais regras existentes; - Desligamento da regra E0675 e os respectivos reflexos nos emissores nacionais para permitir a informação de tributos federais por prestador/fornecedor pessoa física (CPF); - Melhoria no tratamento da integração com a Calculadora de Tributos para retornar ao usuário a mensagem de erro real que foi lançada pela própria integração; - Ajuste no compartilhamento ADN para tratar corretamente o local de incidência de ISSQN em casos de serviço do subitem 14.14; - Correção do Emissor Nacional Web para aceitar a faixa de série correta (entre 80000 e 89999) quando emissão indicar transcrição manual de número e série de DPS; - Melhoria no tratamento de falhas de esquema para não retornar 999 em alguns casos (exemplo: quando o arquivo não possui o atributo xmlns); - Ajuste na API de consulta NFS-e da Sefin Nacional para considerar codificação UTF-8 no retorno da chamada.",
-    "24/04/2026 Correção de códigos de mensagens, conforme abaixo e criação da regra E1000 para retornar erros da Calculadora RTC. - RNG6110 mudou para E1235 - Falha Schema XML; - E6151 mudou para E1634 - Certificado Digital fora do padrão estabelecido; - E6152 mudou para E1200 - Certificado Digital da transmissao inválido; - E6154 mudou para E1229 - Xml não está utilizando codificação UTF-8; - E6155 mudou para E1228 - Xml declarado com prefixo de namespace; e - E6157 mudou para E1225 - Falha ao descompactar XML Zip B64."
+    "20/10/2026 - - Reposicionamento dos campos CST e cClassTrib na estrutura do XML da nota fiscal (item 2.16 da Nota Técnica 009); - Inclusão dos novos fatos geradores na API de emissão (códigos 99.02 a 99.04, itens 2.15 da Nota Técnica 009 e 2.1.3 da Nota Técnica 005); - Criação do grupo vAjusteBC a partir do merge dos grupos vDedRed e gReeRepRes (item 2.3 da Nota Técnica 009).",
+    "24/04/2026 Correção de códigos de mensagens, conforme abaixo e criação da regra E1000 para retornar erros da Calculadora RTC. - RNG6110 mudou para E1235 - Falha Schema XML; - E6151 mudou para E1634 - Certificado Digital fora do padrão estabelecido; - E6152 mudou para E1200 - Certificado Digital da transmissao inválido; - E6154 mudou para E1229 - Xml não está utilizando codificação UTF-8; - E6155 mudou para E1228 - Xml declarado com prefixo de namespace; e - E6157 mudou para E1225 - Falha ao descompactar XML Zip B64.",
+    "28/09/2026 Nova funcionalidade no Painel Administrativo Municipal para permitir antecipar a adoção do Emissor Nacional para optantes pelo Simples Nacional Nova funcionalidade no Painel Administrativo Municipal para permitir antecipar a adoção do Emissor Nacional para optantes pelo Simples Nacional"
   ],
   "apis": [
     "https://adn.nfse.gov.br/cnc/consulta/docs/index.html",
