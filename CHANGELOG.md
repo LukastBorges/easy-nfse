@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.4...easy-nfse-v0.3.0) (2026-10-29)
+
+
+### Funcionalidades
+
+* **config:** suportar vários certificados digitais, um por prestador ([7929942](https://github.com/LukastBorges/easy-nfse/commit/7929942e50f717957ec674a00735d38d1f6f4e95))
+* **config:** vários certificados digitais, um por prestador ([fb1f0c5](https://github.com/LukastBorges/easy-nfse/commit/fb1f0c52779a17bbf055af63e480ef7b1950e9b4))
+* **ui:** buscar e filtrar templates na home e limitar a 3 linhas ([88e0734](https://github.com/LukastBorges/easy-nfse/commit/88e0734039529532fdc41e4d988487bff92a0464))
+* **ui:** usar ícones Tabler na interface ([2f43562](https://github.com/LukastBorges/easy-nfse/commit/2f43562c0c99097b6ce888d01044efe8fd737c03))
+
+
+### Documentação
+
+* atualizar a captura da tela inicial e citar vários certificados ([843bb42](https://github.com/LukastBorges/easy-nfse/commit/843bb427eb70327ba3288a961d169d3f7dce13b4))
+
 ## [0.2.4](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.2.3...easy-nfse-v0.2.4) (2026-10-29)
 
 
