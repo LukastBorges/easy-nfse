@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.4.0...easy-nfse-v0.4.1) (2026-10-29)
+
+
+### Correções
+
+* **ui:** abrir as notas de atualização na altura certa no macOS ([bb80ac3](https://github.com/LukastBorges/easy-nfse/commit/bb80ac3c043d7608963b507f9ca1112966aaad09))
+* **ui:** abrir as notas de atualização na altura certa no macOS ([9810db0](https://github.com/LukastBorges/easy-nfse/commit/9810db0363026f9b45c000a3dde0cc6a0f785e34))
+
 ## [0.4.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.3.0...easy-nfse-v0.4.0) (2026-10-29)
 
 
