@@ -42,9 +42,9 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest && e.target.closest("[data-copy]");
   if (!btn) return;
   navigator.clipboard.writeText(btn.dataset.copy);
-  const old = btn.textContent;
+  const old = btn.innerHTML;
   btn.textContent = "Copiado!";
-  setTimeout(() => (btn.textContent = old), 1200);
+  setTimeout(() => (btn.innerHTML = old), 1200);
 });
 
 // Campos condicionais: data-show-if="campo:v1|v2;outro:v3" (mostra se QUALQUER condição valer).

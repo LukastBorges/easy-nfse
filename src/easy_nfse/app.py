@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from fastapi import FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from pydantic import ValidationError
 
 from . import danfse, dominios, dps, ibge, importers, ptax, storage
@@ -29,6 +31,19 @@ views.env.filters["doc"] = fmt_doc
 views.env.filters["data"] = lambda d: d.strftime("%d/%m/%Y") if d else ""
 views.env.filters["datahora"] = lambda d: d.strftime("%d/%m/%Y %H:%M") if d else ""
 views.env.globals["consulta_publica"] = lambda chave: CONSULTA_PUBLICA.format(chave=chave)
+
+
+@lru_cache
+def _svg_icone(nome: str) -> str:
+    return (BASE / "static" / "vendor" / "tabler-icons" / f"{nome}.svg").read_text(encoding="utf-8").strip()
+
+
+def icone(nome: str, cls: str = "size-4 shrink-0") -> Markup:
+    """Ícone Tabler embutido no HTML (herda a cor do texto). Novos: rode scripts/icones_tabler.py."""
+    return Markup(_svg_icone(nome).replace("<svg ", f'<svg class="{cls}" aria-hidden="true" ', 1))
+
+
+views.env.globals["icone"] = icone
 
 OP_SIMP_NAC = {"1": "Não optante", "2": "MEI", "3": "ME/EPP (Simples Nacional)"}
 REG_AP_TRIB_SN = {

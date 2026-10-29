@@ -15,7 +15,7 @@ com cNaoNIF = 1, NBS obrigatório, comExt em USD e conversão pela PTAX.
 ## Stack e comandos
 
 - Python 3.13 com **uv**, FastAPI, Jinja2, **htmx**, **Tailwind v4 (browser build)**, lxml, cryptography, pdfplumber, reportlab, httpx.
-- Front sem build: `static/vendor/` tem htmx e Tailwind versionados. Não adicione npm nem bundler.
+- Front sem build: `static/vendor/` tem htmx, Tailwind e os ícones Tabler usados (`tabler-icons/`) versionados. Não adicione npm nem bundler.
 
 ```bash
 uv run easy-nfse                     # sobe em http://127.0.0.1:8000 e abre o navegador
@@ -89,6 +89,11 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `dark:`**. Preflight remove `cursor: pointer` (regra global em `base.html`).
 - **htmx**: formulários com `hx-*` recebem fragmentos (`templates/partials/`); formulários sem htmx precisam de página completa
   (ex.: erro em `/danfse` renderiza `historico.html`). Redirecionamento após htmx: header `HX-Redirect`.
+- **Ícones**: só [Tabler](https://tabler.io/icons) (outline), via `{{ icone('nome', 'classes') }}` (helper em `app.py`, SVG
+  embutido, herda a cor do texto). Não use SVG inline nem glifos (✓, !, ←, ↗, 🌐). Ao usar um ícone novo, rode
+  `uv run python scripts/icones_tabler.py` (baixa os usados da versão fixada, apaga os sem uso). O script só enxerga nomes
+  em linhas que contêm `icone`: ao escolher o ícone por variável/dicionário, nomeie-a `icone_*`/`icones_*`.
+  `test_icones_dos_templates_existem` confere os nomes literais.
 - **Confirmações**: nunca use `confirm()`/`onclick`. Use `hx-confirm="texto"` (htmx) ou `data-confirm="texto"` (botão
   de formulário comum), com `data-confirm-titulo`, `data-confirm-acao` e `data-confirm-perigo` opcionais. O diálogo
   `#confirmar` fica em `base.html` e a lógica em `app.js`.

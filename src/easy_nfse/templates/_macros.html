@@ -26,12 +26,16 @@
   'info': 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-900 dark:text-indigo-200 ring-indigo-200 dark:ring-indigo-500/30',
   'ok': 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 ring-emerald-200 dark:ring-emerald-500/30',
 } %}
-<div class="rounded-2xl p-4 text-sm ring-1 {{ styles[kind] }}">
-  {% if title %}<p class="font-semibold">{{ title }}</p>{% endif %}
-  {% if items %}
-  <ul class="{{ 'mt-2' if title }} list-disc space-y-1 pl-5">
-    {% for i in items %}<li>{{ i }}</li>{% endfor %}
-  </ul>
-  {% endif %}
+{% set icones = {'error': 'alert-circle', 'warn': 'alert-triangle', 'info': 'info-circle', 'ok': 'circle-check'} %}
+<div class="flex gap-3 rounded-2xl p-4 text-sm ring-1 {{ styles[kind] }}">
+  {{ icone(icones[kind], 'mt-px size-5 shrink-0') }}
+  <div class="min-w-0 flex-1">
+    {% if title %}<p class="font-semibold">{{ title }}</p>{% endif %}
+    {% if items %}
+    <ul class="{{ 'mt-2' if title }} list-disc space-y-1 pl-5">
+      {% for i in items %}<li>{{ i }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
 </div>
 {%- endmacro %}

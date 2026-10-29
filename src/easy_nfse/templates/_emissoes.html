@@ -3,12 +3,12 @@
 <section class="mt-12">
   <div class="flex items-end justify-between">
     <h2 class="text-lg font-semibold tracking-tight">Últimas emissões</h2>
-    <a href="/historico" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Ver todas</a>
+    <a href="/historico" class="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Ver todas{{ icone('arrow-right') }}</a>
   </div>
   <div class="card mt-4 divide-y divide-slate-100 dark:divide-slate-800">
     {% for e in emissoes %}
     <div class="flex items-center gap-4 px-5 py-3 text-sm">
-      <span class="grid size-8 place-items-center rounded-lg {{ 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' if e.ambiente == '1' else 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400' }}">✓</span>
+      <span class="grid size-8 place-items-center rounded-lg {{ 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' if e.ambiente == '1' else 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400' }}">{{ icone('file-check') }}</span>
       <div class="min-w-0 flex-1">
         <div class="truncate font-medium">{{ e.tomador or e.template_nome }}</div>
         <div class="flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
