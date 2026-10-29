@@ -21,7 +21,7 @@
   {% else %}
     {% call linha('circle-check', 'text-emerald-600 dark:text-emerald-400') %}Você está na versão mais recente ({{ st.atual }}).{% endcall %}
   {% endif %}
-  {% if st.nova and st.pagina and not instalando %}
-    <a href="{{ st.pagina }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Novidades{{ icone('external-link', 'size-3.5') }}</a>
+  {% if st.nova and not instalando %}
+    <button type="button" data-abrir-notas class="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">{{ icone('notes', 'size-3.5') }}Novidades</button>
   {% endif %}
 </div>

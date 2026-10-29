@@ -191,3 +191,50 @@ def test_interface(amb, monkeypatch):
     monkeypatch.setattr(atualizacao, "pasta_do_app", lambda: None)
     assert "git pull" in cli.post("/atualizacao/instalar").text
 
+
+CHANGELOG = """# Changelog
+
+## [0.4.0](https://github.com/x/compare/a...b) (2026-11-05)
+
+
+### Funcionalidades
+
+* **desktop:** atualizar o app automaticamente ([abc1234](https://github.com/x/commit/abc1234))
+* **desktop:** atualizar o app automaticamente ([def5678](https://github.com/x/commit/def5678))
+* menu com ajuda e sobre ([1111111](https://github.com/x/commit/1111111)), closes [#7](https://github.com/x/issues/7)
+
+
+### Documentação
+
+* **agents:** anotar algo interno ([2222222](https://github.com/x/commit/2222222))
+
+## [0.3.0](https://github.com/x/compare/c...d) (2026-10-29)
+
+
+### Build e dependências
+
+* **deps:** atualizar algo ([3333333](https://github.com/x/commit/3333333))
+"""
+
+
+def test_notas_do_changelog():
+    v4, v3 = atualizacao.notas(CHANGELOG)
+    assert (v4["versao"], v4["data"]) == ("0.4.0", "2026-11-05")
+    assert [s["titulo"] for s in v4["secoes"]] == ["Funcionalidades"]  # documentação fica de fora
+    assert v4["secoes"][0]["itens"] == [  # sem hashes, sem "closes" e sem o item repetido
+        {"escopo": "desktop", "texto": "atualizar o app automaticamente"},
+        {"escopo": "", "texto": "menu com ajuda e sobre"},
+    ]
+    assert v3["secoes"] == []
+    assert atualizacao.changelog()  # o CHANGELOG.md do repositório é encontrado
+
+
+def test_rota_de_notas_mostra_a_versao_nova_e_a_instalada(amb, monkeypatch):
+    amb["estado"]["release"] = release(body=CHANGELOG.split("## [0.3.0]")[0])
+    atualizacao.verificar()
+    monkeypatch.setattr(atualizacao, "changelog", lambda: atualizacao.notas(CHANGELOG)[1:])
+    monkeypatch.setattr(webapp.atualizacao, "status", atualizacao.status)
+    html = TestClient(webapp.app).get("/notas").text
+    assert "Versão 0.4.0" in html and "disponível" in html and "Atualizar o app automaticamente" in html
+    assert "Versão 0.3.0" in html and "instalada" in html and "Só ajustes internos" in html
+    assert "abc1234" not in html

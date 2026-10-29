@@ -148,6 +148,7 @@ def verificar(forcar: bool = False) -> dict:
         "pacote_url": pacote["browser_download_url"] if pacote else "",
         "pacote_nome": pacote["name"] if pacote else "",
         "sha256": (pacote or {}).get("digest", "").removeprefix("sha256:"),
+        "notas": (rel.get("body") or "")[:50_000],  # changelog da versão nova (mesmo formato do CHANGELOG.md)
     }
     # mantém o download já feito (e a tentativa de instalação) se a versão não mudou
     if e.get("versao") == novo["versao"]:
@@ -225,6 +226,49 @@ def iniciar_em_segundo_plano() -> None:
             parar.wait(INTERVALO.total_seconds())
 
     threading.Thread(target=laco, name="atualizacao", daemon=True).start()
+
+
+# --- notas de atualização (changelog) ---------------------------------------------
+
+SECOES_VISIVEIS = ("Funcionalidades", "Correções", "Desempenho")  # o resto (docs, build, CI) não interessa a quem usa
+_VERSAO_MD = re.compile(r"^##\s+\[?(\d+\.\d+\.\d+)\]?(?:\([^)]*\))?\s*(?:\((\d{4}-\d{2}-\d{2})\))?")
+_ITEM_MD = re.compile(r"^\*\s+(?:\*\*([^*]+?):\*\*\s+)?(.+)$")
+_REFS_MD = re.compile(r"\s*\(\[[0-9a-f]{7,40}\]\([^)]*\)\)(?:,\s*closes\s+.*)?$")
+
+
+def notas(markdown: str) -> list[dict]:
+    """Lê o changelog do release-please: [{versao, data, secoes: [{titulo, itens: [{escopo, texto}]}]}]."""
+    versoes: list[dict] = []
+    secao: dict | None = None
+    for linha in markdown.splitlines():
+        if m := _VERSAO_MD.match(linha):
+            versoes.append({"versao": m.group(1), "data": m.group(2) or "", "secoes": []})
+            secao = None
+        elif linha.startswith("### ") and versoes:
+            titulo = linha[4:].strip()
+            secao = {"titulo": titulo, "itens": []} if titulo in SECOES_VISIVEIS else None
+            if secao:
+                versoes[-1]["secoes"].append(secao)
+        elif secao is not None and (m := _ITEM_MD.match(linha.strip())):
+            item = {"escopo": m.group(1) or "", "texto": _REFS_MD.sub("", m.group(2)).strip()}
+            if item not in secao["itens"]:  # o release-please repete o commit e o merge do PR
+                secao["itens"].append(item)
+    return versoes
+
+
+def changelog() -> list[dict]:
+    """Notas das versões até a instalada (CHANGELOG.md vai junto no app empacotado)."""
+    aqui = Path(__file__).resolve().parent
+    for arq in (aqui / "CHANGELOG.md", aqui.parents[1] / "CHANGELOG.md"):
+        if arq.exists():
+            return notas(arq.read_text(encoding="utf-8"))
+    return []
+
+
+def notas_da_versao_nova() -> list[dict]:
+    if not status()["nova"]:
+        return []
+    return [v for v in notas(_ler().get("notas", "")) if versao(v["versao"]) > versao(__version__)]
 
 
 # --- instalar ------------------------------------------------------------------------

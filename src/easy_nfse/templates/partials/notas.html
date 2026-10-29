@@ -1,0 +1,33 @@
+{# Notas de atualização (diálogo #notas). Precisa de: atualizacao, nova (versão disponível), versoes (CHANGELOG.md) #}
+{% macro versao_bloco(v, selo='', cor='') -%}
+<section class="py-4 first:pt-0">
+  <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+    <h3 class="text-base font-semibold">Versão {{ v.versao }}</h3>
+    {% if v.data %}<span class="text-xs text-slate-500 dark:text-slate-400">{{ v.data[8:10] }}/{{ v.data[5:7] }}/{{ v.data[:4] }}</span>{% endif %}
+    {% if selo %}<span class="rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">{{ selo }}</span>{% endif %}
+  </div>
+  {% for s in v.secoes %}
+  <h4 class="mt-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    {{ icone({'Funcionalidades': 'sparkles', 'Correções': 'tool', 'Desempenho': 'bolt'}.get(s.titulo, 'point'), 'size-3.5') }}{{ s.titulo }}</h4>
+  <ul class="mt-1.5 space-y-1.5 text-sm">
+    {% for i in s.itens %}
+    <li class="flex items-start gap-2">
+      <span class="mt-2 size-1 shrink-0 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+      <span class="min-w-0">{% if i.escopo %}<span class="mr-1 rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">{{ i.escopo }}</span>{% endif %}{{ i.texto[:1]|upper }}{{ i.texto[1:] }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Só ajustes internos (documentação, build).</p>
+  {% endfor %}
+</section>
+{%- endmacro %}
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+  {% for v in nova %}{{ versao_bloco(v, 'disponível', 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 ring-indigo-200 dark:ring-indigo-500/30') }}{% endfor %}
+  {% for v in versoes %}
+    {% if v.versao == atualizacao.atual %}{{ versao_bloco(v, 'instalada', 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-500/30') }}
+    {% else %}{{ versao_bloco(v) }}{% endif %}
+  {% else %}
+  <p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Notas indisponíveis nesta instalação.</p>
+  {% endfor %}
+</div>

@@ -146,6 +146,11 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   atrás (`.antigo`) e reabre. Tenta instalar na abertura **uma vez por versão** (evita laço se falhar). Depende dos nomes
   `easy-nfse-vX.Y.Z-<plataforma>.(dmg|zip)` e do `.zip` do Windows conter a pasta `easy-nfse/`: se mudar o empacotamento,
   ajuste `atualizacao.plataforma`/`_extrair`. O script sh limita a espera (~2 min): `kill -0` responde para processo zumbi.
+- **Menu ⋮ do cabeçalho** (`base.html`): Ajuda (README), Notas de atualização, Reportar um problema (issues) e, por último,
+  Sobre (versão, "Verificar agora" e link do código-fonte; o item mostra a versão nova quando houver). As notas vêm de `atualizacao.notas()`, um leitor do formato do
+  release-please que mostra só Funcionalidades/Correções/Desempenho: o `CHANGELOG.md` (versões até a instalada; vai no
+  app pelo `.spec`) e o corpo da release nova (guardado em `estado.json`). Se mudar as seções do release-please
+  (`release-please-config.json`), ajuste `SECOES_VISIVEIS`.
 - `tzdata` é dependência só no Windows (não há base de fusos no sistema para `zoneinfo`).
 - O repositório usa **releases imutáveis**: publicada, a release não aceita arquivos novos (HTTP 422). Por isso o
   release-please cria a release como **rascunho** (`draft` + `force-tag-creation`), os builds anexam os executáveis

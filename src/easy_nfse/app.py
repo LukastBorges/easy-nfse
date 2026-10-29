@@ -763,6 +763,12 @@ def instalar_atualizacao(request: Request):
     return render(request, "partials/atualizacao.html", instalando=True)
 
 
+@app.get("/notas", response_class=HTMLResponse)
+def notas_de_atualizacao(request: Request):
+    return render(request, "partials/notas.html", nova=atualizacao.notas_da_versao_nova(),
+                  versoes=atualizacao.changelog())
+
+
 @app.post("/atualizacao/dispensar")
 def dispensar_aviso_atualizacao():
     atualizacao.dispensar_aviso()
