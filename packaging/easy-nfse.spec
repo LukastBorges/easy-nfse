@@ -22,6 +22,7 @@ datas = (
     collect_data_files("easy_nfse")  # templates, static, xsd, paises.json
     + collect_data_files("reportlab")  # fontes usadas no DANFSe
     + copy_metadata("easy-nfse")  # para importlib.metadata.version() funcionar no app
+    + [(str(RAIZ / "CHANGELOG.md"), "easy_nfse")]  # notas de atualização (menu ⋮ → Notas de atualização)
 )
 hiddenimports = (
     collect_submodules("uvicorn")

@@ -28,6 +28,8 @@ quando ele está perto de vencer. A imagem acompanha o tema (claro ou escuro) do
 - **Tomador do exterior e exportação de serviço**, com conversão do valor em moeda estrangeira pela PTAX.
 - Geração do **PDF da nota (DANFSe v2.0)** e histórico das emissões, com download do PDF e do XML.
 - Numeração da DPS automática e protegida contra notas duplicadas.
+- **Atualização automática** do app instalado: baixa a versão nova sozinho, confere a integridade e instala com um
+  clique (ou ao abrir o app). As notas de cada versão ficam no menu ⋮.
 - Tema claro e escuro.
 
 ## Requisitos

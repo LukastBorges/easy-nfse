@@ -181,3 +181,68 @@ document.addEventListener("click", (e) => {
     delete btn.dataset.confirmado;
   });
 });
+
+// Menu do cabeçalho (⋮): abre/fecha no botão; fecha com clique fora, Esc ou ao escolher um item.
+function fecharMenus(exceto) {
+  document.querySelectorAll("[data-menu]").forEach((m) => {
+    if (m === exceto) return;
+    m.querySelector("[role=menu]").hidden = true;
+    m.querySelector("[data-menu-botao]").setAttribute("aria-expanded", "false");
+  });
+}
+document.addEventListener("click", (e) => {
+  const botao = e.target.closest && e.target.closest("[data-menu-botao]");
+  if (!botao) return fecharMenus();
+  const menu = botao.closest("[data-menu]");
+  const lista = menu.querySelector("[role=menu]");
+  fecharMenus(menu);
+  lista.hidden = !lista.hidden;
+  botao.setAttribute("aria-expanded", String(!lista.hidden));
+  if (!lista.hidden) lista.querySelector("[role=menuitem]").focus();
+});
+document.addEventListener("keydown", (e) => {
+  const lista = document.activeElement && document.activeElement.closest("[role=menu]");
+  if (e.key === "Escape" && lista) {
+    fecharMenus();
+    lista.closest("[data-menu]").querySelector("[data-menu-botao]").focus();
+  } else if (lista && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+    e.preventDefault();
+    const itens = [...lista.querySelectorAll("[role=menuitem]")];
+    const i = itens.indexOf(document.activeElement) + (e.key === "ArrowDown" ? 1 : -1);
+    itens[(i + itens.length) % itens.length].focus();
+  }
+});
+
+// Diálogo "Sobre" (versão e atualizações).
+document.addEventListener("click", (e) => {
+  const item = e.target.closest && e.target.closest("[data-abrir-sobre]");
+  if (!item) return;
+  const dlg = document.getElementById("sobre");
+  dlg.showModal();
+});
+document.getElementById("sobre")?.addEventListener("click", (e) => {
+  if (e.target.id === "sobre") e.target.close(); // clique no fundo fecha
+});
+
+// Notas de atualização: abre o diálogo e carrega o changelog (só quando pedido).
+document.addEventListener("click", (e) => {
+  const item = e.target.closest && e.target.closest("[data-abrir-notas]");
+  if (!item) return;
+  document.getElementById("sobre")?.close();
+  const dlg = document.getElementById("notas");
+  dlg.querySelector("#notas-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Carregando…</p>';
+  dlg.showModal();
+  htmx.ajax("GET", "/notas", "#notas-conteudo");
+});
+
+// Campos que salvam sozinhos (data-salva-sozinho + hx-post): se a gravação falhar, desfaz a mudança e avisa,
+// em vez de deixar parecer que salvou.
+function falhaAoSalvar(e) {
+  const el = e.detail.elt;
+  if (!el.matches || !el.matches("[data-salva-sozinho]")) return;
+  if (el.type === "checkbox") el.checked = !el.checked;
+  const alvo = document.querySelector(el.getAttribute("hx-target"));
+  if (alvo) alvo.innerHTML = '<span class="text-rose-700 dark:text-rose-300">Não foi possível salvar. Feche e abra o easy-nfse e tente de novo.</span>';
+}
+document.addEventListener("htmx:responseError", falhaAoSalvar);
+document.addEventListener("htmx:sendError", falhaAoSalvar);

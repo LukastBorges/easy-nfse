@@ -45,6 +45,7 @@
     @utility btn-success { @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-500; }
     @utility btn-ghost { @apply btn bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40; }
     @utility btn-danger { @apply btn text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10; }
+    @utility menu-item { @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800 focus-visible:outline-none; }
     @utility card { @apply rounded-2xl bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-800; }
     @utility label { @apply mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400; }
     @utility input { @apply block w-full rounded-xl border-0 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 ring-1 ring-slate-300 dark:ring-slate-700 ring-inset placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-600 focus:ring-inset focus:outline-none; }
@@ -94,8 +95,32 @@
           </span>
         {% endif %}
       </a>
+      {% set versao = atualizacao.atual if atualizacao else '' %}
+      <div class="relative shrink-0" data-menu>
+        <button type="button" data-menu-botao aria-haspopup="menu" aria-expanded="false" aria-controls="menu-app"
+                class="relative grid size-8 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 sm:size-9"
+                title="Mais opções" aria-label="Mais opções">
+          {{ icone('dots-vertical', 'size-[18px]') }}
+          {% if atualizacao and atualizacao.nova %}<span class="absolute top-1 right-1 size-2 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-slate-950" aria-hidden="true"></span>{% endif %}
+        </button>
+        <div id="menu-app" role="menu" hidden
+             class="absolute top-full right-0 z-40 mt-2 w-64 rounded-xl bg-white dark:bg-slate-900 p-1.5 shadow-lg ring-1 ring-slate-200 dark:ring-slate-800">
+          <a role="menuitem" href="https://github.com/LukastBorges/easy-nfse#readme" target="_blank" rel="noopener" class="menu-item">
+            {{ icone('help-circle', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Ajuda{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-slate-400 dark:text-slate-500') }}</a>
+          <button role="menuitem" type="button" data-abrir-notas class="menu-item">
+            {{ icone('notes', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Notas de atualização</button>
+          <a role="menuitem" href="https://github.com/LukastBorges/easy-nfse/issues" target="_blank" rel="noopener" class="menu-item">
+            {{ icone('bug', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Reportar um problema{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-slate-400 dark:text-slate-500') }}</a>
+          <div class="my-1 border-t border-slate-100 dark:border-slate-800" role="separator"></div>
+          <button role="menuitem" type="button" data-abrir-sobre class="menu-item">
+            {{ icone('info-circle', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Sobre o easy-nfse
+            {% if atualizacao and atualizacao.nova %}<span class="ml-auto rounded-full bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300" title="Versão nova disponível">{{ atualizacao.nova }}</span>
+            {% else %}<span class="ml-auto text-xs tabular-nums text-slate-400 dark:text-slate-500">v{{ versao }}</span>{% endif %}</button>
+        </div>
+      </div>
     </div>
   </header>
+  {% if atualizacao %}{% include "_aviso_atualizacao.html" %}{% endif %}
 
   <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
     {% block content %}{% endblock %}
@@ -118,6 +143,55 @@
         <button value="ok" id="confirmar-ok" class="btn-primary">Confirmar</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="sobre" aria-labelledby="sobre-titulo"
+          class="m-auto w-[min(28rem,calc(100%-2rem))] rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm">
+    <div class="p-6">
+      <div class="flex items-center gap-4">
+        <img src="/static/logo.svg" alt="" class="size-14 drop-shadow-sm">
+        <div>
+          <h2 id="sobre-titulo" class="text-lg font-semibold">easy<span class="text-indigo-600 dark:text-indigo-400">nfse</span></h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Versão {{ versao }}</p>
+        </div>
+      </div>
+      <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Emissão de NFS-e do padrão nacional (Sefin Nacional) a partir de
+        uma nota anterior. Roda só no seu computador: certificados, templates e notas não saem dele.</p>
+      <div class="mt-5 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-4 ring-1 ring-slate-200 dark:ring-slate-800">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-sm font-semibold">Atualizações</span>
+          <button type="button" id="sobre-verificar" class="btn-ghost px-3 py-1.5" hx-post="/atualizacao/verificar"
+                  hx-target="#sobre-atualizacao" hx-disabled-elt="this">
+            <span class="htmx-hide-on-request inline-flex">{{ icone('refresh') }}</span><span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>Verificar agora</button>
+        </div>
+        <div id="sobre-atualizacao" class="mt-3 empty:hidden">{% if atualizacao and atualizacao.nova %}{% include "partials/atualizacao.html" %}{% endif %}</div>
+        <label class="mt-3 flex items-start gap-3 border-t border-slate-200 dark:border-slate-700 pt-3 text-sm">
+          <input type="checkbox" name="ativa" value="1" {{ 'checked' if cfg.verificar_atualizacoes }}
+                 hx-post="/atualizacao/automatica" hx-trigger="change" hx-target="#sobre-auto-salvo" data-salva-sozinho
+                 class="mt-0.5 size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
+          <span>Verificar e baixar atualizações automaticamente
+            <span class="block text-xs text-slate-500 dark:text-slate-400">Consulta as versões publicadas no GitHub a cada 6 horas.
+              A instalação só acontece quando você clica em "Reiniciar e atualizar" ou ao abrir o app.</span>
+            <span id="sobre-auto-salvo" class="block text-xs font-medium empty:hidden" aria-live="polite"></span></span>
+        </label>
+      </div>
+      <ul class="mt-4 space-y-1 text-sm">
+        <li><a href="https://github.com/LukastBorges/easy-nfse" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline">{{ icone('brand-github') }}Código-fonte</a></li>
+      </ul>
+      <form method="dialog" class="mt-6 flex justify-end">
+        <button class="btn-ghost" autofocus>Fechar</button>
+      </form>
+    </div>
+  </dialog>
+  <dialog id="notas" aria-labelledby="notas-titulo"
+          class="m-auto flex max-h-[min(44rem,calc(100%-2rem))] w-[min(40rem,calc(100%-2rem))] flex-col rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm [&:not([open])]:hidden">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+      <h2 id="notas-titulo" class="flex items-center gap-2 text-base font-semibold">{{ icone('notes', 'size-5 text-slate-400 dark:text-slate-500') }}Notas de atualização</h2>
+      <form method="dialog"><button class="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button></form>
+    </div>
+    <div id="notas-conteudo" class="min-h-0 flex-1 overflow-y-auto px-6 py-5"></div>
+    <div class="border-t border-slate-100 dark:border-slate-800 px-6 py-3 text-right text-sm">
+      <a href="https://github.com/LukastBorges/easy-nfse/releases" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Todas as versões no GitHub{{ icone('external-link', 'size-3.5') }}</a>
+    </div>
   </dialog>
   <script src="/static/app.js"></script>
 </body>

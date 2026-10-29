@@ -157,6 +157,7 @@ class Config(BaseModel):
     certificados: list[CertificadoSalvo] = Field(default_factory=list)
     certificado_senha: str = ""  # legado: senha do certificado único (migrada para `certificados`)
     verificar_tls: bool = True
+    verificar_atualizacoes: bool = True  # consulta as releases do GitHub e baixa a versão nova (ver atualizacao.py)
 
     @staticmethod
     def chave_numeracao(ambiente: str, documento: str, serie: str) -> str:

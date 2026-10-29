@@ -1,0 +1,27 @@
+{# Estado da atualização (resposta de verificar/instalar). Precisa de: atualizacao; opcionais: erro, instalando #}
+{% set st = atualizacao %}
+{% macro linha(nome_icone, cor) -%}
+<span class="flex min-w-0 items-start gap-1.5">{{ icone(nome_icone, 'mt-0.5 size-4 shrink-0 ' ~ cor) }}<span class="min-w-0">{{ caller() }}</span></span>
+{%- endmacro %}
+<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+  {% if instalando %}
+    {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Instalando a versão <b>{{ st.nova }}</b>. O easy-nfse vai fechar e reabrir em instantes.{% endcall %}
+  {% elif erro %}
+    {% call linha('alert-circle', 'text-rose-600 dark:text-rose-400') %}<span class="text-rose-700 dark:text-rose-300">{{ erro }}</span>{% endcall %}
+  {% elif st.nova and st.pronta %}
+    {% call linha('circle-check', 'text-emerald-600 dark:text-emerald-400') %}Versão <b>{{ st.nova }}</b> baixada e verificada.{% endcall %}
+    <button class="btn-primary px-3 py-1.5" hx-post="/atualizacao/instalar" hx-target="closest div" hx-swap="outerHTML"
+            hx-disabled-elt="this" hx-confirm="O easy-nfse vai fechar e reabrir na versão {{ st.nova }}. Seus certificados, templates e notas não são alterados."
+            data-confirm-titulo="Atualizar agora?" data-confirm-acao="Reiniciar e atualizar">{{ icone('refresh') }}Reiniciar e atualizar</button>
+  {% elif st.nova and st.instalavel %}
+    {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. Baixando em segundo plano…
+      {% if st.erro %}<span class="text-rose-700 dark:text-rose-300">Última tentativa: {{ st.erro }}</span>{% endif %}{% endcall %}
+  {% elif st.nova %}
+    {% call linha('info-circle', 'text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. {{ st.motivo }}{% endcall %}
+  {% else %}
+    {% call linha('circle-check', 'text-emerald-600 dark:text-emerald-400') %}Você está na versão mais recente ({{ st.atual }}).{% endcall %}
+  {% endif %}
+  {% if st.nova and not instalando %}
+    <button type="button" data-abrir-notas class="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">{{ icone('notes', 'size-3.5') }}Novidades</button>
+  {% endif %}
+</div>

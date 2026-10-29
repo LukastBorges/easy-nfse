@@ -88,6 +88,10 @@ def main() -> None:
         return
 
     _configurar_logs()
+    from . import atualizacao
+
+    if atualizacao.ao_abrir():  # versão nova já baixada: instala antes de qualquer emissão e reabre
+        return
     try:
         import uvicorn
 
