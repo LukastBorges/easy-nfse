@@ -58,7 +58,10 @@ def template(**over) -> Template:
 
 
 def dados(**over) -> dps.DadosEmissao:
-    base = dict(competencia=dt.date.today(), valor=Decimal("1500"), descricao="Serviço\nlinha 2",
+    # Data de Brasília, e não a do sistema: a CI roda em UTC e, perto da meia-noite, a competência
+    # ficaria depois do dhEmi (que ainda desconta 1 min de margem) → E0015.
+    hoje = (dt.datetime.now(dps.TZ) - dt.timedelta(minutes=5)).date()
+    base = dict(competencia=hoje, valor=Decimal("1500"), descricao="Serviço\nlinha 2",
                 serie="1", n_dps=7, ambiente="2")
     base.update(over)
     return dps.DadosEmissao(**base)
