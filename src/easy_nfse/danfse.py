@@ -387,11 +387,13 @@ def gerar(nfse_xml: bytes) -> bytes:
             ("Suspensão da Exigibilidade do ISSQN", "Sim" if tm.find("exigSusp") is not None else "Não", 1),
             ("Número Processo Suspensão", _d(tm("exigSusp/nProcesso")), 1),
         ])
-    if tm.find("BM") is not None or v.find("vDedRed") is not None or v("vDescCondIncond/vDescIncond"):
+    # NT 009 (2.3): vDedRed virou vAjusteBC e vCalcDR virou vCalcAjusteBCISSQN; lê os dois leiautes.
+    ajuste_bc = v.find("vDedRed") is not None or v.find("vAjusteBC") is not None
+    if tm.find("BM") is not None or ajuste_bc or v("vDescCondIncond/vDescIncond"):
         pg.linha_celulas([
             ("Benefício Municipal", _d(tm("BM/nBM")), 1),
             ("Cálculo do BM", _money(vn("vCalcBM")), 1),
-            ("Total Deduções/Reduções", _money(vn("vCalcDR")), 1),
+            ("Total Deduções/Reduções", _money(vn("vCalcDR") or vn("vCalcAjusteBCISSQN")), 1),
             ("Desconto Incondicionado", _money(v("vDescCondIncond/vDescIncond")), 1),
         ])
     pg.linha_celulas([

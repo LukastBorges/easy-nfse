@@ -58,7 +58,10 @@ def template(**over) -> Template:
 
 
 def dados(**over) -> dps.DadosEmissao:
-    base = dict(competencia=dt.date.today(), valor=Decimal("1500"), descricao="Serviço\nlinha 2",
+    # Data de Brasília, e não a do sistema: a CI roda em UTC e, perto da meia-noite, a competência
+    # ficaria depois do dhEmi (que ainda desconta 1 min de margem) → E0015.
+    hoje = (dt.datetime.now(dps.TZ) - dt.timedelta(minutes=5)).date()
+    base = dict(competencia=hoje, valor=Decimal("1500"), descricao="Serviço\nlinha 2",
                 serie="1", n_dps=7, ambiente="2")
     base.update(over)
     return dps.DadosEmissao(**base)
@@ -266,6 +269,24 @@ def test_danfse_pdf(tpl):
     assert "R$ 1.500,00" in texto
     if tpl == "exportacao":
         assert "Exportação de Serviço" in texto and "USD 200,00" in texto and "San Francisco" in texto
+
+
+@pytest.mark.parametrize("grupo,calc", [("vDedRed", "vCalcDR"), ("vAjusteBC", "vCalcAjusteBCISSQN")])
+def test_le_ajuste_bc_nos_dois_leiautes(grupo, calc):
+    """NT 009 (2.3): vDedRed/vCalcDR viraram vAjusteBC/vCalcAjusteBCISSQN; o app só lê esses grupos."""
+    import pdfplumber
+    from easy_nfse import danfse
+
+    root, _ = dps.montar(template(), dados())
+    ns = {"n": dps.NS}
+    root.find(".//n:valores", ns).append(etree.Element(f"{{{dps.NS}}}{grupo}"))
+    nfse = etree.fromstring(_nfse(root))
+    etree.SubElement(nfse.find("n:infNFSe/n:valores", ns), f"{{{dps.NS}}}{calc}").text = "123.45"
+
+    kw = nfse_xml.parse(etree.tostring(nfse))
+    assert any("deduções" in a for a in kw["avisos"])
+    with pdfplumber.open(io.BytesIO(danfse.gerar(etree.tostring(nfse)))) as p:
+        assert "R$ 123,45" in p.pages[0].extract_text()
 
 
 def test_ibge_bloqueado_nao_quebra_o_pdf(monkeypatch):
