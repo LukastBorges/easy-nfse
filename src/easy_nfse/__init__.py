@@ -3,7 +3,7 @@ from importlib.metadata import PackageNotFoundError, version
 try:  # fonte única da versão: o pyproject.toml (atualizado pelo release-please)
     __version__ = version("easy-nfse")
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "0.4.0"
+    __version__ = "0.4.1"
 
 
 def main() -> None:
