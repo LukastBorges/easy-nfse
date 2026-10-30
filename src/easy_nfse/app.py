@@ -747,6 +747,13 @@ def verificar_atualizacao(request: Request):
     st = atualizacao.status()
     if st["nova"] and st["instalavel"] and not st["pronta"]:  # baixa em segundo plano (~50 MB)
         threading.Thread(target=atualizacao.verificar_e_baixar, kwargs={"forcar": True}, daemon=True).start()
+        st["baixando"] = True  # a thread pode ainda não ter pegado a trava
+    return render(request, "partials/atualizacao.html", atualizacao=st)
+
+
+@app.get("/atualizacao/estado", response_class=HTMLResponse)
+def estado_atualizacao(request: Request):
+    """Consultado a cada poucos segundos pelo aviso enquanto o download está em andamento."""
     return render(request, "partials/atualizacao.html")
 
 
