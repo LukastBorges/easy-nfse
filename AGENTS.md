@@ -31,23 +31,23 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `app.py` | Rotas FastAPI, fluxo importar → editar → revisar → emitir, histórico, configurações, `/cotacao`, `/danfse` |
-| `models.py` | Pydantic: `Template` (prestador, tomador, serviço, tributação, `com_ext`, `certificado_id`), `Config` (com a lista `certificados`), `CertificadoSalvo`, `Emissao` |
-| `dps.py` | `validar_template`, `montar` (DPS v1.01) e validação XSD. **Regras de negócio da Sefin ficam aqui** |
+| `app.py` | Rotas FastAPI, fluxo importar → editar → revisar → emitir, cadastros, histórico, configurações, `/cotacao`, `/danfse` |
+| `models.py` | Pydantic: `Prestador` (com `certificado_id`) e `Tomador` (cadastros), `Template` (`prestador_id`, `tomador_id`, serviço, tributação, `com_ext`), `Config` (com a lista `certificados`), `CertificadoSalvo`, `Emissao` |
+| `dps.py` | `validar_prestador`, `validar_tomador`, `validar_template`, `montar` (DPS v1.01) e validação XSD. **Regras de negócio da Sefin ficam aqui** |
 | `certificado.py` | Leitura do .pfx, CNPJ/CPF pelas OIDs ICP-Brasil, **XMLDSig feito à mão**, contexto mTLS |
 | `sefin.py` | Cliente da API (`POST /nfse`, `GET /nfse/{chave}`, `GET/HEAD /dps/{id}`), parse de erros |
 | `danfse.py` | Gera o PDF **DANFSe v2.0** (NT 008/2026) a partir do XML da NFS-e (reportlab) |
-| `importers/` | `nfse_xml.py` (fiel), `danfse_pdf.py` (heurístico: grade v1/v2 + lista da Consulta Pública), `__init__.py` (campos → Template) |
+| `importers/` | `nfse_xml.py` (fiel), `danfse_pdf.py` (heurístico: grade v1/v2 + lista da Consulta Pública), `__init__.py` (campos → Template, ligando aos cadastros) |
 | `dominios.py` | Países ISO2 (`paises.json`, do Anexo A oficial), moedas BACEN, enums lidos do XSD |
 | `ibge.py`, `ptax.py` | Códigos IBGE (API do IBGE, cache em `data/cache`) e cotação PTAX (BCB) |
-| `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `emissoes/` + `emissoes.jsonl`, `certificados/<id>.pfx` |
+| `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `prestadores/*.json`, `tomadores/*.json`, `emissoes/` + `emissoes.jsonl`, `certificados/<id>.pfx`; chave única e migração dos cadastros |
 | `xsd/` | XSDs oficiais **v1.01** (com um patch, ver abaixo) |
 | `atualizacao.py` | Atualização do app empacotado: checa a release mais recente (6 h), baixa o pacote da plataforma, confere o SHA-256 (`digest` da API do GitHub) e instala por troca de pastas |
 | `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
 | `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
-| `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema) |
-| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão), `/templates/{id}/editar`, `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
-| Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html` |
+| `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema, diálogo de cadastro) |
+| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão, com troca do prestador/tomador só para a nota), `/templates/{id}/editar`, `/cadastros/{prestadores|tomadores}` (lista, `/novo`, `/{id}`; `?dialogo=1` devolve o formulário para o diálogo), `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
+| Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html`, `_prestador_campos.html`, `_tomador_campos.html`, `partials/resumo_cadastro.html` |
 
 ## Regras que NÃO podem ser quebradas
 
@@ -64,13 +64,36 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - Titular, documento e validade são **guardados no `config.json` ao salvar**: as páginas usam esses dados e o `.pfx` só
   é decifrado para assinar/conectar (`app.abrir_certificado`). Decifrar todos a cada página custava ~36 ms por
   certificado. Registros sem esses dados (antigos/migrados) são abertos uma vez por `info_certificados` e completados.
-- O template usa `certificado_id` se escolhido; senão (**automático**) o certificado do CNPJ/CPF do prestador,
-  preferindo o não vencido de validade mais longa (renovar = adicionar o novo, sem mexer nos templates).
-  Lógica em `app.certificado_do_template` / `app.problema_certificado`; a Sefin exige o certificado do emitente (E0718).
-- Remover um certificado volta ao automático os templates que o tinham escolhido.
+- O **prestador** usa `certificado_id` se escolhido no cadastro; senão (**automático**) o certificado do CNPJ/CPF dele,
+  preferindo o não vencido de validade mais longa (renovar = adicionar o novo, sem mexer nos cadastros).
+  Lógica em `app.certificado_do_prestador` / `app.problema_certificado`; a Sefin exige o certificado do emitente (E0718).
+- Remover um certificado volta ao automático os prestadores que o tinham escolhido.
 - `data/certificado.pfx` + `config.certificado_senha` (até a 0.2.x) são migrados sozinhos em `storage.load_config`.
 - `EASY_NFSE_CERT_SENHA` agora é só **fallback** para certificado salvo sem senha (antes sobrepunha a senha salva).
 - Importar pela chave tenta todos os certificados válidos, primeiro os cujo documento aparece na chave.
+
+### Cadastros de prestadores e tomadores
+- Desde a 0.5 o template **aponta** para os cadastros (`prestador_id`, `tomador_id`; vazio = sem tomador). `storage`
+  preenche `t.prestador`/`t.tomador` ao carregar (`resolver`); esses campos têm `exclude=True` e nunca vão no JSON do
+  template, então `dps.py` e as telas continuam lendo `t.prestador`/`t.tomador`.
+- **Chave única**: prestador = tipo + CNPJ/CPF; tomador = CPF/CNPJ, NIF ou, no exterior sem NIF, nome + país
+  (`storage.chave_*`). Importar uma nota liga ao cadastro existente **sem sobrescrevê-lo** e avisa as diferenças
+  (`storage.vincular_*`); só cria se não houver. As rotas recusam cadastro sem chave ou repetido.
+- O **documento do prestador não muda** depois de gravado (numeração e certificado dependem dele): para outro, crie
+  um cadastro novo. Excluir cadastro usado por template é bloqueado.
+- Editar um cadastro vale para todos os templates dele; a rota mostra os templates que ficaram com pendência.
+- Na **emissão** o usuário pode trocar o prestador/tomador só para aquela nota (`app._para_emissao`): o template não
+  muda. "Sem tomador" na emissão é `tomador_id=sem` — o FastAPI trata campo de formulário vazio como ausente
+  (`Form(None)` vira `None`, isto é, "o do template"). `Emissao` guarda os ids usados.
+- Cadastros → Emitir leva a `/?prestador_id=` ou `/?tomador_id=`: a home avisa e os cards levam o cadastro para a emissão.
+- **Migração** (`storage.migrar_cadastros`): templates no formato até a 0.4 (sem `prestador_id`) são convertidos ao
+  serem lidos; o mais recente define o cadastro quando há divergência, o certificado escolhido vai para o prestador e
+  os JSON originais ficam em `data/backup/templates-0.4/`. Pode rodar de novo sem duplicar.
+- Diálogo de cadastro (`#cadastro` em `base.html`, `partials/cadastro_dialogo.html`): ao salvar, a rota responde **204 +
+  `HX-Trigger: cadastro-salvo`** e o `app.js` atualiza o select (o `change` atualiza o resumo ou recarrega a emissão).
+  Condição pela opção escolhida: `data-show-if="tomador_id@tipo:NIF"` lê o `data-tipo` da opção.
+- Na emissão, a troca de cadastro recarrega a página levando o que já foi digitado por `hx-vals="js:...valoresDaEmissao()"`:
+  com `hx-include` o htmx valida os campos obrigatórios ainda vazios e **cancela** a requisição sem avisar.
 
 ### Numeração da DPS
 - O `nDPS` **só avança quando a Sefin aceita** a nota. Reenviar o mesmo número é seguro: duplicata → **E0014**, e o app
@@ -112,9 +135,10 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `test_icones_dos_templates_existem` confere os nomes literais.
 - **Aviso da home** é só para o que é global (ambiente). Estado de certificado vai no card do template (e na página de
   emissão), nunca numa lista no alerta.
-- **Busca/filtro de listas** (home e Configurações): `[data-filtro]` com `[data-filtro-busca]`, `[data-filtro-estado]`,
-  `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-estado` (vários estados separados por espaço);
-  a busca ignora acentos. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
+- **Busca/filtro de listas** (home, Templates, Cadastros e Configurações): `[data-filtro]` com `[data-filtro-busca]`,
+  selects `[data-filtro-por="campo"]`, `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-<campo>`
+  (vários valores separados por espaço; ex.: `data-filtro-por="tomador"` + `data-tomador="<id>"`). A busca ignora acentos;
+  `option[selected]` vinda do servidor já filtra ao abrir. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
   (depende das colunas e da altura dos cards), não fixe em CSS.
 - **Salvar sozinho** (campo fora de formulário com botão, ex.: opção de atualização no Sobre): `hx-post` + `hx-trigger="change"`
   + `data-salva-sozinho`; a rota responde a confirmação. Se a gravação falhar, `app.js` desfaz a mudança e avisa.
@@ -189,6 +213,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - Português para UI, mensagens, docstrings e nomes de domínio (`prestador`, `tomador`, `competencia`); siga o estilo existente.
 - Mensagens de erro ao usuário devem dizer **o que fazer** e citar o código da Sefin quando houver (ex.: "(E0590)").
 - Regra de negócio nova → `dps.validar_template` + teste em `tests/test_core.py`.
+- Campo novo do prestador/tomador → `models.py`, `_prestador_campos.html`/`_tomador_campos.html`, `app._normalizar_*`,
+  `dps.validar_prestador`/`validar_tomador`, `dps.montar`, `importers/nfse_xml.py` (e `storage.ROTULOS_CAMPOS`) e teste.
 - Campo novo no template → `models.py`, `template_form.html`, `app.salvar`, `dps.montar`, `importers/nfse_xml.py`
   (e `danfse_pdf`/`importers/__init__.py` se aparecer no PDF), `danfse.py` se for impresso, e teste.
 - Não adicione dependências sem necessidade; prefira a biblioteca padrão. Use `uv add` (nunca pip).

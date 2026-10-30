@@ -6,7 +6,8 @@ Aplicativo local para emitir NFS-e do **padrão nacional** (Sefin Nacional / [nf
 a partir de uma nota já emitida.
 
 1. Arraste o **PDF** (DANFSe ou impressão do Emissor Nacional) ou o **XML** de uma nota anterior.
-2. O app cria um **template** com prestador, tomador, serviço e tributação. Revise e salve.
+2. O app cria um **template** com serviço e tributação, ligado aos cadastros do prestador e do tomador
+   (criados sozinhos na importação). Revise e salve.
 3. A cada nova nota, informe apenas a **data de competência** e o **valor**, revise e emita.
 
 <picture>
@@ -22,8 +23,10 @@ quando ele está perto de vencer. A imagem acompanha o tema (claro ou escuro) do
 
 - Emissão direta pela **API oficial da Sefin Nacional**, com assinatura digital e autenticação feitas com o seu
   certificado A1, sem intermediários.
-- **Vários certificados A1**, um por prestador: cada template usa automaticamente o certificado do CNPJ/CPF do seu
-  prestador (ou um escolhido), com aviso de validade e numeração da DPS por CNPJ. Para renovar, basta adicionar o novo.
+- **Cadastros de prestadores e tomadores**, compartilhados entre os templates: corrija um endereço uma vez, filtre
+  os templates por prestador ou tomador e, na hora de emitir, troque o prestador ou o tomador só para aquela nota.
+- **Vários certificados A1**, um por prestador: cada prestador usa automaticamente o certificado do seu CNPJ/CPF
+  (ou um escolhido no cadastro), com aviso de validade e numeração da DPS por CNPJ. Para renovar, basta adicionar o novo.
 - Importação de notas anteriores em PDF ou XML (ou pela chave de acesso, se houver certificado configurado).
 - **Tomador do exterior e exportação de serviço**, com conversão do valor em moeda estrangeira pela PTAX.
 - Geração do **PDF da nota (DANFSe v2.0)** e histórico das emissões, com download do PDF e do XML.
