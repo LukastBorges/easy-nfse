@@ -1,9 +1,11 @@
-{# Estado da atualização (resposta de verificar/instalar). Precisa de: atualizacao; opcionais: erro, instalando #}
+{# Estado da atualização (resposta de verificar/instalar/estado; consulta /atualizacao/estado enquanto baixa). Precisa de: atualizacao; opcionais: erro, instalando #}
 {% set st = atualizacao %}
 {% macro linha(nome_icone, cor) -%}
 <span class="flex min-w-0 items-start gap-1.5">{{ icone(nome_icone, 'mt-0.5 size-4 shrink-0 ' ~ cor) }}<span class="min-w-0">{{ caller() }}</span></span>
 {%- endmacro %}
-<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+{% set acompanhar = st.nova and st.instalavel and st.baixando and not st.pronta and not instalando and not erro %}
+<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm"
+     {% if acompanhar %}hx-get="/atualizacao/estado" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
   {% if instalando %}
     {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Instalando a versão <b>{{ st.nova }}</b>. O easy-nfse vai fechar e reabrir em instantes.{% endcall %}
   {% elif erro %}
@@ -13,9 +15,17 @@
     <button class="btn-primary px-3 py-1.5" hx-post="/atualizacao/instalar" hx-target="closest div" hx-swap="outerHTML"
             hx-disabled-elt="this" hx-confirm="O easy-nfse vai fechar e reabrir na versão {{ st.nova }}. Seus certificados, templates e notas não são alterados."
             data-confirm-titulo="Atualizar agora?" data-confirm-acao="Reiniciar e atualizar">{{ icone('refresh') }}Reiniciar e atualizar</button>
+  {% elif acompanhar %}
+    {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. Baixando em segundo plano…{% endcall %}
   {% elif st.nova and st.instalavel %}
-    {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. Baixando em segundo plano…
-      {% if st.erro %}<span class="text-rose-700 dark:text-rose-300">Última tentativa: {{ st.erro }}</span>{% endif %}{% endcall %}
+    {% if st.erro %}
+      {% call linha('alert-circle', 'text-rose-600 dark:text-rose-400') %}Versão <b>{{ st.nova }}</b> disponível, mas o download falhou:
+        <span class="text-rose-700 dark:text-rose-300">{{ st.erro }}</span>{% endcall %}
+    {% else %}
+      {% call linha('info-circle', 'text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível.{% endcall %}
+    {% endif %}
+    <button class="btn-ghost px-3 py-1.5" hx-post="/atualizacao/verificar" hx-target="closest div" hx-swap="outerHTML"
+            hx-disabled-elt="this">{{ icone('download') }}{{ 'Tentar de novo' if st.erro else 'Baixar' }}</button>
   {% elif st.nova %}
     {% call linha('info-circle', 'text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. {{ st.motivo }}{% endcall %}
   {% else %}

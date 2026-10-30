@@ -120,6 +120,7 @@ def status() -> dict:
         "instalavel": pode,
         "motivo": motivo,
         "erro": e.get("erro", "") if nova else "",
+        "baixando": _trava.locked(),  # verificar_e_baixar rodando em segundo plano
         "verificado_em": e.get("verificado_em", ""),
         "atualizado_para": e.get("atualizado_para", ""),
     }

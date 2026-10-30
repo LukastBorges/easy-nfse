@@ -192,6 +192,29 @@ def test_interface(amb, monkeypatch):
     assert "git pull" in cli.post("/atualizacao/instalar").text
 
 
+
+def test_aviso_acompanha_o_download(amb, monkeypatch):
+    """Enquanto baixa, o aviso consulta /atualizacao/estado; ao terminar, mostra o botão de instalar."""
+    monkeypatch.setattr(webapp.atualizacao, "status", atualizacao.status)
+    cli = TestClient(webapp.app)
+    atualizacao.verificar()
+    with atualizacao._trava:  # download em andamento (thread de segundo plano)
+        pagina = cli.get("/historico").text
+        assert "Baixando em segundo plano" in pagina and 'hx-get="/atualizacao/estado"' in pagina
+    estado = cli.get("/atualizacao/estado").text  # parou sem baixar: oferece baixar, sem consultar de novo
+    assert 'hx-get="/atualizacao/estado"' not in estado and "Baixar" in estado
+
+    amb["estado"]["pacote"] = b"adulterado"
+    atualizacao.verificar_e_baixar()
+    estado = cli.get("/atualizacao/estado").text
+    assert "download falhou" in estado and "SHA-256" in estado and "Tentar de novo" in estado
+
+    amb["estado"]["pacote"] = PACOTE
+    atualizacao.verificar_e_baixar()
+    estado = cli.get("/atualizacao/estado").text
+    assert "baixada e verificada" in estado and 'hx-post="/atualizacao/instalar"' in estado
+    assert 'hx-get="/atualizacao/estado"' not in estado
+
 def test_opcao_de_checagem_automatica_no_sobre(amb, monkeypatch):
     chamadas = []
     monkeypatch.setattr(atualizacao, "verificar_e_baixar", lambda **kw: chamadas.append(kw))

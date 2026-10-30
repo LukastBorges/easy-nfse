@@ -152,6 +152,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   atrás (`.antigo`) e reabre. Tenta instalar na abertura **uma vez por versão** (evita laço se falhar). Depende dos nomes
   `easy-nfse-vX.Y.Z-<plataforma>.(dmg|zip)` e do `.zip` do Windows conter a pasta `easy-nfse/`: se mudar o empacotamento,
   ajuste `atualizacao.plataforma`/`_extrair`. O script sh limita a espera (~2 min): `kill -0` responde para processo zumbi.
+  O download roda em thread; enquanto `status()["baixando"]` (a `_trava` presa), `partials/atualizacao.html` consulta
+  `GET /atualizacao/estado` a cada 2 s e se troca sozinho (baixada → "Reiniciar e atualizar"; falhou → erro + "Tentar de novo").
 - **Menu ⋮ do cabeçalho** (`base.html`): Ajuda (README), Notas de atualização, Reportar um problema (issues) e, por último,
   Sobre (versão, "Verificar agora", a opção de checagem automática, que salva sozinha via `/atualizacao/automatica`, e
   o link do código-fonte; o item mostra a versão nova quando houver). Essa opção não fica no formulário de Configurações. As notas vêm de `atualizacao.notas()`, um leitor do formato do
