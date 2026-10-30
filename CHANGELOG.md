@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.4.1...easy-nfse-v0.4.2) (2026-10-30)
+
+
+### Correções
+
+* **ui:** atualizar o aviso quando o download da atualização terminar ([37b65b5](https://github.com/LukastBorges/easy-nfse/commit/37b65b5a22586ef52525a0c729114836395e222e))
+* **ui:** atualizar o aviso quando o download da atualização terminar ([dd82e78](https://github.com/LukastBorges/easy-nfse/commit/dd82e78756db499121653475ce1e28b78950b1bb))
+
 ## [0.4.1](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.4.0...easy-nfse-v0.4.1) (2026-10-29)
 
 
