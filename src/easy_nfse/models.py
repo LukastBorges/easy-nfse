@@ -40,6 +40,11 @@ class Endereco(BaseModel):
 
 
 class Prestador(BaseModel):
+    """Cadastro do prestador (emitente), em `prestadores/<id>.json`; templates apontam para ele por `prestador_id`."""
+
+    id: str = ""
+    criado_em: datetime = Field(default_factory=datetime.now)
+    atualizado_em: datetime = Field(default_factory=datetime.now)
     tipo_doc: Literal["CNPJ", "CPF"] = "CNPJ"
     documento: str = ""
     nome: str = ""  # só exibição: não vai na DPS quando o prestador é o emitente (E0121)
@@ -51,9 +56,15 @@ class Prestador(BaseModel):
     op_simp_nac: Literal["1", "2", "3"] = "1"
     reg_ap_trib_sn: str = ""  # só para ME/EPP (op_simp_nac = 3)
     reg_esp_trib: str = "0"
+    certificado_id: str = ""  # vazio = automático: o certificado do CNPJ/CPF do prestador
 
 
 class Tomador(BaseModel):
+    """Cadastro do tomador, em `tomadores/<id>.json`; templates apontam para ele por `tomador_id`."""
+
+    id: str = ""
+    criado_em: datetime = Field(default_factory=datetime.now)
+    atualizado_em: datetime = Field(default_factory=datetime.now)
     tipo_doc: Literal["CNPJ", "CPF", "NIF", ""] = "CPF"  # NIF = tomador do exterior
     documento: str = ""
     c_nao_nif: str = ""  # motivo de não informar o NIF (1 = dispensado, 2 = não exigência)
@@ -62,6 +73,10 @@ class Tomador(BaseModel):
     fone: str = ""
     email: str = ""
     endereco: Endereco = Field(default_factory=Endereco)
+
+    @property
+    def exterior(self) -> bool:
+        return self.tipo_doc == "NIF"
 
 
 class Servico(BaseModel):
@@ -114,20 +129,22 @@ class Template(BaseModel):
     nome: str
     criado_em: datetime = Field(default_factory=datetime.now)
     atualizado_em: datetime = Field(default_factory=datetime.now)
-    prestador: Prestador = Field(default_factory=Prestador)
-    tomador: Tomador | None = Field(default_factory=Tomador)
+    prestador_id: str = ""
+    tomador_id: str = ""  # vazio = sem tomador identificado
+    # preenchidos por `storage` ao carregar (e trocados na emissão, se o usuário escolher outro); não vão no JSON
+    prestador: Prestador = Field(default_factory=Prestador, exclude=True)
+    tomador: Tomador | None = Field(default=None, exclude=True)
     servico: Servico = Field(default_factory=Servico)
     tributacao: Tributacao = Field(default_factory=Tributacao)
     com_ext: ComercioExterior = Field(default_factory=ComercioExterior)
     origem: Origem = Field(default_factory=Origem)
-    certificado_id: str = ""  # vazio = automático: o certificado do CNPJ/CPF do prestador
     ultimo_valor: str = ""
     ultimo_valor_moeda: str = ""
     avisos: list[str] = Field(default_factory=list)
 
     @property
     def tomador_exterior(self) -> bool:
-        return bool(self.tomador and self.tomador.tipo_doc == "NIF")
+        return bool(self.tomador and self.tomador.exterior)
 
     @property
     def exige_com_ext(self) -> bool:
@@ -173,6 +190,8 @@ class Emissao(BaseModel):
     ambiente: Ambiente
     template_id: str
     template_nome: str
+    prestador_id: str = ""
+    tomador_id: str = ""
     tomador: str = ""
     valor: str
     valor_moeda: str = ""

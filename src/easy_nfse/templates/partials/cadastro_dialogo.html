@@ -1,0 +1,26 @@
+{# Formulário do cadastro dentro do diálogo #cadastro (base.html). Ao salvar, a rota responde 204 com o evento
+   "cadastro-salvo" e o app.js atualiza o select do template ou da emissão. #}
+{% from "_macros.html" import alert %}
+{% set novo = not c.id %}
+<form hx-post="/cadastros/{{ cad.tipo }}{{ '/' ~ c.id if c.id }}" hx-target="this" hx-swap="outerHTML"
+      hx-disabled-elt="find button[type=submit]" class="flex min-h-0 flex-1 flex-col">
+  <input type="hidden" name="dialogo" value="1">
+  <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+    <h2 id="cadastro-titulo" class="flex min-w-0 items-center gap-2 text-base font-semibold">
+      {{ icone('building' if cad.papel == 'prestador' else 'user', 'size-5 shrink-0 text-slate-400 dark:text-slate-500') }}
+      <span class="truncate">{{ ('Novo ' ~ cad.papel) if novo else ('Editar ' ~ cad.papel) }}</span></h2>
+    <button type="button" data-fechar-dialogo class="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button>
+  </div>
+  <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+    {% if erros %}{{ alert('error', 'Não foi possível salvar', erros) }}{% endif %}
+    {% if usos|length > 1 %}<p class="text-sm text-slate-500 dark:text-slate-400">Usado pelos {{ usos|length }} templates
+      {{ usos|map(attribute='nome')|join(', ') }}: as mudanças valem para todos.</p>{% endif %}
+    {% include "_" ~ cad.papel ~ "_campos.html" %}
+  </div>
+  <div class="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 px-6 py-3">
+    <button type="button" data-fechar-dialogo class="btn-ghost">Cancelar</button>
+    <button type="submit" class="btn-primary">
+      <span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>
+      <span class="htmx-hide-on-request inline-flex">{{ icone('device-floppy') }}</span>Salvar</button>
+  </div>
+</form>

@@ -1,0 +1,39 @@
+{# Campos do cadastro do tomador. Precisa de: c (Tomador) #}
+{% from "_macros.html" import field, select %}
+{% set to = c %}{% set e = to.endereco %}
+<div class="grid gap-4 sm:grid-cols-6">
+  {{ select('tomador.tipo_doc', 'Tipo', {'CPF': 'CPF', 'CNPJ': 'CNPJ', 'NIF': 'Exterior (NIF)'}, to.tipo_doc or 'CPF', cls='sm:col-span-2') }}
+  {{ field('tomador.documento', 'Documento', (to.documento|doc) if to.tipo_doc != 'NIF' else to.documento, cls='sm:col-span-2') }}
+  <div class="sm:col-span-2" data-show-if="tomador.tipo_doc:NIF">
+    {{ select('tomador.c_nao_nif', 'Sem NIF? Motivo', C_NAO_NIF, to.c_nao_nif, blank='— (informei o NIF)') }}
+  </div>
+  {{ field('tomador.nome', 'Nome / razão social', to.nome, cls='sm:col-span-6') }}
+  <div class="sm:col-span-2" data-show-if="tomador.tipo_doc:CPF|CNPJ">
+    {{ field('tomador.im', 'Inscrição municipal', to.im) }}
+  </div>
+  {{ field('tomador.fone', 'Telefone', to.fone, cls='sm:col-span-2') }}
+  {{ field('tomador.email', 'E-mail', to.email, cls='sm:col-span-2', type='email') }}
+</div>
+
+<h3 class="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Endereço
+  <span class="font-normal normal-case tracking-normal" data-show-if="tomador.tipo_doc:CPF|CNPJ">(opcional; se preencher, preencha tudo)</span>
+  <span class="font-normal normal-case tracking-normal" data-show-if="tomador.tipo_doc:NIF">no exterior (obrigatório)</span>
+</h3>
+<div class="mt-3 grid gap-4 sm:grid-cols-6" data-show-if="tomador.tipo_doc:CPF|CNPJ">
+  {{ field('tomador.endereco.cep', 'CEP', e.cep, cls='sm:col-span-2') }}
+  {{ field('tomador.endereco.municipio', 'Município', e.municipio, placeholder='Cidade/UF', cls='sm:col-span-2') }}
+  {{ field('tomador.endereco.cod_municipio', 'Código IBGE', e.cod_municipio, cls='sm:col-span-2') }}
+</div>
+<div class="mt-3 grid gap-4 sm:grid-cols-6" data-show-if="tomador.tipo_doc:NIF">
+  {{ select('tomador.endereco.pais', 'País', PAISES_EXT, e.pais, cls='sm:col-span-2', blank='Selecione…') }}
+  {{ field('tomador.endereco.cidade', 'Cidade', e.cidade, cls='sm:col-span-2') }}
+  {{ field('tomador.endereco.estado_prov', 'Estado / província / região', e.estado_prov, cls='sm:col-span-2') }}
+  {{ field('tomador.endereco.cod_postal', 'Código postal (ZIP)', e.cod_postal, cls='sm:col-span-2') }}
+</div>
+<div class="mt-4 grid gap-4 sm:grid-cols-6">
+  {{ field('tomador.endereco.logradouro', 'Logradouro', e.logradouro, cls='sm:col-span-4') }}
+  {{ field('tomador.endereco.numero', 'Número', e.numero, cls='sm:col-span-2') }}
+  {{ field('tomador.endereco.complemento', 'Complemento', e.complemento, cls='sm:col-span-3') }}
+  {{ field('tomador.endereco.bairro', 'Bairro', e.bairro, cls='sm:col-span-3') }}
+</div>
+<p class="hint mt-3" data-show-if="tomador.tipo_doc:NIF">Sem número ou bairro no endereço estrangeiro? Deixe vazio: enviamos "S/N" e "-".</p>

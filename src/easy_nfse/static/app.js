@@ -17,17 +17,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Lista filtrável: [data-filtro] com [data-filtro-busca] (texto), [data-filtro-estado] (select) e itens
-// <li data-busca="..." data-estado="a b">. Mostra [data-filtro-vazio] quando nada sobra.
+// Lista filtrável: [data-filtro] com [data-filtro-busca] (texto), selects [data-filtro-por="campo"] e itens
+// <li data-busca="..." data-campo="a b"> (ex.: data-filtro-por="estado" + data-estado). Mostra [data-filtro-vazio]
+// quando nada sobra.
 function filtrarLista(box) {
   const sem = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const termos = sem(box.querySelector("[data-filtro-busca]")?.value || "").split(/\s+/).filter(Boolean);
-  const estado = box.querySelector("[data-filtro-estado]")?.value || "";
+  const filtros = [...box.querySelectorAll("[data-filtro-por]")].filter((s) => s.value).map((s) => [s.dataset.filtroPor, s.value]);
   const itens = [...box.querySelectorAll("[data-busca]")];
   let visiveis = 0;
   itens.forEach((li) => {
     const texto = sem(li.dataset.busca);
-    const ok = termos.every((t) => texto.includes(t)) && (!estado || li.dataset.estado.split(" ").includes(estado));
+    const ok = termos.every((t) => texto.includes(t))
+      && filtros.every(([campo, valor]) => (li.dataset[campo] || "").split(" ").includes(valor));
     li.classList.toggle("hidden", !ok);
     visiveis += ok;
   });
@@ -38,8 +40,12 @@ function filtrarLista(box) {
 }
 document.addEventListener("input", (e) => {
   const box = e.target.closest && e.target.closest("[data-filtro]");
-  if (box && e.target.matches("[data-filtro-busca], [data-filtro-estado]")) filtrarLista(box);
+  if (box && e.target.matches("[data-filtro-busca], [data-filtro-por]")) filtrarLista(box);
 });
+// filtro já escolhido pelo servidor (ex.: Cadastros → Emitir)
+document.addEventListener("DOMContentLoaded", () =>
+  document.querySelectorAll("[data-filtro]").forEach((box) => box.querySelector("[data-filtro-por] option[selected]:not([value=''])") && filtrarLista(box))
+);
 
 // Grade com no máximo N linhas visíveis (data-max-linhas="N"); o resto rola. A altura depende das colunas
 // e do tamanho dos cards, então é medida: vai até o início da linha N+1, deixando uma ponta dela à mostra.
@@ -89,13 +95,16 @@ document.addEventListener("click", (e) => {
 });
 
 // Campos condicionais: data-show-if="campo:v1|v2;outro:v3" (mostra se QUALQUER condição valer).
+// "campo@attr:v" compara o data-attr da opção escolhida no select (ex.: tomador_id@tipo:NIF).
 function atualizarCondicionais(root = document) {
   root.querySelectorAll("[data-show-if]").forEach((el) => {
     const form = el.closest("form") || document;
     const visivel = el.dataset.showIf.split(";").some((cond) => {
-      const [nome, valores] = cond.split(":");
+      const [chave, valores] = cond.split(":");
+      const [nome, attr] = chave.split("@");
       const campo = form.querySelector(`[name="${nome}"]`);
-      return campo && valores.split("|").includes(campo.value);
+      const valor = attr ? campo?.selectedOptions?.[0]?.dataset[attr] : campo?.value;
+      return campo && valores.split("|").includes(valor);
     });
     el.classList.toggle("hidden", !visivel);
   });
@@ -246,3 +255,45 @@ function falhaAoSalvar(e) {
 }
 document.addEventListener("htmx:responseError", falhaAoSalvar);
 document.addEventListener("htmx:sendError", falhaAoSalvar);
+
+// Emissão: trocar o prestador/tomador recarrega a página levando o que já foi digitado (via hx-vals, não
+// hx-include: o htmx validaria os campos obrigatórios ainda vazios e cancelaria a troca).
+function valoresDaEmissao() {
+  const form = document.getElementById("form-emissao");
+  const campos = ["competencia", "valor", "valor_moeda", "descricao"];
+  return form ? Object.fromEntries(campos.map((n) => [n, form.elements[n]?.value || ""]).filter(([, v]) => v)) : {};
+}
+
+// Cadastro de prestador/tomador num diálogo (template e emissão): data-abrir-cadastro="tomadores" abre um novo;
+// com data-editar="tomador_id", edita o escolhido nesse select. Ao salvar, a rota dispara "cadastro-salvo" e o
+// select é atualizado (o "change" atualiza o resumo do template ou recarrega a emissão).
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest && e.target.closest("[data-abrir-cadastro]");
+  if (!btn) return;
+  let url = `/cadastros/${btn.dataset.abrirCadastro}/novo?dialogo=1`;
+  if (btn.dataset.editar) {
+    const id = document.querySelector(`select[name="${btn.dataset.editar}"]`)?.value;
+    if (!id) return;
+    url = `/cadastros/${btn.dataset.abrirCadastro}/${id}?dialogo=1`;
+  }
+  const dlg = document.getElementById("cadastro");
+  dlg.querySelector("#cadastro-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Carregando…</p>';
+  dlg.showModal();
+  htmx.ajax("GET", url, "#cadastro-conteudo");
+});
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest && e.target.closest("[data-fechar-dialogo]");
+  if (btn) btn.closest("dialog")?.close();
+});
+document.addEventListener("cadastro-salvo", (e) => {
+  const { papel, id, rotulo, tipo } = e.detail;
+  document.querySelectorAll(`select[name="${papel}_id"]`).forEach((sel) => {
+    let opt = [...sel.options].find((o) => o.value === id);
+    if (!opt) sel.add((opt = new Option(rotulo, id)));
+    opt.textContent = rotulo;
+    opt.dataset.tipo = tipo;
+    sel.value = id;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  document.getElementById("cadastro")?.close();
+});

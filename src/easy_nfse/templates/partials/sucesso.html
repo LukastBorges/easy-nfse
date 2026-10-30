@@ -28,5 +28,5 @@
   {% if e.ambiente == '1' %}
   <a class="btn-ghost" href="{{ consulta_publica(e.chave_acesso) }}" target="_blank" rel="noopener">Ver/imprimir no portal{{ icone('external-link') }}</a>
   {% endif %}
-  <a class="btn-primary" href="/templates/{{ t.id }}">{{ icone('plus') }}Emitir outra</a>
+  <a class="btn-primary" href="{{ url_emissao(t) }}">{{ icone('plus') }}Emitir outra</a>
 </div>

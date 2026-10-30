@@ -2,7 +2,7 @@
 {{ alert('error', titulo or 'Não foi possível continuar', mensagens) }}
 {% if t is defined and t %}
 <div class="mt-4 flex gap-2">
-  <a href="/templates/{{ t.id }}" class="btn-ghost">{{ icone('arrow-left') }}Voltar</a>
+  <a href="{{ url_emissao(t) }}" class="btn-ghost">{{ icone('arrow-left') }}Voltar</a>
   <a href="/templates/{{ t.id }}/editar" class="btn-ghost">{{ icone('pencil') }}Editar template</a>
 </div>
 {% endif %}

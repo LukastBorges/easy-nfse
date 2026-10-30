@@ -1,8 +1,7 @@
-"""Vários certificados A1: biblioteca em Configurações e escolha por template."""
+"""Vários certificados A1: biblioteca em Configurações e escolha por prestador."""
 
 import datetime as dt
 
-import pytest
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -33,17 +32,6 @@ def gerar_pfx(cnpj: str, dias: int = 30, nome: str = "EMPRESA TESTE LTDA", senha
     return pkcs12.serialize_key_and_certificates(b"t", key, c, None, BestAvailableEncryption(senha.encode()))
 
 
-@pytest.fixture
-def dados(tmp_path, monkeypatch):
-    """Pasta de dados vazia e isolada por teste."""
-    for nome, rel in [("DATA_DIR", "."), ("TEMPLATES_DIR", "templates"), ("EMISSOES_DIR", "emissoes"),
-                      ("CERTS_DIR", "certificados"), ("CONFIG_FILE", "config.json"),
-                      ("CERT_FILE", "certificado.pfx"), ("EMISSOES_LOG", "emissoes.jsonl")]:
-        monkeypatch.setattr(storage, nome, (tmp_path / rel).resolve())
-    monkeypatch.delenv("EASY_NFSE_CERT_SENHA", raising=False)
-    return tmp_path
-
-
 def adicionar(pfx: bytes, senha: str = "senha") -> str:
     cfg = storage.load_config()
     s = CertificadoSalvo(id=storage.new_id(), arquivo="x.pfx", senha=senha)
@@ -53,8 +41,17 @@ def adicionar(pfx: bytes, senha: str = "senha") -> str:
     return s.id
 
 
-def template(cnpj: str, **over) -> Template:
-    return Template(id=over.pop("id", "abcd1234"), nome="t", prestador=Prestador(documento=cnpj), **over)
+def prestador(cnpj: str, certificado_id: str = "") -> Prestador:
+    return Prestador(id=cnpj[:8], documento=cnpj, certificado_id=certificado_id)
+
+
+def template(cnpj: str, certificado_id: str = "", **over) -> Template:
+    """Template gravado (com o cadastro do prestador) para as páginas."""
+    p = prestador(cnpj, certificado_id)
+    storage.save_prestador(p)
+    t = Template(id=over.pop("id", "abcd1234"), nome="t", prestador_id=p.id, prestador=p, **over)
+    storage.save_template(t)
+    return t
 
 
 def test_migra_certificado_unico(dados):
@@ -85,27 +82,27 @@ def test_escolha_automatica_pelo_prestador(dados):
     outro = adicionar(gerar_pfx(CNPJ_B, nome="OUTRA LTDA"))
     certs = webapp.info_certificados(storage.load_config())
 
-    assert webapp.certificado_do_template(certs, template(CNPJ_A))["id"] == renovado
-    assert webapp.certificado_do_template(certs, template(CNPJ_B))["id"] == outro
-    assert webapp.certificado_do_template(certs, template("37040642034")) is None
+    assert webapp.certificado_do_prestador(certs, prestador(CNPJ_A))["id"] == renovado
+    assert webapp.certificado_do_prestador(certs, prestador(CNPJ_B))["id"] == outro
+    assert webapp.certificado_do_prestador(certs, prestador("37040642034")) is None
     # escolha explícita vence o automático; id que sumiu volta ao automático
-    assert webapp.certificado_do_template(certs, template(CNPJ_A, certificado_id=vencido))["id"] == vencido
-    assert webapp.certificado_do_template(certs, template(CNPJ_A, certificado_id="ffffffff"))["id"] == renovado
+    assert webapp.certificado_do_prestador(certs, prestador(CNPJ_A, certificado_id=vencido))["id"] == vencido
+    assert webapp.certificado_do_prestador(certs, prestador(CNPJ_A, certificado_id="ffffffff"))["id"] == renovado
 
 
 def test_problema_certificado(dados):
-    t = template(CNPJ_A)
-    assert "Nenhum certificado digital" in webapp.problema_certificado([], t, None)
+    p = prestador(CNPJ_A)
+    assert "Nenhum certificado digital" in webapp.problema_certificado([], p, None)
 
     adicionar(gerar_pfx(CNPJ_A, dias=-1))
     certs = webapp.info_certificados(storage.load_config())
-    assert "vencido" in webapp.problema_certificado(certs, t, webapp.certificado_do_template(certs, t))
-    assert "Nenhum certificado de 11.222.333/0001-81" in webapp.problema_certificado(certs, template(CNPJ_B), None)
+    assert "vencido" in webapp.problema_certificado(certs, p, webapp.certificado_do_prestador(certs, p))
+    assert "Nenhum certificado de 11.222.333/0001-81" in webapp.problema_certificado(certs, prestador(CNPJ_B), None)
 
     outro = adicionar(gerar_pfx(CNPJ_B))
     certs = webapp.info_certificados(storage.load_config())
-    t = template(CNPJ_A, certificado_id=outro)
-    assert "E0718" in webapp.problema_certificado(certs, t, webapp.certificado_do_template(certs, t))
+    p = prestador(CNPJ_A, certificado_id=outro)
+    assert "E0718" in webapp.problema_certificado(certs, p, webapp.certificado_do_prestador(certs, p))
 
 
 def test_rotas_de_certificados(dados):
@@ -124,21 +121,20 @@ def test_rotas_de_certificados(dados):
     id_b = next(i["id"] for i in webapp.info_certificados(cfg) if i["documento"] == CNPJ_B)
 
     t = template(CNPJ_A, certificado_id=id_b)
-    storage.save_template(t)
     pagina = cli.get("/configuracoes").text
     linha_b = pagina[pagina.index(f'id="ultimo-{id_b}"') - 3000:pagina.index(f'id="ultimo-{id_b}"')]
-    assert "OUTRA LTDA" in linha_b and '<span class="truncate">t</span>' in linha_b  # usado pelo template
+    assert "OUTRA LTDA" in linha_b and '<span class="truncate">51.925.143/0001-45</span>' in linha_b  # usado pelo prestador
     assert pagina.count('name="ultimo"') == 2  # numeração da DPS em cada certificado
     home = cli.get("/").text
     assert "Certificado de outro CNPJ (11.222.333/0001-81)" in home
     assert 'data-estado="problema"' in home and "data-max-linhas" in home  # filtro e grade limitada da home
     assert "E0718" in cli.get(f"/templates/{t.id}").text
-    form = cli.get(f"/templates/{t.id}/editar").text
+    form = cli.get(f"/cadastros/prestadores/{t.prestador_id}").text
     assert f'value="{id_b}" selected' in form and "Automático" in form
 
     assert cli.post(f"/configuracoes/certificados/{id_b}/excluir").status_code == 200
     assert len(storage.load_config().certificados) == 1
-    assert storage.get_template(t.id).certificado_id == ""
+    assert storage.get_prestador(t.prestador_id).certificado_id == ""
     home = cli.get("/").text
     assert "outro CNPJ" not in home and "Certificado vence em" in home  # o de teste vale 30 dias
     assert cli.post("/configuracoes/certificados/../excluir").status_code == 404
@@ -167,9 +163,10 @@ def test_paginas_nao_abrem_os_pfx(dados, monkeypatch):
         raise AssertionError("abriu o .pfx")
 
     monkeypatch.setattr(webapp.Certificado, "load", proibido)
-    storage.save_template(template(CNPJ_A))
+    template(CNPJ_A)
     cli = TestClient(webapp.app)
-    for url in ("/", "/templates", "/configuracoes", "/templates/abcd1234", "/templates/abcd1234/editar"):
+    for url in ("/", "/templates", "/configuracoes", "/templates/abcd1234", "/templates/abcd1234/editar",
+                "/cadastros/prestadores", f"/cadastros/prestadores/{CNPJ_A[:8]}"):
         assert cli.get(url).status_code == 200, url
     storage.delete_certificate(salvo.id)
     assert "não está mais na pasta" in webapp.info_certificados(storage.load_config())[0]["erro"]

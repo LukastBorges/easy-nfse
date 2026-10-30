@@ -33,3 +33,17 @@ def sem_rede(monkeypatch, tmp_path):
 
     monkeypatch.setattr(storage, "CACHE_DIR", tmp_path / "cache")  # cache do IBGE isolado por teste
     monkeypatch.setattr(ibge.httpx, "get", resposta_ibge)
+
+
+@pytest.fixture
+def dados(tmp_path, monkeypatch):
+    """Pasta de dados vazia e isolada por teste."""
+    from easy_nfse import storage
+
+    for nome, rel in [("DATA_DIR", "."), ("TEMPLATES_DIR", "templates"), ("EMISSOES_DIR", "emissoes"),
+                      ("PRESTADORES_DIR", "prestadores"), ("TOMADORES_DIR", "tomadores"), ("BACKUP_DIR", "backup"),
+                      ("CERTS_DIR", "certificados"), ("CONFIG_FILE", "config.json"),
+                      ("CERT_FILE", "certificado.pfx"), ("EMISSOES_LOG", "emissoes.jsonl")]:
+        monkeypatch.setattr(storage, nome, (tmp_path / rel).resolve())
+    monkeypatch.delenv("EASY_NFSE_CERT_SENHA", raising=False)
+    return tmp_path

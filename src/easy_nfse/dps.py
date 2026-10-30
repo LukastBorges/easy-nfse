@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 from lxml import etree
 
 from . import __version__
-from .models import Template
+from .models import Prestador, Template, Tomador
 from .util import cnpj_valido, cpf_valido, digits, xml_text
 
 NS = "http://www.sped.fazenda.gov.br/nfse"
@@ -45,10 +45,9 @@ def id_dps(t: Template, serie: str, n_dps: int) -> str:
     return f"DPS{p.cod_municipio}{tipo}{digits(p.documento).zfill(14)}{int(serie):05d}{n_dps:015d}"
 
 
-def validar_template(t: Template) -> list[str]:
-    """Regras que conseguimos checar antes de enviar (evita rejeições óbvias)."""
+def validar_prestador(p: Prestador) -> list[str]:
+    """Regras do cadastro do prestador (valem para qualquer template que o use)."""
     erros: list[str] = []
-    p, s, tr = t.prestador, t.servico, t.tributacao
     doc = digits(p.documento)
     if p.tipo_doc == "CNPJ" and not cnpj_valido(doc):
         erros.append("CNPJ do prestador inválido.")
@@ -58,6 +57,38 @@ def validar_template(t: Template) -> list[str]:
         erros.append("Código IBGE do município do prestador (emissor) não informado.")
     if p.op_simp_nac == "3" and not p.reg_ap_trib_sn:
         erros.append("Informe o regime de apuração do Simples Nacional (ME/EPP).")
+    return erros
+
+
+def validar_tomador(to: Tomador) -> list[str]:
+    """Regras do cadastro do tomador (valem para qualquer template que o use)."""
+    erros: list[str] = []
+    dt = digits(to.documento)
+    if to.tipo_doc == "CNPJ" and not cnpj_valido(dt):
+        erros.append("CNPJ do tomador inválido.")
+    if to.tipo_doc == "CPF" and not cpf_valido(dt):
+        erros.append("CPF do tomador inválido.")
+    if to.tipo_doc == "NIF" and not to.documento.strip() and to.c_nao_nif not in ("1", "2"):
+        erros.append("Tomador do exterior: informe o NIF ou o motivo para não informá-lo.")
+    if not to.nome.strip():
+        erros.append("Nome do tomador é obrigatório.")
+    e = to.endereco
+    if to.tipo_doc == "NIF":
+        if not e.exterior:
+            erros.append("Tomador do exterior: informe o país do endereço (diferente de Brasil).")
+        elif not e.completo():
+            erros.append("Endereço do tomador no exterior incompleto (código postal, cidade, estado/província e logradouro).")
+    elif e.exterior:
+        erros.append("Tomador com CPF/CNPJ deve ter endereço no Brasil; para exterior, use NIF.")
+    elif e.preenchido() and not e.completo():
+        erros.append("Endereço do tomador incompleto (CEP, município, logradouro, número e bairro).")
+    return erros
+
+
+def validar_template(t: Template) -> list[str]:
+    """Regras que conseguimos checar antes de enviar (evita rejeições óbvias)."""
+    p, s, tr = t.prestador, t.servico, t.tributacao
+    erros = validar_prestador(p)
     if p.op_simp_nac == "3" and not tr.p_tot_trib_sn:
         erros.append("ME/EPP: informe o percentual aproximado de tributos do Simples Nacional.")
     if len(digits(s.c_trib_nac)) != 6:
@@ -85,26 +116,7 @@ def validar_template(t: Template) -> list[str]:
     if tr.pais_resultado == "BR":
         erros.append("O país do resultado da exportação não pode ser o Brasil.")
     if t.tomador and t.tomador.tipo_doc:
-        to = t.tomador
-        dt = digits(to.documento)
-        if to.tipo_doc == "CNPJ" and not cnpj_valido(dt):
-            erros.append("CNPJ do tomador inválido.")
-        if to.tipo_doc == "CPF" and not cpf_valido(dt):
-            erros.append("CPF do tomador inválido.")
-        if to.tipo_doc == "NIF" and not to.documento.strip() and to.c_nao_nif not in ("1", "2"):
-            erros.append("Tomador do exterior: informe o NIF ou o motivo para não informá-lo.")
-        if not to.nome.strip():
-            erros.append("Nome do tomador é obrigatório.")
-        e = to.endereco
-        if to.tipo_doc == "NIF":
-            if not e.exterior:
-                erros.append("Tomador do exterior: informe o país do endereço (diferente de Brasil).")
-            elif not e.completo():
-                erros.append("Endereço do tomador no exterior incompleto (código postal, cidade, estado/província e logradouro).")
-        elif e.exterior:
-            erros.append("Tomador com CPF/CNPJ deve ter endereço no Brasil; para exterior, use NIF.")
-        elif e.preenchido() and not e.completo():
-            erros.append("Endereço do tomador incompleto (CEP, município, logradouro, número e bairro).")
+        erros += validar_tomador(t.tomador)
     if t.exige_com_ext:
         if len(digits(s.c_nbs)) != 9:
             erros.append("Exportação/tomador do exterior: o código NBS é obrigatório (E0318).")

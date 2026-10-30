@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_macros.html" import alert %}
+{% block title %}{{ cad.titulo }} · easy-nfse{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Cadastros</h1>
+    <p class="mt-1 max-w-2xl text-slate-600 dark:text-slate-400">Prestadores e tomadores usados pelos templates. Ao importar
+      uma nota eles são cadastrados sozinhos; corrigir um cadastro vale para todos os templates que o usam.</p>
+  </div>
+  <a href="/cadastros/{{ cad.tipo }}/novo" class="btn-primary">{{ icone('plus') }}Novo {{ cad.papel }}</a>
+</div>
+
+<nav class="mt-6 inline-flex rounded-xl bg-slate-100 dark:bg-slate-800/60 p-1 text-sm" aria-label="Tipo de cadastro">
+  {% for tipo, nome, icone_aba in [('tomadores', 'Tomadores', 'user'), ('prestadores', 'Prestadores', 'building')] %}
+  <a href="/cadastros/{{ tipo }}" {{ 'aria-current="page"'|safe if tipo == cad.tipo }}
+     class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium {{ 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' if tipo == cad.tipo else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone(icone_aba, 'size-4') }}{{ nome }}</a>
+  {% endfor %}
+</nav>
+
+{% if ok %}<div class="mt-6">{{ alert('ok', ok, []) }}</div>{% endif %}
+{% if erro %}<div class="mt-6">{{ alert('error', erro, []) }}</div>{% endif %}
+
+{% if linhas %}
+<div data-filtro class="card mt-6">
+  {% if linhas|length > 1 %}
+  <div class="flex flex-wrap items-center gap-3 px-5 py-4">
+    <label class="relative min-w-48 flex-1">
+      <span class="sr-only">Buscar {{ cad.papel }}</span>
+      <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
+      <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por nome, documento ou template">
+    </label>
+    <label class="flex items-center gap-2">
+      <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar</span></span>
+      <select data-filtro-por="estado" class="input w-auto py-2">
+        <option value="">Todos</option>
+        <option value="pendente">Com pendências</option>
+        <option value="sem-uso">Sem template</option>
+        {% if cad.papel == 'tomador' %}<option value="exterior">Do exterior</option>{% endif %}
+      </select>
+    </label>
+    <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
+  </div>
+  {% endif %}
+  <ul class="divide-y divide-slate-100 dark:divide-slate-800 {{ 'border-t border-slate-100 dark:border-slate-800' if linhas|length > 1 }}">
+    {% for l in linhas %}{% set c = l.c %}
+    {% set problema = l.pendencias or l.problema_cert %}
+    <li data-busca="{{ c.nome }} {{ c.documento }} {{ c.documento|doc }} {{ l.usos|map(attribute='nome')|join(' ') }}"
+        data-estado="{{ 'pendente' if problema }}{{ ' sem-uso' if not l.usos }}{{ ' exterior' if cad.papel == 'tomador' and c.exterior }}"
+        class="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4">
+      <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">
+        {% if cad.papel == 'tomador' and c.exterior %}{{ icone('world', 'size-5') }}{% else %}{{ (c.nome or '?')[:1]|upper }}{% endif %}
+      </span>
+      <div class="min-w-0 flex-1 basis-56">
+        <a href="/cadastros/{{ cad.tipo }}/{{ c.id }}" class="block truncate font-semibold hover:text-indigo-600 dark:hover:text-indigo-400">{{ c.nome or 'Sem nome' }}</a>
+        <p class="truncate text-sm text-slate-500 dark:text-slate-400">
+          {% if cad.papel == 'tomador' and c.exterior %}{{ ('NIF ' ~ c.documento) if c.documento else 'Sem NIF' }} · {{ PAISES.get(c.endereco.pais, 'Exterior') }}
+          {% else %}{{ c.tipo_doc }} {{ c.documento|doc }}{% endif %}</p>
+        <p class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+          {{ icone('template', 'size-3.5 shrink-0') }}<span class="truncate">{{ l.usos|map(attribute='nome')|join(', ') if l.usos else 'Nenhum template usa' }}</span></p>
+        {% if l.problema_cert %}
+        <p class="mt-0.5 flex min-w-0 items-start gap-1 text-xs text-rose-700 dark:text-rose-300">{{ icone('certificate-off', 'size-3.5 shrink-0') }}<span class="min-w-0">{{ l.problema_cert }}</span></p>
+        {% elif l.cert %}
+        <p class="mt-0.5 flex min-w-0 items-center gap-1 text-xs {{ 'text-amber-700 dark:text-amber-300' if l.cert.vence_em_breve else 'text-slate-500 dark:text-slate-400' }}">{{ icone('certificate', 'size-3.5 shrink-0') }}<span class="truncate">Certificado {{ 'vence em ' ~ l.cert.dias ~ ' dias' if l.cert.vence_em_breve else 'válido até ' ~ l.cert.validade|data }}</span></p>
+        {% endif %}
+        {% if l.pendencias %}
+        <p class="mt-0.5 flex min-w-0 items-start gap-1 text-xs text-amber-700 dark:text-amber-300" title="{{ l.pendencias|join(' ') }}">{{ icone('alert-triangle', 'size-3.5 shrink-0') }}<span class="min-w-0">{{ l.pendencias[0] }}{% if l.pendencias|length > 1 %} (+{{ l.pendencias|length - 1 }}){% endif %}</span></p>
+        {% endif %}
+      </div>
+      <div class="flex shrink-0 gap-1.5">
+        <a href="/cadastros/{{ cad.tipo }}/{{ c.id }}" class="btn-ghost px-3" title="Editar" aria-label="Editar {{ c.nome }}">{{ icone('pencil', 'size-4') }}</a>
+        <form method="post" action="/cadastros/{{ cad.tipo }}/{{ c.id }}/excluir">
+          <button class="btn-ghost px-3 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-40 disabled:hover:text-slate-500"
+                  {% if l.usos %}disabled title="Usado por templates: troque-o neles antes de excluir"{% else %}title="Excluir"{% endif %} aria-label="Excluir {{ c.nome }}"
+                  data-confirm="O cadastro {{ cad.rotulo(c) }} será excluído. As notas já emitidas continuam no histórico."
+                  data-confirm-titulo="Excluir cadastro?" data-confirm-acao="Excluir" data-confirm-perigo>{{ icone('trash', 'size-4') }}</button>
+        </form>
+        <a href="/?{{ cad.papel }}_id={{ c.id }}" class="btn-primary" title="Escolher um template para emitir {{ 'por' if cad.papel == 'prestador' else 'para' }} {{ c.nome }}">{{ icone('send') }}Emitir</a>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  <p data-filtro-vazio class="hidden border-t border-slate-100 dark:border-slate-800 px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum cadastro encontrado.</p>
+</div>
+{% else %}
+<div class="mt-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+  Nenhum {{ cad.papel }} ainda. Importe uma nota em <a href="/templates" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Templates</a>
+  ou cadastre um novo.
+</div>
+{% endif %}
+{% endblock %}

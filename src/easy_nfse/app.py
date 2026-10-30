@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -11,6 +12,7 @@ from datetime import date, datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from fastapi import FastAPI, Form, HTTPException, Request, UploadFile
@@ -22,7 +24,7 @@ from pydantic import ValidationError
 
 from . import atualizacao, danfse, dominios, dps, ibge, importers, ptax, storage
 from .certificado import Certificado, CertificadoError
-from .models import CertificadoSalvo, Config, Emissao, Template
+from .models import CertificadoSalvo, Config, Emissao, Prestador, Template, Tomador
 from .sefin import CONSULTA_PUBLICA, SefinClient, SefinError
 from .util import digits, fmt_doc, fmt_money, parse_money, split_municipio_uf, strip_accents
 
@@ -73,9 +75,10 @@ TP_IMUNIDADE = {
     "3": "Partidos, sindicatos, educação e assistência social (art. 150, VI, c)",
     "4": "Livros, jornais e periódicos (art. 150, VI, d)", "5": "Fonogramas e videofonogramas (art. 150, VI, e)",
 }
+PAISES_EXT = {k: v for k, v in dominios.paises().items() if k != "BR"}
 views.env.globals.update(
     PAISES=dominios.paises(),
-    PAISES_EXT={k: v for k, v in dominios.paises().items() if k != "BR"},
+    PAISES_EXT=PAISES_EXT,
     MOEDAS={k: f"{iso} · {nome}" for k, (iso, nome) in dominios.MOEDAS.items()},
     MOEDA_ISO={k: iso for k, (iso, _) in dominios.MOEDAS.items()},
     MD_PRESTACAO=dominios.opcoes("TSModoPrestacao"),
@@ -144,32 +147,60 @@ def abrir_certificado(cfg: Config, cert_id: str) -> Certificado:
     return _abrir_certificado(salvo)
 
 
-def certificado_do_template(certs: list[dict], t: Template) -> dict | None:
-    """O certificado escolhido no template ou, no automático, o mais novo do CNPJ/CPF do prestador."""
-    if t.certificado_id:
-        escolhido = next((c for c in certs if c["id"] == t.certificado_id), None)
+def certificado_do_prestador(certs: list[dict], p: Prestador) -> dict | None:
+    """O certificado escolhido no prestador ou, no automático, o mais novo do CNPJ/CPF dele."""
+    if p.certificado_id:
+        escolhido = next((c for c in certs if c["id"] == p.certificado_id), None)
         if escolhido:
             return escolhido
-    doc = digits(t.prestador.documento)
+    doc = digits(p.documento)
     candidatos = [c for c in certs if c["ok"] and doc and c["documento"] == doc]
     return max(candidatos, key=lambda c: (not c["vencido"], c["validade"]), default=None)
 
 
-def problema_certificado(certs: list[dict], t: Template, cert: dict | None) -> str:
-    """Por que o template não pode emitir com esse certificado ("" se pode)."""
+def problema_certificado(certs: list[dict], p: Prestador, cert: dict | None) -> str:
+    """Por que o prestador não pode emitir com esse certificado ("" se pode)."""
     if not certs:
         return "Nenhum certificado digital configurado."
     if not cert:
-        return (f"Nenhum certificado de {fmt_doc(t.prestador.documento) or 'prestador'} (prestador do template). "
+        return (f"Nenhum certificado de {fmt_doc(p.documento) or 'prestador'} (prestador). "
                 "Adicione o certificado A1 dele em Configurações.")
     if not cert["ok"]:
         return cert["erro"]
     if cert["vencido"]:
         return f"O certificado de {cert['titular']} está vencido."
-    if cert["documento"] and digits(t.prestador.documento) != cert["documento"]:
-        return (f"O certificado é de {fmt_doc(cert['documento'])}, mas o prestador do template é "
-                f"{fmt_doc(t.prestador.documento)}. A Sefin exige o certificado do emitente (E0718).")
+    if cert["documento"] and digits(p.documento) != cert["documento"]:
+        return (f"O certificado é de {fmt_doc(cert['documento'])}, mas o prestador é "
+                f"{fmt_doc(p.documento)}. A Sefin exige o certificado do emitente (E0718).")
     return ""
+
+
+def erros_template(t: Template) -> list[str]:
+    """Pendências que impedem emitir: cadastros ausentes e as regras da DPS (`dps.validar_template`)."""
+    if not t.prestador.id:
+        return ["Escolha o prestador (emitente) do template."]
+    erros = [] if not t.tomador_id or t.tomador else ["O tomador do template não existe mais: escolha outro."]
+    return erros + dps.validar_template(t)
+
+
+def rotulo_prestador(p: Prestador) -> str:
+    return " · ".join(x for x in (p.nome, fmt_doc(p.documento)) if x) or "Prestador sem nome"
+
+
+def rotulo_tomador(to: Tomador) -> str:
+    if to.exterior:
+        quem = ("NIF " + to.documento) if to.documento else PAISES_EXT.get(to.endereco.pais, "Exterior")
+    else:
+        quem = fmt_doc(to.documento)
+    return " · ".join(x for x in (to.nome, quem) if x) or "Tomador sem nome"
+
+
+def url_emissao(t: Template) -> str:
+    """Página de emissão mantendo o prestador e o tomador escolhidos para a nota."""
+    return f"/templates/{t.id}?prestador_id={t.prestador_id}&tomador_id={t.tomador_id or 'sem'}"
+
+
+views.env.globals.update(rotulo_prestador=rotulo_prestador, rotulo_tomador=rotulo_tomador, url_emissao=url_emissao)
 
 
 def render(request: Request, nome: str, status_code: int = 200, **ctx: Any) -> HTMLResponse:
@@ -259,8 +290,12 @@ def _resolver_municipio(cod: str, texto: str) -> tuple[str, str]:
 # --------------------------------------------------------------------------------------
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    """Home: boas-vindas (sem templates) ou atalhos de emissão + últimas emissões."""
+def index(request: Request, prestador_id: str = "", tomador_id: str = ""):
+    """Home: boas-vindas (sem templates) ou atalhos de emissão + últimas emissões.
+
+    Com `prestador_id`/`tomador_id` (vindo de Cadastros → Emitir), os cards levam o cadastro para a emissão,
+    trocando o do template.
+    """
     cfg = storage.load_config()
     emissoes = storage.list_emissoes()
     ultimas: dict[str, Emissao] = {}
@@ -270,19 +305,48 @@ def index(request: Request):
     # templates usados recentemente primeiro
     templates.sort(key=lambda t: ultimas[t.id].emitida_em if t.id in ultimas else t.atualizado_em, reverse=True)
     certs = info_certificados(cfg)
+    escolhido = _escolha_da_emissao(prestador_id, tomador_id)
     cert_templates = {}  # id do template → (certificado, problema que impede emitir)
     for t in templates:
-        c = certificado_do_template(certs, t)
-        cert_templates[t.id] = (c, problema_certificado(certs, t, c))
+        p = escolhido["prestador"] or t.prestador
+        c = certificado_do_prestador(certs, p)
+        cert_templates[t.id] = (c, problema_certificado(certs, p, c))
     return render(request, "index.html", cfg=cfg, templates=templates, ultimas=ultimas, emissoes=emissoes[:5],
-                  certs=certs, cert_templates=cert_templates)
+                  certs=certs, cert_templates=cert_templates, escolhido=escolhido, **_filtros(templates))
+
+
+def _escolha_da_emissao(prestador_id: str, tomador_id: str) -> dict:
+    """Cadastro escolhido para emitir com qualquer template (vindo de Cadastros → Emitir)."""
+    out: dict[str, Any] = {"prestador": None, "tomador": None, "query": ""}
+    try:
+        if prestador_id:
+            out["prestador"] = storage.get_prestador(prestador_id)
+            out["query"] = f"?prestador_id={prestador_id}"
+        elif tomador_id:
+            out["tomador"] = storage.get_tomador(tomador_id)
+            out["query"] = f"?tomador_id={tomador_id}"
+    except KeyError:
+        pass
+    return out
+
+
+def _filtros(templates: list[Template]) -> dict:
+    """Prestadores e tomadores usados pelos templates, para os filtros das listas."""
+    prestadores = {t.prestador.id: t.prestador for t in templates if t.prestador.id}
+    tomadores = {t.tomador.id: t.tomador for t in templates if t.tomador}
+    ordem = lambda c: strip_accents(c.nome).casefold()  # noqa: E731
+    return {"filtro_prestadores": sorted(prestadores.values(), key=ordem),
+            "filtro_tomadores": sorted(tomadores.values(), key=ordem),
+            "filtro_sem_tomador": any(not t.tomador for t in templates)}
 
 
 @app.get("/templates", response_class=HTMLResponse)
 def lista_templates(request: Request):
     """Importação de notas e gestão dos templates."""
     cfg = storage.load_config()
-    return render(request, "templates.html", cfg=cfg, templates=storage.list_templates(), certs=info_certificados(cfg))
+    templates = storage.list_templates()
+    return render(request, "templates.html", cfg=cfg, templates=templates, certs=info_certificados(cfg),
+                  **_filtros(templates))
 
 
 @app.post("/importar")
@@ -316,59 +380,43 @@ def importar_chave(request: Request, chave: str = Form(...)):
 def _form_template(request: Request, t: Template, status_code: int = 200, **ctx) -> HTMLResponse:
     cfg = storage.load_config()
     certs = info_certificados(cfg)
-    automatico = certificado_do_template(certs, t.model_copy(update={"certificado_id": ""}))
-    return render(request, "template_form.html", status_code, cfg=cfg, t=t, certs=certs, cert_automatico=automatico,
-                  **ctx)
+    return render(request, "template_form.html", status_code, cfg=cfg, t=t, certs=certs,
+                  prestadores=storage.list_prestadores(), tomadores=storage.list_tomadores(), **ctx)
 
 
 @app.get("/templates/{template_id}/editar", response_class=HTMLResponse)
 def editar(request: Request, template_id: str, importado: int = 0):
     t = get_template_or_404(template_id)
-    return _form_template(request, t, importado=bool(importado), erros=dps.validar_template(t))
+    return _form_template(request, t, importado=bool(importado), erros=erros_template(t))
 
 
 @app.post("/templates/{template_id}")
 async def salvar(request: Request, template_id: str):
     atual = get_template_or_404(template_id)
     dados = _unflatten(await request.form())
-    tem_tomador = dados.pop("tem_tomador", "") == "1"
-    base = atual.model_dump()
-    certificado_id = dados.get("certificado_id", atual.certificado_id)
-    if certificado_id not in {c.id for c in storage.load_config().certificados}:
-        certificado_id = ""
-    base.update(nome=dados.get("nome") or atual.nome, ultimo_valor=atual.ultimo_valor, certificado_id=certificado_id)
-    for secao in ("prestador", "servico", "tributacao", "com_ext"):
+    base = atual.model_dump()  # sem `prestador`/`tomador`: o template guarda só os ids dos cadastros
+    prestador_id = dados.get("prestador_id", atual.prestador_id)
+    tomador_id = dados.get("tomador_id", atual.tomador_id)
+    if prestador_id not in {p.id for p in storage.list_prestadores()}:
+        prestador_id = ""
+    if tomador_id not in {to.id for to in storage.list_tomadores()}:
+        tomador_id = ""
+    base.update(nome=dados.get("nome") or atual.nome, ultimo_valor=atual.ultimo_valor,
+                prestador_id=prestador_id, tomador_id=tomador_id)
+    for secao in ("servico", "tributacao", "com_ext"):
         base[secao].update(dados.get(secao, {}))
     if dados.get("servico", {}).get("local_tipo") == "brasil":
         base["servico"]["pais_prestacao"] = ""
     base["servico"].pop("local_tipo", None)
-    if tem_tomador:
-        tom = dados.get("tomador", {})
-        end = tom.pop("endereco", {})
-        base["tomador"] = {**(base.get("tomador") or {}), **tom}
-        base["tomador"]["endereco"] = {**((base.get("tomador") or {}).get("endereco") or {}), **end}
-    else:
-        base["tomador"] = None
     try:
         t = Template.model_validate(base)
     except ValidationError as exc:
         erros = [f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()]
         return _form_template(request, atual, 422, erros=erros)
+    storage.resolver([t])
 
-    p, s = t.prestador, t.servico
-    p.cod_municipio, p.municipio = _resolver_municipio(p.cod_municipio, p.municipio)
+    s = t.servico
     s.cod_municipio_prestacao, s.municipio_prestacao = _resolver_municipio(s.cod_municipio_prestacao, s.municipio_prestacao)
-    if t.tomador:
-        e = t.tomador.endereco
-        if t.tomador.tipo_doc == "NIF":
-            if e.pais == "BR":
-                e.pais = ""
-            e.cep = e.cod_municipio = e.municipio = ""
-        else:
-            e.pais = e.cod_postal = e.cidade = e.estado_prov = ""
-            t.tomador.c_nao_nif = ""
-            if e.preenchido() or e.municipio:
-                e.cod_municipio, e.municipio = _resolver_municipio(e.cod_municipio, e.municipio)
     if s.pais_prestacao:
         s.cod_municipio_prestacao = s.municipio_prestacao = ""
     if t.tributacao.trib_issqn == "3":  # exportação: sem retenção nem alíquota (campos ficam ocultos)
@@ -377,22 +425,12 @@ async def salvar(request: Request, template_id: str):
         t.tributacao.pais_resultado = ""
     if t.tributacao.trib_issqn == "3" and not t.tributacao.pais_resultado and t.tomador_exterior:
         t.tributacao.pais_resultado = t.tomador.endereco.pais
-    for campo in ("documento", "fone"):
-        setattr(p, campo, digits(getattr(p, campo)))
     s.c_trib_nac, s.c_trib_mun, s.c_nbs = digits(s.c_trib_nac), digits(s.c_trib_mun), digits(s.c_nbs)
-    if t.tomador:
-        to = t.tomador
-        if to.tipo_doc != "NIF":
-            to.documento = digits(to.documento)
-        to.fone = digits(to.fone)
-        to.endereco.cep = digits(to.endereco.cep)
-        if not to.documento and not (to.tipo_doc == "NIF" and to.c_nao_nif):
-            t.tomador = None
     t.atualizado_em = datetime.now()
     t.avisos = []
     storage.save_template(t)
 
-    erros = dps.validar_template(t)
+    erros = erros_template(t)
     if erros:
         return _form_template(request, t, erros=erros, salvo=True)
     return RedirectResponse(f"/templates/{t.id}", status_code=303)
@@ -416,22 +454,267 @@ def duplicar(template_id: str):
 
 
 # --------------------------------------------------------------------------------------
+# cadastros (prestadores e tomadores)
+# --------------------------------------------------------------------------------------
+
+def _normalizar_prestador(p: Prestador) -> None:
+    p.cod_municipio, p.municipio = _resolver_municipio(p.cod_municipio, p.municipio)
+    p.documento, p.fone = digits(p.documento), digits(p.fone)
+
+
+def _normalizar_tomador(to: Tomador) -> None:
+    e = to.endereco
+    if to.tipo_doc == "NIF":
+        if e.pais == "BR":
+            e.pais = ""
+        e.cep = e.cod_municipio = e.municipio = ""
+    else:
+        e.pais = e.cod_postal = e.cidade = e.estado_prov = ""
+        to.c_nao_nif = ""
+        to.documento = digits(to.documento)
+        if e.preenchido() or e.municipio:
+            e.cod_municipio, e.municipio = _resolver_municipio(e.cod_municipio, e.municipio)
+    to.fone, e.cep = digits(to.fone), digits(e.cep)
+
+
+CADASTROS = {
+    "prestadores": {
+        "papel": "prestador", "modelo": Prestador, "titulo": "Prestadores", "listar": storage.list_prestadores,
+        "obter": storage.get_prestador, "gravar": storage.save_prestador, "apagar": storage.delete_prestador,
+        "chave": storage.chave_prestador, "validar": dps.validar_prestador, "normalizar": _normalizar_prestador,
+        "rotulo": rotulo_prestador,
+    },
+    "tomadores": {
+        "papel": "tomador", "modelo": Tomador, "titulo": "Tomadores", "listar": storage.list_tomadores,
+        "obter": storage.get_tomador, "gravar": storage.save_tomador, "apagar": storage.delete_tomador,
+        "chave": storage.chave_tomador, "validar": dps.validar_tomador, "normalizar": _normalizar_tomador,
+        "rotulo": rotulo_tomador,
+    },
+}
+
+
+def _cadastro(tipo: str) -> dict:
+    if tipo not in CADASTROS:
+        raise HTTPException(404, "Página não encontrada")
+    return {**CADASTROS[tipo], "tipo": tipo}
+
+
+def _obter(cad: dict, ident: str):
+    try:
+        return cad["obter"](ident)
+    except KeyError:
+        raise HTTPException(404, "Cadastro não encontrado")
+
+
+def _usos(cad: dict, templates: list[Template]) -> dict[str, list[Template]]:
+    """id do cadastro → templates que apontam para ele."""
+    campo = f"{cad['papel']}_id"
+    usos: dict[str, list[Template]] = {}
+    for t in templates:
+        if getattr(t, campo):
+            usos.setdefault(getattr(t, campo), []).append(t)
+    return usos
+
+
+def _voltar_seguro(voltar: str) -> str:
+    """Só caminhos locais (evita redirecionar para outro site)."""
+    return voltar if voltar.startswith("/") and not voltar.startswith("//") else ""
+
+
+@app.get("/cadastros")
+def cadastros():
+    return RedirectResponse("/cadastros/tomadores", status_code=303)
+
+
+@app.get("/cadastros/{tipo}", response_class=HTMLResponse)
+def lista_cadastros(request: Request, tipo: str, ok: str = "", erro: str = ""):
+    cad = _cadastro(tipo)
+    cfg = storage.load_config()
+    certs = info_certificados(cfg)
+    usos = _usos(cad, storage.list_templates())
+    linhas = []
+    for c in cad["listar"]():
+        linha = {"c": c, "usos": usos.get(c.id, []), "pendencias": cad["validar"](c)}
+        if cad["papel"] == "prestador":
+            linha["cert"] = certificado_do_prestador(certs, c)
+            linha["problema_cert"] = problema_certificado(certs, c, linha["cert"])
+        linhas.append(linha)
+    return render(request, "cadastros.html", cfg=cfg, cad=cad, linhas=linhas, ok=ok, erro=erro)
+
+
+def _form_cadastro(request: Request, cad: dict, c, dialogo: bool, voltar: str = "", status_code: int = 200,
+                   **ctx) -> HTMLResponse:
+    cfg = storage.load_config()
+    certs = info_certificados(cfg)
+    extra = {}
+    if cad["papel"] == "prestador":
+        automatico = certificado_do_prestador(certs, c.model_copy(update={"certificado_id": ""}))
+        extra = {"certs": certs, "cert_automatico": automatico}
+    nome = "partials/cadastro_dialogo.html" if dialogo else "cadastro.html"
+    return render(request, nome, status_code, cfg=cfg, cad=cad, c=c, voltar=voltar,
+                  usos=_usos(cad, storage.list_templates()).get(c.id, []) if c.id else [], **extra, **ctx)
+
+
+@app.get("/cadastros/{tipo}/novo", response_class=HTMLResponse)
+def novo_cadastro(request: Request, tipo: str, dialogo: int = 0, voltar: str = ""):
+    cad = _cadastro(tipo)
+    return _form_cadastro(request, cad, cad["modelo"](), bool(dialogo), _voltar_seguro(voltar))
+
+
+@app.get("/cadastros/{tipo}/resumo", response_class=HTMLResponse)
+def resumo_cadastro(request: Request, tipo: str):
+    """Resumo do cadastro escolhido num select (formulário do template)."""
+    cad = _cadastro(tipo)
+    ident = request.query_params.get(f"{cad['papel']}_id", "")
+    try:
+        c = cad["obter"](ident) if ident else None
+    except KeyError:
+        c = None
+    return render(request, "partials/resumo_cadastro.html", **_ctx_resumo(cad["papel"], c))
+
+
+def _ctx_resumo(papel: str, c) -> dict:
+    ctx: dict[str, Any] = {"papel": papel, "c": c, "pendencias": []}
+    if c is None:
+        return ctx
+    ctx["pendencias"] = (dps.validar_prestador if papel == "prestador" else dps.validar_tomador)(c)
+    if papel == "prestador":
+        certs = info_certificados(storage.load_config())
+        ctx["cert"] = certificado_do_prestador(certs, c)
+        ctx["problema_cert"] = problema_certificado(certs, c, ctx["cert"])
+    return ctx
+
+
+views.env.globals["ctx_resumo"] = _ctx_resumo
+
+
+@app.get("/cadastros/{tipo}/{ident}", response_class=HTMLResponse)
+def editar_cadastro(request: Request, tipo: str, ident: str, dialogo: int = 0, voltar: str = ""):
+    cad = _cadastro(tipo)
+    c = _obter(cad, ident)
+    return _form_cadastro(request, cad, c, bool(dialogo), _voltar_seguro(voltar), pendencias=cad["validar"](c))
+
+
+@app.post("/cadastros/{tipo}", response_class=HTMLResponse)
+async def criar_cadastro(request: Request, tipo: str):
+    return await _salvar_cadastro(request, _cadastro(tipo), None)
+
+
+@app.post("/cadastros/{tipo}/{ident}", response_class=HTMLResponse)
+async def salvar_cadastro(request: Request, tipo: str, ident: str):
+    cad = _cadastro(tipo)
+    return await _salvar_cadastro(request, cad, _obter(cad, ident))
+
+
+async def _salvar_cadastro(request: Request, cad: dict, atual) -> Response:
+    papel = cad["papel"]
+    dados = _unflatten(await request.form())
+    dialogo = dados.get("dialogo") == "1"
+    voltar = _voltar_seguro(dados.get("voltar", ""))
+    base = (atual or cad["modelo"]()).model_dump()
+    campos = dados.get(papel, {})
+    if "endereco" in base:
+        base["endereco"].update(campos.pop("endereco", {}))
+    base.update(campos)
+    if papel == "prestador":
+        cert_id = dados.get("certificado_id", "")
+        base["certificado_id"] = cert_id if cert_id in {c.id for c in storage.load_config().certificados} else ""
+        if atual and digits(atual.documento):  # numeração e certificado dependem do documento: não muda
+            base.update(tipo_doc=atual.tipo_doc, documento=atual.documento)
+    try:
+        c = cad["modelo"].model_validate(base)
+    except ValidationError as exc:
+        erros = [f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors()]
+        return _form_cadastro(request, cad, atual or cad["modelo"](), dialogo, voltar, 200 if dialogo else 422,
+                              erros=erros)
+    cad["normalizar"](c)
+
+    chave = cad["chave"](c)
+    if not chave:
+        erro = ("Informe o CNPJ/CPF do prestador." if papel == "prestador" else
+                "Informe o documento do tomador (no exterior sem NIF, o nome e o país).")
+        return _form_cadastro(request, cad, c, dialogo, voltar, 200 if dialogo else 422, erros=[erro])
+    repetido = next((x for x in cad["listar"]() if x.id != c.id and cad["chave"](x) == chave), None)
+    if repetido:
+        return _form_cadastro(request, cad, c, dialogo, voltar, 200 if dialogo else 422,
+                              erros=[f"Já existe o cadastro {cad['rotulo'](repetido)}: use-o em vez de criar outro."])
+
+    agora = datetime.now()
+    if not c.id:
+        c.id, c.criado_em = storage.new_id(), agora
+    c.atualizado_em = agora
+    cad["gravar"](c)
+
+    if dialogo:  # formulário aberto a partir do template ou da emissão: o app.js atualiza o select
+        evento = {"cadastro-salvo": {"papel": papel, "id": c.id, "rotulo": cad["rotulo"](c),
+                                     "tipo": getattr(c, "tipo_doc", "")}}
+        return Response(status_code=204, headers={"HX-Trigger": json.dumps(evento)})
+    pendencias = cad["validar"](c)
+    # a mudança vale para todos os templates do cadastro: mostra os que ficaram com pendência
+    afetados = [t.nome for t in _usos(cad, storage.list_templates()).get(c.id, []) if erros_template(t)]
+    if pendencias or afetados:
+        return _form_cadastro(request, cad, c, False, voltar, pendencias=pendencias, afetados=afetados, salvo=True)
+    return RedirectResponse(voltar or f"/cadastros/{cad['tipo']}?ok=" + quote(f"{cad['rotulo'](c)} salvo."),
+                            status_code=303)
+
+
+@app.post("/cadastros/{tipo}/{ident}/excluir")
+def excluir_cadastro(tipo: str, ident: str):
+    cad = _cadastro(tipo)
+    c = _obter(cad, ident)
+    usos = _usos(cad, storage.list_templates()).get(c.id, [])
+    if usos:
+        nomes = ", ".join(t.nome for t in usos)
+        msg = f"{cad['rotulo'](c)} é usado pelos templates {nomes}. Troque-o nesses templates antes de excluir."
+        return RedirectResponse(f"/cadastros/{tipo}?erro=" + quote(msg), status_code=303)
+    cad["apagar"](c.id)
+    return RedirectResponse(f"/cadastros/{tipo}?ok=" + quote(f"{cad['rotulo'](c)} excluído."), status_code=303)
+
+
+# --------------------------------------------------------------------------------------
 # emissão
 # --------------------------------------------------------------------------------------
 
+def _para_emissao(t: Template, prestador_id: str | None, tomador_id: str | None) -> Template:
+    """O template com o prestador e o tomador escolhidos na hora de emitir (None = os do template).
+
+    Sem tomador é `tomador_id="sem"` (o FastAPI trata campo de formulário vazio como ausente). Só a emissão usa
+    a troca; o template continua apontando para os seus cadastros.
+    """
+    try:
+        if prestador_id is not None and prestador_id != t.prestador_id:
+            p = storage.get_prestador(prestador_id)
+            t = t.model_copy(update={"prestador_id": p.id, "prestador": p})
+        tomador_id = "" if tomador_id == "sem" else tomador_id
+        if tomador_id is not None and tomador_id != t.tomador_id:
+            to = storage.get_tomador(tomador_id) if tomador_id else None
+            t = t.model_copy(update={"tomador_id": tomador_id, "tomador": to})
+    except KeyError:
+        raise HTTPException(404, "Cadastro não encontrado")
+    return t
+
+
 @app.get("/templates/{template_id}", response_class=HTMLResponse)
-def pagina_emissao(request: Request, template_id: str):
+def pagina_emissao(request: Request, template_id: str, prestador_id: str | None = None,
+                   tomador_id: str | None = None):
     cfg = storage.load_config()
-    t = get_template_or_404(template_id)
+    original = get_template_or_404(template_id)
+    t = _para_emissao(original, prestador_id, tomador_id)
     certs = info_certificados(cfg)
-    cert = certificado_do_template(certs, t)
-    return render(request, "emitir.html", cfg=cfg, t=t, n_dps=proximo_numero(cfg, t), hoje=date.today(),
-                  erros=dps.validar_template(t), cert=cert, problema_cert=problema_certificado(certs, t, cert),
+    cert = certificado_do_prestador(certs, t.prestador)
+    q = request.query_params  # valores já digitados, quando a página é recarregada pela troca de cadastro
+    return render(request, "emitir.html", cfg=cfg, t=t, original=original, n_dps=proximo_numero(cfg, t),
+                  hoje=date.today(), erros=erros_template(t), cert=cert,
+                  problema_cert=problema_certificado(certs, t.prestador, cert),
+                  prestadores=storage.list_prestadores(), tomadores=storage.list_tomadores(),
+                  digitado={k: q.get(k, "") for k in ("competencia", "valor", "valor_moeda", "descricao")},
                   emissoes=[e for e in storage.list_emissoes() if e.template_id == t.id][:5])
 
 
 def _dados_emissao(cfg: Config, t: Template, competencia: str, valor: str, descricao: str,
                    n_dps: int | None = None, valor_moeda: str = "") -> dps.DadosEmissao:
+    if pendencias := erros_template(t):
+        raise dps.DPSError(pendencias)
     erros = []
     try:
         comp = date.fromisoformat(competencia)
@@ -450,17 +733,18 @@ def _dados_emissao(cfg: Config, t: Template, competencia: str, valor: str, descr
 
 @app.post("/templates/{template_id}/revisar", response_class=HTMLResponse)
 def revisar(request: Request, template_id: str, competencia: str = Form(""), valor: str = Form(""),
-            descricao: str = Form(""), valor_moeda: str = Form("")):
+            descricao: str = Form(""), valor_moeda: str = Form(""), prestador_id: str | None = Form(None),
+            tomador_id: str | None = Form(None)):
     cfg = storage.load_config()
-    t = get_template_or_404(template_id)
+    t = _para_emissao(get_template_or_404(template_id), prestador_id, tomador_id)
     try:
         d = _dados_emissao(cfg, t, competencia, valor, descricao, valor_moeda=valor_moeda)
         root, ident = dps.montar(t, d)
     except dps.DPSError as exc:
         return render(request, "partials/erro.html", t=t, mensagens=exc.erros)
     certs = info_certificados(cfg)
-    cert = certificado_do_template(certs, t)
-    alertas = [p] if (p := problema_certificado(certs, t, cert)) else []
+    cert = certificado_do_prestador(certs, t.prestador)
+    alertas = [p] if (p := problema_certificado(certs, t.prestador, cert)) else []
     xml = dps.serializar(root).decode()
     return render(request, "partials/revisao.html", cfg=cfg, t=t, d=d, id_dps=ident, xml=xml, alertas=alertas,
                   cert=cert, pode_emitir=not alertas)
@@ -469,17 +753,18 @@ def revisar(request: Request, template_id: str, competencia: str = Form(""), val
 @app.post("/templates/{template_id}/emitir", response_class=HTMLResponse)
 def emitir(request: Request, template_id: str, competencia: str = Form(""), valor: str = Form(""),
            descricao: str = Form(""), n_dps: int = Form(...), ambiente: str = Form(...),
-           valor_moeda: str = Form("")):
+           valor_moeda: str = Form(""), prestador_id: str | None = Form(None), tomador_id: str | None = Form(None)):
     cfg = storage.load_config()
-    t = get_template_or_404(template_id)
+    original = get_template_or_404(template_id)
+    t = _para_emissao(original, prestador_id, tomador_id)
     if ambiente != cfg.ambiente:
         return render(request, "partials/erro.html",
                       mensagens=["O ambiente mudou desde a revisão. Revise a emissão novamente."])
     try:
         certs = info_certificados(cfg)
-        info = certificado_do_template(certs, t)
+        info = certificado_do_prestador(certs, t.prestador)
         if not (info and info["ok"]):
-            raise CertificadoError(problema_certificado(certs, t, info))
+            raise CertificadoError(problema_certificado(certs, t.prestador, info))
         cert = abrir_certificado(cfg, info["id"])
         d = _dados_emissao(cfg, t, competencia, valor, descricao, n_dps=n_dps, valor_moeda=valor_moeda)
         root, ident = dps.montar(t, d)
@@ -529,6 +814,7 @@ def emitir(request: Request, template_id: str, competencia: str = Form(""), valo
     emissao = storage.save_emissao(
         Emissao(chave_acesso=res.chave_acesso, numero_nfse=numero_nfse, id_dps=ident, serie=cfg.serie,
                 n_dps=n_dps, ambiente=cfg.ambiente, template_id=t.id, template_nome=t.nome,
+                prestador_id=t.prestador_id, tomador_id=t.tomador_id,
                 tomador=t.tomador.nome if t.tomador else "", valor=str(d.valor),
                 valor_moeda=str(d.valor_moeda) if d.valor_moeda else "",
                 moeda=dominios.MOEDAS.get(t.com_ext.tp_moeda, (t.com_ext.tp_moeda,))[0] if d.valor_moeda else "",
@@ -540,11 +826,11 @@ def emitir(request: Request, template_id: str, competencia: str = Form(""), valo
             (storage.DATA_DIR / emissao.pasta / "danfse.pdf").write_bytes(danfse.gerar(res.nfse_xml))
         except Exception:  # noqa: BLE001
             pass
-    t.ultimo_valor = str(d.valor)
+    original.ultimo_valor = str(d.valor)
     if d.valor_moeda:
-        t.ultimo_valor_moeda = str(d.valor_moeda)
-    t.atualizado_em = datetime.now()
-    storage.save_template(t)
+        original.ultimo_valor_moeda = str(d.valor_moeda)
+    original.atualizado_em = datetime.now()
+    storage.save_template(original)
     return render(request, "partials/sucesso.html", cfg=cfg, t=t, e=emissao, alertas=res.alertas)
 
 
@@ -628,11 +914,11 @@ def _estado_certificado(c: dict) -> str:
 def _pagina_config(request: Request, cfg: Config | None = None, **ctx):
     cfg = cfg or storage.load_config()
     certs = info_certificados(cfg)
-    templates = storage.list_templates()
-    usos: dict[str, list[str]] = {}  # id do certificado → templates que o usam
-    for t in templates:
-        if c := certificado_do_template(certs, t):
-            usos.setdefault(c["id"], []).append(t.nome)
+    prestadores = storage.list_prestadores()
+    usos: dict[str, list[str]] = {}  # id do certificado → prestadores que o usam
+    for p in prestadores:
+        if c := certificado_do_prestador(certs, p):
+            usos.setdefault(c["id"], []).append(p.nome or fmt_doc(p.documento))
     ordem = {"erro": 0, "vencido": 1, "vencendo": 2, "valido": 3}
     linhas = []  # um certificado por linha, com a numeração da DPS do CNPJ/CPF dele
     for c in certs:
@@ -640,13 +926,13 @@ def _pagina_config(request: Request, cfg: Config | None = None, **ctx):
         linhas.append({**c, "estado": estado, "usos": usos.get(c["id"], []),
                        "numeracao": _numeracao(cfg, c["documento"]) if c["documento"] else None})
     linhas.sort(key=lambda c: (ordem[c["estado"]], strip_accents(c.get("titular") or c["arquivo"]).casefold()))
-    # prestadores de templates sem certificado também têm numeração (ajustável antes de adicionar o certificado)
+    # prestadores sem certificado também têm numeração (ajustável antes de adicionar o certificado)
     docs_cert = {c["documento"] for c in certs if c["documento"]}
     sem_cert = []
-    for t in templates:
-        d = digits(t.prestador.documento)
+    for p in prestadores:
+        d = digits(p.documento)
         if d and d not in docs_cert and d not in {n["doc"] for n in sem_cert}:
-            sem_cert.append(_numeracao(cfg, d))
+            sem_cert.append({**_numeracao(cfg, d), "nome": p.nome})
     chaves = {c["numeracao"]["chave"] for c in linhas if c["numeracao"]} | {n["chave"] for n in sem_cert}
     outros = sorted((k, v) for k, v in cfg.numeracao.items() if k not in chaves)
     return render(request, "config.html", cfg=cfg, linhas=linhas, sem_cert=sem_cert, numeracao_outros=outros,
@@ -703,10 +989,10 @@ def excluir_certificado(request: Request, cert_id: str):
     cfg = storage.load_config()
     cfg.certificados = [c for c in cfg.certificados if c.id != cert_id]
     storage.save_config(cfg)
-    for t in storage.list_templates():  # templates que o escolheram voltam ao automático
-        if t.certificado_id == cert_id:
-            t.certificado_id = ""
-            storage.save_template(t)
+    for p in storage.list_prestadores():  # prestadores que o escolheram voltam ao automático
+        if p.certificado_id == cert_id:
+            p.certificado_id = ""
+            storage.save_prestador(p)
     return _pagina_config(request, cfg, ok="Certificado removido.")
 
 
