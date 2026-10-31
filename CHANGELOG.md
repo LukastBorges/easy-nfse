@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.5.1...easy-nfse-v1.0.0) (2026-10-31)
+
+
+### Funcionalidades
+
+* nova identidade visual (mata, mostarda e papel) e cadastros de prestadores e tomadores ([3f81664](https://github.com/LukastBorges/easy-nfse/commit/3f81664c9d9f8aef332dae007cc8495eaadc25c8))
+
+
+### Manutenção
+
+* lançar a nova identidade visual como 1.0.0 ([3114330](https://github.com/LukastBorges/easy-nfse/commit/3114330af4fa7ca139808e413f13513899b38b17))
+
 ## [0.5.1](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.5.0...easy-nfse-v0.5.1) (2026-10-31)
 
 
