@@ -1,6 +1,6 @@
-<p align="center"><img src="src/easy_nfse/static/logo.svg" width="96" alt="easy-nfse"></p>
+<p align="center"><img src="src/easy_nfse/static/logo.svg" width="96" alt="easyNFSe"></p>
 
-# easy-nfse
+# easyNFSe
 
 Aplicativo local para emitir NFS-e do **padrão nacional** (Sefin Nacional / [nfse.gov.br](https://www.nfse.gov.br/))
 a partir de uma nota já emitida.
@@ -11,9 +11,9 @@ a partir de uma nota já emitida.
 3. A cada nova nota, informe apenas a **data de competência** e o **valor**, revise e emita.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inicio-escuro.png">
-  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/inicio-claro.png">
-  <img src="docs/screenshots/inicio-claro.png" alt="Tela inicial do easy-nfse com templates de dois prestadores, cada um com o estado do seu certificado digital, e as últimas notas emitidas (dados fictícios)">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/inicio-escuro.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/screenshots/inicio-claro.jpg">
+  <img src="docs/screenshots/inicio-claro.jpg" alt="Tela inicial do easyNFSe com templates de dois prestadores, cada um com o estado do seu certificado digital, e as últimas notas emitidas (dados fictícios)">
 </picture>
 
 <sub>Tela inicial em uma versão de teste, com dados fictícios: cada template mostra o certificado do seu prestador e avisa
