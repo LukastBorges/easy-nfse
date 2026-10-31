@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.4.2...easy-nfse-v0.5.0) (2026-10-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* templates em data/templates não guardam mais o prestador e o tomador. Os do formato anterior são migrados ao serem lidos (prestadores/, tomadores/), com backup em data/backup/templates-0.4/; versões anteriores do app não leem os templates migrados.
+
+### Funcionalidades
+
+* cadastrar prestadores e tomadores separados dos templates ([3631cf1](https://github.com/LukastBorges/easy-nfse/commit/3631cf15fdae384562afff1cd4cd707bcf32d202))
+
+
+### Documentação
+
+* **agents:** documentar cadastros de prestadores e tomadores ([0ee2124](https://github.com/LukastBorges/easy-nfse/commit/0ee21249eb1e7ba9c78cfb64ad34a6d9b567f458))
+
 ## [0.4.2](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.4.1...easy-nfse-v0.4.2) (2026-10-30)
 
 
