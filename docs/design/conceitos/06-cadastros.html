@@ -1,0 +1,129 @@
+<!-- titulo: easyNFSe — Cadastros -->
+<style>
+.cabeca { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.cabeca p { margin: 8px 0 0; color: var(--p2); max-width: 66ch; }
+
+/* abas Prestadores / Tomadores como duas fichas de arquivo */
+.abas { margin-top: 28px; display: flex; gap: 4px; border-bottom: 1px solid rgba(238, 230, 208, .1); }
+.abas a {
+  display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px 12px; text-decoration: none; color: var(--p3); font-weight: 500;
+  border-radius: 10px 10px 0 0; border: 1px solid transparent; border-bottom: 0; margin-bottom: -1px; transition: color .25s;
+}
+.abas a svg { width: 17px; height: 17px; }
+.abas a .cont { font: 600 12px 'Public Sans'; color: var(--p4); }
+.abas a.ativo { color: var(--p); background: rgba(238, 230, 208, .05); border-color: rgba(238, 230, 208, .1); box-shadow: inset 0 2px 0 var(--m); }
+.abas a.ativo .cont { color: var(--m-clara); }
+
+.filtros { margin-top: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filtros .entrada { width: 300px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { padding: 7px 12px; border-radius: 999px; font-size: 13px; color: var(--p3); border: 1px solid rgba(238, 230, 208, .1); background: transparent; }
+.chip.ativo { color: var(--tinta); background: var(--p); border-color: var(--p); font-weight: 600; }
+.chip b { font-weight: 600; color: var(--m-clara); margin-left: 4px; }
+.chip.ativo b { color: #8F6C08; }
+
+.fichas { margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ficha { padding: 20px 22px; display: grid; gap: 14px; }
+.ficha .topo-f { display: flex; gap: 12px; align-items: flex-start; }
+.bandeira {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex: none;
+  background: rgba(238, 230, 208, .06); border: 1px solid rgba(238, 230, 208, .12); color: var(--p2);
+  font: 600 13px 'Public Sans'; letter-spacing: .02em;
+}
+.bandeira svg { width: 20px; height: 20px; }
+.ficha h3 { font: 600 17px/1.25 var(--titulo); letter-spacing: -.015em; }
+.ficha .doc { margin-top: 3px; color: var(--p3); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ficha .topo-f .pill { margin-left: auto; }
+.ficha dl { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; font-size: 13px; }
+.ficha dt { color: var(--p3); font-size: 12px; }
+.ficha dd { margin: 1px 0 0; color: var(--p2); }
+.ficha .rodape { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px dashed rgba(238, 230, 208, .12); font-size: 13px; color: var(--p3); }
+.ficha .rodape .usos { display: inline-flex; gap: 6px; align-items: center; }
+.ficha .rodape .usos svg { width: 15px; height: 15px; }
+.ficha .rodape .btn { margin-left: auto; padding: 8px 13px; font-size: 13px; }
+.ficha .rodape .icone-btn { width: 32px; height: 32px; }
+.aviso { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; font-size: 13px;
+  background: rgba(213, 161, 26, .08); border: 1px solid rgba(213, 161, 26, .25); color: var(--m-clara); }
+.aviso svg { width: 16px; height: 16px; margin-top: 1px; }
+.aviso span { color: var(--p2); }
+</style>
+{{header:Cadastros}}
+<main class="conteudo pagina">
+  <div class="cabeca pousa">
+    <div>
+      <h1>Cadastros</h1>
+      <p>Prestadores e tomadores usados pelos templates. Ao importar uma nota eles são cadastrados sozinhos. Corrigir um cadastro vale para todos os templates que o usam.</p>
+    </div>
+    <span class="btn btn-mostarda">{{icon:plus}}Novo tomador</span>
+  </div>
+
+  <nav class="abas pousa" aria-label="Tipo de cadastro">
+    <a href="#">{{icon:building}}Prestadores <span class="cont">2</span></a>
+    <a href="#" class="ativo">{{icon:user}}Tomadores <span class="cont">4</span></a>
+  </nav>
+
+  <div class="filtros pousa">
+    <div class="entrada">{{icon:search}}<span class="ph">Buscar por nome, CNPJ, CPF ou NIF</span></div>
+    <div class="chips">
+      <span class="chip ativo">Todos</span>
+      <span class="chip">Com pendências<b>1</b></span>
+      <span class="chip">Do exterior<b>2</b></span>
+      <span class="chip">Sem template<b>1</b></span>
+    </div>
+  </div>
+
+  <div class="fichas">
+    <article class="vidro toque ficha pousa">
+      <div class="topo-f">
+        <span class="bandeira">EUA</span>
+        <div><h3>Acme Corporation, Inc.</h3><p class="doc">NIF 12-3456789</p></div>
+        <span class="pill">Exterior</span>
+      </div>
+      <dl>
+        <div><dt>Cidade</dt><dd>Wilmington, Delaware</dd></div>
+        <div><dt>Código postal</dt><dd>19808</dd></div>
+        <div style="grid-column:1/-1"><dt>Endereço</dt><dd>2711 Centerville Rd, Suite 400</dd></div>
+      </dl>
+      <div class="rodape"><span class="usos">{{icon:template}}1 template</span><button class="icone-btn" aria-label="Editar">{{icon:pencil}}</button><span class="btn btn-vidro">{{icon:send}}Emitir</span></div>
+    </article>
+
+    <article class="vidro toque ficha pousa">
+      <div class="topo-f">
+        <span class="bandeira">EUA</span>
+        <div><h3>Pixel Labs LLC</h3><p class="doc">Sem NIF: não exigido no país</p></div>
+        <span class="pill">Exterior</span>
+      </div>
+      <dl>
+        <div><dt>Cidade</dt><dd>Austin, Texas</dd></div>
+        <div><dt>Código postal</dt><dd>78701</dd></div>
+        <div style="grid-column:1/-1"><dt>Endereço</dt><dd>500 Congress Ave, Floor 3</dd></div>
+      </dl>
+      <div class="rodape"><span class="usos">{{icon:template}}1 template</span><button class="icone-btn" aria-label="Editar">{{icon:pencil}}</button><span class="btn btn-vidro">{{icon:send}}Emitir</span></div>
+    </article>
+
+    <article class="vidro toque ficha pousa">
+      <div class="topo-f">
+        <span class="bandeira">{{icon:building}}</span>
+        <div><h3>Horta Digital Ltda</h3><p class="doc">CNPJ 98.765.432/0001-10</p></div>
+      </div>
+      <div class="aviso">{{icon:alert-triangle}}<span>Falta o CEP. A Sefin exige o endereço completo do tomador com CNPJ.</span></div>
+      <dl>
+        <div><dt>Município</dt><dd>Belo Horizonte, MG</dd></div>
+        <div><dt>E-mail</dt><dd>financeiro@hortadigital.com.br</dd></div>
+      </dl>
+      <div class="rodape"><span class="usos">{{icon:template}}1 template</span><span class="btn btn-vidro" style="margin-left:auto">{{icon:pencil}}Completar cadastro</span></div>
+    </article>
+
+    <article class="vidro toque ficha pousa">
+      <div class="topo-f">
+        <span class="bandeira">{{icon:user}}</span>
+        <div><h3>Marina Duarte</h3><p class="doc">CPF 123.456.789-09</p></div>
+      </div>
+      <dl>
+        <div><dt>Município</dt><dd>Nova Lima, MG</dd></div>
+        <div><dt>E-mail</dt><dd>marina.duarte@email.com</dd></div>
+      </dl>
+      <div class="rodape"><span class="usos">{{icon:template}}Nenhum template</span><button class="icone-btn" aria-label="Editar" style="margin-left:auto">{{icon:pencil}}</button><span class="btn btn-vidro" style="margin-left:0">{{icon:trash}}Excluir</span></div>
+    </article>
+  </div>
+</main>

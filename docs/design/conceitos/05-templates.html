@@ -1,0 +1,117 @@
+<!-- titulo: easyNFSe — Templates -->
+<style>
+.cabeca p { margin: 8px 0 0; color: var(--p2); max-width: 64ch; }
+
+/* a bandeja: onde a nota anterior é solta */
+.bandeja {
+  margin-top: 28px; padding: 26px; display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center;
+  border: 1.5px dashed rgba(213, 161, 26, .38); background: linear-gradient(165deg, rgba(213, 161, 26, .07), rgba(213, 161, 26, .02));
+  border-radius: 18px; position: relative; transition: border-color .3s var(--ease), background .3s var(--ease);
+}
+.bandeja:hover { border-color: rgba(213, 161, 26, .7); background: linear-gradient(165deg, rgba(213, 161, 26, .11), rgba(213, 161, 26, .03)); }
+.pilha { position: relative; width: 92px; height: 104px; }
+.pilha i {
+  position: absolute; width: 70px; height: 90px; border-radius: 5px; background: #EEE7D3; box-shadow: 0 12px 20px -10px rgba(0, 0, 0, .8);
+  display: block;
+}
+.pilha i:nth-child(1) { left: 6px; top: 10px; transform: rotate(-8deg); opacity: .55; }
+.pilha i:nth-child(2) { left: 18px; top: 4px; transform: rotate(4deg); }
+.pilha i:nth-child(2)::before { /* linhas impressas na folha */
+  content: ""; position: absolute; inset: 14px 12px auto; height: 40px;
+  background: repeating-linear-gradient(180deg, rgba(23, 23, 15, .28) 0 2px, transparent 2px 9px);
+}
+.pilha i:nth-child(2)::after { content: "PDF"; position: absolute; right: 7px; bottom: 7px; font: 700 9px 'Public Sans'; color: #8F6C08; letter-spacing: .04em; }
+.bandeja:hover .pilha i:nth-child(2) { transform: rotate(1deg) translateY(-4px); transition: transform .4s var(--ease); }
+.bandeja h2 { font-size: 19px; }
+.bandeja p { margin: 6px 0 0; color: var(--p3); }
+.bandeja p a { color: var(--m-clara); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(235, 194, 71, .4); }
+.bandeja .formatos { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+.lista-topo { margin-top: 38px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.filtros { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filtros .entrada { width: 340px; }
+.filtros .entrada.sel { width: auto; min-width: 190px; justify-content: space-between; }
+
+.lista { margin-top: 14px; padding: 4px 0; }
+.linha-t {
+  display: grid; grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, 1fr) 160px 150px; gap: 18px; align-items: center;
+  padding: 16px 20px; border-top: 1px solid rgba(238, 230, 208, .07); transition: background .25s var(--ease);
+}
+.linha-t:first-child { border-top: 0; }
+.linha-t:hover { background: rgba(238, 230, 208, .03); }
+.inicial {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+  font: 600 18px var(--titulo); color: var(--m-clara);
+  background: rgba(213, 161, 26, .09); border: 1px solid rgba(213, 161, 26, .22);
+}
+.inicial svg { width: 20px; height: 20px; }
+.linha-t h3 { font: 600 16px/1.25 var(--titulo); letter-spacing: -.015em; display: flex; gap: 8px; align-items: center; }
+.linha-t .quem { margin-top: 3px; color: var(--p3); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.linha-t .servico { color: var(--p2); font-size: 13px; }
+.linha-t .servico small { display: block; color: var(--p4); font-size: 12px; margin-top: 2px; }
+.linha-t .valor { text-align: right; }
+.linha-t .valor .num { display: block; font-size: 19px; line-height: 1.1; }
+.linha-t .valor small { color: var(--p4); font-size: 12px; }
+.linha-t .acoes { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+.linha-t .acoes .icone-btn { width: 32px; height: 32px; }
+.linha-t .btn { padding: 8px 14px; font-size: 13px; }
+.pend { color: var(--m-clara); font-size: 12px; display: inline-flex; gap: 5px; align-items: center; margin-top: 4px; }
+.pend svg { width: 14px; height: 14px; }
+</style>
+{{header:Templates}}
+<main class="conteudo pagina">
+  <div class="cabeca pousa">
+    <h1>Templates</h1>
+    <p>Cada template guarda o que se repete numa nota: prestador, tomador, serviço e tributação. Crie um a partir de uma NFS-e que você já emitiu.</p>
+  </div>
+
+  <section class="bandeja pousa">
+    <div class="pilha" aria-hidden="true"><i></i><i></i></div>
+    <div>
+      <h2>Arraste o PDF ou o XML da nota aqui</h2>
+      <p>ou <a href="#">escolha um arquivo</a>. Os dados são lidos e você revisa antes de salvar.</p>
+      <div class="formatos"><span class="pill">DANFSe</span><span class="pill">Impressão do Emissor Nacional</span><span class="pill">XML da NFS-e</span></div>
+    </div>
+    <span class="btn btn-mostarda">{{icon:file-import}}Importar nota</span>
+  </section>
+
+  <div class="lista-topo pousa">
+    <h2>Seus templates</h2>
+    <div class="filtros">
+      <div class="entrada">{{icon:search}}<span class="ph">Buscar por template, tomador ou prestador</span></div>
+      <div class="entrada sel">{{icon:building}}<span>Todos os prestadores</span>{{icon:adjustments-horizontal:ico-sm}}</div>
+      <span class="rotulo">4 templates</span>
+    </div>
+  </div>
+
+  <div class="vidro lista pousa">
+    <div class="linha-t">
+      <span class="inicial">{{icon:world}}</span>
+      <div style="min-width:0"><h3>Consultoria em TI para a Acme <span class="pill">USD</span></h3><p class="quem">Acme Corporation, Inc. para Jatobá Tecnologia ME</p></div>
+      <div class="servico">01.07.00, consultoria em TI<small>Exportação, NBS 1.1501.00.00</small></div>
+      <div class="valor"><span class="num">R$ 38.420,00</span><small>último valor</small></div>
+      <div class="acoes"><button class="icone-btn" aria-label="Editar">{{icon:pencil}}</button><span class="btn btn-vidro">{{icon:send}}Emitir</span></div>
+    </div>
+    <div class="linha-t">
+      <span class="inicial">{{icon:world}}</span>
+      <div style="min-width:0"><h3>Desenvolvimento sob demanda <span class="pill">USD</span></h3><p class="quem">Pixel Labs LLC para Estúdio Ipê Ltda</p></div>
+      <div class="servico">01.01.01, desenvolvimento de software<small>Exportação, sem NIF (cNaoNIF 1)</small></div>
+      <div class="valor"><span class="num">R$ 12.150,00</span><small>último valor</small></div>
+      <div class="acoes"><button class="icone-btn" aria-label="Editar">{{icon:pencil}}</button><span class="btn btn-vidro">{{icon:send}}Emitir</span></div>
+    </div>
+    <div class="linha-t">
+      <span class="inicial">H</span>
+      <div style="min-width:0"><h3>Suporte mensal</h3><p class="quem">Horta Digital Ltda para Jatobá Tecnologia ME</p></div>
+      <div class="servico">01.07.00, suporte técnico<small>Tributado em Belo Horizonte</small></div>
+      <div class="valor"><span class="num">R$ 4.800,00</span><small>último valor</small></div>
+      <div class="acoes"><button class="icone-btn" aria-label="Editar">{{icon:pencil}}</button><span class="btn btn-vidro">{{icon:send}}Emitir</span></div>
+    </div>
+    <div class="linha-t">
+      <span class="inicial">{{icon:receipt-tax}}</span>
+      <div style="min-width:0"><h3>Treinamento avulso</h3><p class="quem">Sem tomador identificado, Jatobá Tecnologia ME</p><p class="pend">{{icon:alert-triangle}}Falta a descrição do serviço. Corrija o template para emitir.</p></div>
+      <div class="servico">08.02.01, treinamento<small>Tributado em Belo Horizonte</small></div>
+      <div class="valor"><span class="num">R$ 2.000,00</span><small>valor da nota importada</small></div>
+      <div class="acoes"><span class="btn btn-vidro">{{icon:pencil}}Corrigir</span></div>
+    </div>
+  </div>
+</main>

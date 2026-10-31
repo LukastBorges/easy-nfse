@@ -1,0 +1,113 @@
+<!-- titulo: easy-nfse — Histórico -->
+<style>
+
+.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+.trilho {
+  position: sticky; top: 0; height: 100vh; padding: 22px 16px; display: flex; flex-direction: column; gap: 6px;
+  border-right: 1px solid rgba(238, 230, 208, .08);
+  background: linear-gradient(180deg, rgba(238, 230, 208, .05), rgba(238, 230, 208, .02));
+  -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
+}
+.trilho .marca { padding: 4px 8px 22px; }
+.trilho a.item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+  color: var(--p3); text-decoration: none; font-weight: 500; transition: color .25s, background .25s;
+}
+.trilho a.item svg { width: 17px; height: 17px; }
+.trilho a.item:hover { color: var(--p); }
+.trilho a.item.ativo { color: var(--p); background: rgba(238, 230, 208, .07); box-shadow: inset 0 1px 0 rgba(255, 250, 235, .07), inset 3px 0 0 var(--m); }
+.trilho .fim { margin-top: auto; display: grid; gap: 10px; }
+.trilho .fim .ambiente { justify-content: center; }
+.trilho .versao { display: flex; justify-content: space-between; color: var(--p4); font-size: 12px; padding: 0 6px; }
+.trilho .versao a { color: var(--m-clara); text-decoration: none; }
+
+.miolo { padding: 36px 40px 60px; max-width: 1100px; }
+.cabeca { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.cabeca p { margin: 6px 0 0; color: var(--p3); }
+
+.resumo { margin-top: 28px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; }
+.resumo .vidro { padding: 20px 22px; }
+.resumo .rotulo { display: block; }
+.resumo .num { display: block; margin-top: 8px; font-size: 40px; line-height: 1; font-weight: 300; }
+.resumo .num small { font: 400 15px 'Public Sans'; color: var(--p3); margin-right: 5px; }
+.resumo .nota { margin-top: 10px; font-size: 12.5px; color: var(--p3); }
+.resumo .nota b { color: var(--p2); font-weight: 500; }
+.barras { display: flex; align-items: flex-end; gap: 5px; height: 42px; margin-top: 14px; }
+.barras i { flex: 1; border-radius: 3px 3px 1px 1px; background: rgba(238, 230, 208, .14); display: block; }
+.barras i.m { background: linear-gradient(180deg, var(--m-clara), var(--m-escura)); }
+
+.filtros { margin-top: 28px; display: flex; gap: 10px; align-items: center; }
+.filtros .entrada { width: 320px; }
+.filtros .entrada.sel { width: auto; min-width: 170px; justify-content: space-between; }
+.filtros .rotulo { margin-left: auto; }
+
+/* o livro-razão: linhas, não cartões */
+.razao { margin-top: 16px; padding: 6px 0; }
+.razao table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.razao th { text-align: left; font-weight: 500; color: var(--p3); font-size: 12px; padding: 12px 18px; border-bottom: 1px solid rgba(238, 230, 208, .1); }
+.razao td { padding: 13px 18px; border-bottom: 1px solid rgba(238, 230, 208, .06); vertical-align: middle; }
+.razao tr:last-child td { border-bottom: 0; }
+.razao tbody tr { transition: background .25s var(--ease); }
+.razao tbody tr:hover { background: rgba(238, 230, 208, .035); }
+.razao .d { color: var(--p3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.razao .n { color: var(--p); font-weight: 500; }
+.razao .n small { display: block; color: var(--p3); font-weight: 400; font-size: 12px; margin-top: 1px; }
+.razao .chave { color: var(--p3); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.razao .v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.razao .v small { display: block; color: var(--p4); font-size: 11.5px; }
+.razao .acoes { text-align: right; white-space: nowrap; }
+.razao .acoes a { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: var(--p3); vertical-align: middle; margin-left: 2px; }
+.razao .acoes a:hover { color: var(--p); background: rgba(238, 230, 208, .08); }
+.razao .acoes a svg { width: 16px; height: 16px; }
+.mes td { padding: 18px 18px 6px; border-bottom: 0; }
+.mes span { font: 500 15px var(--titulo); font-variation-settings: "SOFT" 70, "opsz" 16; color: var(--p2); }
+</style>
+{{header:Histórico}}
+<main class="conteudo pagina">
+    <div class="cabeca pousa">
+      <div>
+        <h1>Histórico</h1>
+        <p>Tudo o que saiu deste computador, nos dois ambientes.</p>
+      </div>
+      <a class="btn btn-mostarda" href="01-inicio.html">{{icon:send}}Emitir nota</a>
+    </div>
+
+    <div class="resumo">
+      <div class="vidro pousa">
+        <span class="rotulo">Emitido em outubro</span>
+        <span class="num"><small>R$</small>55.370,00</span>
+        <p class="nota"><b>3 notas</b> autorizadas, 1 em teste. Setembro fechou em R$ 51.370,00.</p>
+      </div>
+      <div class="vidro pousa">
+        <span class="rotulo">Últimos 12 meses</span>
+        <div class="barras"><i style="height:40%"></i><i style="height:52%"></i><i style="height:48%"></i><i style="height:60%"></i><i style="height:55%"></i><i style="height:62%"></i><i style="height:70%"></i><i style="height:64%"></i><i style="height:72%"></i><i style="height:80%"></i><i style="height:76%"></i><i class="m" style="height:84%"></i></div>
+        <p class="nota">Outubro é o mês mais alto do ano.</p>
+      </div>
+      <div class="vidro pousa">
+        <span class="rotulo">Próximo número da DPS</span>
+        <span class="num">42</span>
+        <p class="nota">Série 1, Jatobá Tecnologia ME. Avança só quando a Sefin aceita.</p>
+      </div>
+    </div>
+
+    <div class="filtros pousa">
+      <div class="entrada">{{icon:search}}<span class="ph">Buscar por tomador, número ou chave</span></div>
+      <div class="entrada sel">{{icon:filter}}<span>Autorizadas</span>{{icon:adjustments-horizontal:ico-sm}}</div>
+      <span class="rotulo">14 notas</span>
+    </div>
+
+    <div class="vidro razao pousa">
+      <table>
+        <thead><tr><th>Data</th><th>Tomador</th><th>Número da NFS-e</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+        <tbody>
+          <tr class="mes"><td colspan="5"><span>Outubro de 2026</span></td></tr>
+          <tr><td class="d">18/10</td><td class="n">Acme Corporation, Inc.<small>Consultoria em TI</small></td><td class="chave">3123 0004 2271 <span class="pill ok">Autorizada</span></td><td class="v">R$ 38.420,00<small>$ 7.000,00</small></td><td class="acoes"><a href="#" title="PDF">{{icon:file-type-pdf}}</a><a href="#" title="XML">{{icon:file-code}}</a><a href="#" title="Copiar chave">{{icon:copy}}</a></td></tr>
+          <tr><td class="d">15/10</td><td class="n">Pixel Labs LLC<small>Desenvolvimento sob demanda</small></td><td class="chave">3123 0004 2104 <span class="pill ok">Autorizada</span></td><td class="v">R$ 12.150,00<small>$ 2.200,00</small></td><td class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a><a href="#">{{icon:copy}}</a></td></tr>
+          <tr><td class="d">01/10</td><td class="n">Horta Digital Ltda<small>Suporte mensal</small></td><td class="chave">0000 0000 0812 <span class="pill teste">Teste</span></td><td class="v">R$ 4.800,00</td><td class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a><a href="#">{{icon:copy}}</a></td></tr>
+          <tr class="mes"><td colspan="5"><span>Setembro de 2026</span></td></tr>
+          <tr><td class="d">30/09</td><td class="n">Acme Corporation, Inc.<small>Consultoria em TI</small></td><td class="chave">3123 0004 1180 <span class="pill ok">Autorizada</span></td><td class="v">R$ 38.420,00<small>$ 7.000,00</small></td><td class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a><a href="#">{{icon:copy}}</a></td></tr>
+          <tr><td class="d">16/09</td><td class="n">Pixel Labs LLC<small>Desenvolvimento sob demanda</small></td><td class="chave">3123 0004 0931 <span class="pill ok">Autorizada</span></td><td class="v">R$ 12.950,00<small>$ 2.400,00</small></td><td class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a><a href="#">{{icon:copy}}</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>

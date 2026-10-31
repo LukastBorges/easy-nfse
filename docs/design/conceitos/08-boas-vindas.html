@@ -1,0 +1,156 @@
+<!-- titulo: easyNFSe — Boas-vindas -->
+<style>
+/* abertura: o texto à esquerda; à direita, a nota anterior com o que vira template marcado a marca-texto */
+.abertura { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 56px; align-items: center; padding-top: 18px; }
+.abertura h1 { font-size: 46px; line-height: 1.05; letter-spacing: -.035em; text-wrap: balance; max-width: 16ch; }
+.inteiro { white-space: nowrap; }
+.abertura .lead { margin: 18px 0 0; font-size: 17px; line-height: 1.6; color: var(--p2); max-width: 46ch; }
+.abertura .acoes { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.mesa { position: relative; height: 430px; }
+.nota {
+  position: absolute; left: 0; top: 10px; width: 330px; padding: 22px 22px 18px; color: var(--tinta);
+  background: #EEE7D3; border-radius: 5px; transform: rotate(-3deg);
+  box-shadow: 0 40px 60px -30px rgba(0, 0, 0, .9), 0 2px 6px rgba(0, 0, 0, .45);
+}
+.nota::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .55; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .5 0 0 0 0 .38 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+.nota > * { position: relative; }
+.nota .cab { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 10px; border-bottom: 1.5px solid rgba(23, 23, 15, .5); }
+.nota .cab b { font: 700 15px var(--titulo); letter-spacing: -.01em; }
+.nota .cab small { font-size: 10.5px; color: #6B6A52; }
+.nota dl { margin: 12px 0 0; display: grid; gap: 9px; font-size: 11.5px; }
+.nota dt { color: #6B6A52; font-size: 10px; }
+.nota dd { margin: 1px 0 0; position: relative; display: inline-block; }
+/* marca-texto mostarda: desenha da esquerda para a direita, um campo de cada vez */
+.nota dd.marcado::before {
+  content: ""; position: absolute; left: -3px; right: -3px; top: 52%; height: 62%; transform: translateY(-50%) scaleX(0);
+  transform-origin: left; background: rgba(213, 161, 26, .55); border-radius: 2px 6px 3px 7px; mix-blend-mode: multiply;
+  animation: marcar .55s var(--ease) forwards;
+}
+.m1::before { animation-delay: .7s !important; } .m2::before { animation-delay: .9s !important; }
+.m3::before { animation-delay: 1.1s !important; } .m4::before { animation-delay: 1.3s !important; }
+@keyframes marcar { to { transform: translateY(-50%) scaleX(1); } }
+.nota .rodape-n { margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(23, 23, 15, .3); display: flex; justify-content: space-between; font-size: 11.5px; }
+.nota .rodape-n .fora { color: #6B6A52; }
+
+/* sobre a folha clara o vidro fica quase opaco: o papel atrás não pode atrapalhar a leitura */
+.ficha-nova { position: absolute; right: 0; bottom: 0; width: 260px; padding: 18px; animation-delay: .5s !important;
+  background: linear-gradient(165deg, rgba(31, 60, 44, .94), rgba(23, 45, 34, .96)) !important; }
+.ficha-nova .rotulo { display: flex; align-items: center; gap: 6px; color: var(--m-clara); }
+.ficha-nova .rotulo svg { width: 15px; height: 15px; }
+.ficha-nova h3 { margin-top: 8px; font: 600 16px/1.25 var(--titulo); letter-spacing: -.015em; }
+.ficha-nova .so { margin: 4px 0 12px; color: var(--p3); font-size: 12.5px; }
+.ficha-nova .campo + .campo { margin-top: 10px; }
+.ficha-nova .entrada { padding: 8px 10px; font-size: 13px; }
+.ficha-nova .entrada .num { font-size: 16px; }
+
+/* como funciona: uma sequência real, então os passos são numerados */
+.passos { margin-top: 64px; }
+.passos h2 { font-size: 20px; }
+.trilha { margin-top: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; counter-reset: passo; }
+.passo { padding: 22px; position: relative; }
+.passo .n {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 15px var(--titulo); color: var(--tinta); background: linear-gradient(180deg, var(--m-clara), var(--m-escura));
+  box-shadow: inset 0 1px 0 rgba(255, 245, 200, .55), 0 6px 14px -6px rgba(213, 161, 26, .6);
+}
+.passo h3 { margin-top: 16px; font: 600 17px/1.25 var(--titulo); letter-spacing: -.015em; }
+.passo p { margin: 8px 0 0; color: var(--p3); font-size: 13.5px; line-height: 1.55; }
+.passo:not(:last-child)::after { /* o fio que liga um passo ao próximo */
+  content: ""; position: absolute; top: 39px; left: calc(22px + 34px + 12px); right: -18px; height: 1px;
+  background: linear-gradient(90deg, rgba(213, 161, 26, .5), rgba(213, 161, 26, 0));
+}
+
+.base { margin-top: 22px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.checklist { padding: 22px; }
+.checklist h2 { font-size: 17px; }
+.checklist ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 4px; }
+.checklist li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-top: 1px solid rgba(238, 230, 208, .07); font-size: 13.5px; color: var(--p2); }
+.checklist li:first-child { border-top: 0; }
+.checklist .marca-li { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font: 700 12px 'Public Sans'; }
+.checklist .marca-li svg { width: 15px; height: 15px; }
+.checklist .pend { color: var(--m-clara); border: 1px dashed rgba(213, 161, 26, .55); }
+.checklist .info { color: var(--m-clara); background: rgba(213, 161, 26, .1); border: 1px solid rgba(213, 161, 26, .25); }
+.checklist a { color: var(--m-clara); }
+.checklist b { color: var(--p); font-weight: 600; }
+
+.garantias { display: grid; gap: 12px; }
+.garantia { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 16px 18px; align-items: start; }
+.garantia .ic { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; color: var(--p2); background: rgba(238, 230, 208, .06); border: 1px solid rgba(238, 230, 208, .12); }
+.garantia .ic svg { width: 19px; height: 19px; }
+.garantia b { display: block; font-weight: 600; }
+.garantia span { color: var(--p3); font-size: 13px; }
+.garantia code { font: 500 12px ui-monospace, Menlo, monospace; color: var(--p2); }
+
+@media (prefers-reduced-motion: reduce) { .nota dd.marcado::before { animation: none; transform: translateY(-50%) scaleX(1); } }
+@media (max-width: 900px) {
+  .abertura { grid-template-columns: 1fr; gap: 32px; }
+  .abertura h1 { font-size: 34px; }
+  .mesa { height: 400px; max-width: 360px; }
+  .nota { width: 290px; }
+  .ficha-nova { width: 230px; }
+    .trilha, .base { grid-template-columns: 1fr; }
+  .passo::after { display: none; }
+}
+</style>
+{{header:Início}}
+<main class="conteudo pagina">
+  <section class="abertura">
+    <div class="pousa">
+      <h1>Emita sua <span class="inteiro">NFS-e</span> em segundos, a partir de uma nota que você já emitiu</h1>
+      <p class="lead">Envie o PDF ou o XML de uma nota anterior. O easyNFSe guarda tudo o que se repete num template, e nas próximas emissões você só informa a data e o valor.</p>
+      <div class="acoes">
+        <a class="btn btn-mostarda grande" href="05-templates.html">{{icon:file-import}}Importar minha primeira nota</a>
+        <a class="btn btn-vidro grande" href="07-configuracoes.html">{{icon:certificate}}Configurar certificado</a>
+      </div>
+    </div>
+
+    <div class="mesa" aria-hidden="true">
+      <div class="nota pousa">
+        <div class="cab"><b>NFS-e 3123 0004 1180</b><small>emitida em 30/09/2026</small></div>
+        <dl>
+          <div><dt>Prestador</dt><dd class="marcado m1">Jatobá Tecnologia ME, 12.345.678/0001-90</dd></div>
+          <div><dt>Tomador</dt><dd class="marcado m2">Acme Corporation, Inc. (Estados Unidos)</dd></div>
+          <div><dt>Serviço</dt><dd class="marcado m3">01.07.00, consultoria em TI</dd></div>
+          <div><dt>Tributação</dt><dd class="marcado m4">Exportação, ISSQN não incide</dd></div>
+        </dl>
+        <div class="rodape-n"><span class="fora">Competência 30/09/2026</span><span class="fora">R$ 38.420,00</span></div>
+      </div>
+      <div class="vidro ficha-nova pousa">
+        <span class="rotulo">{{icon:template}}Próximas notas</span>
+        <h3>Consultoria em TI para a Acme</h3>
+        <p class="so">O resto já está no template.</p>
+        <label class="campo"><span class="rotulo">Data de competência</span><div class="entrada">{{icon:history}}31/10/2026</div></label>
+        <label class="campo"><span class="rotulo">Valor do serviço</span><div class="entrada foco"><span class="num">R$ 38.420,00</span></div></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="passos">
+    <h2 class="pousa">Como funciona</h2>
+    <ol class="trilha" style="list-style:none;padding:0;margin-bottom:0">
+      <li class="vidro passo pousa"><span class="n">1</span><h3>Importe uma nota anterior</h3><p>PDF (DANFSe ou impressão do Emissor Nacional) ou XML. Os dados são lidos automaticamente.</p></li>
+      <li class="vidro passo pousa"><span class="n">2</span><h3>Revise e salve o template</h3><p>Prestador, tomador (inclusive do exterior), serviço e tributação ficam salvos para as próximas notas.</p></li>
+      <li class="vidro passo pousa"><span class="n">3</span><h3>Informe data e valor e emita</h3><p>Assine com seu certificado e envie direto à Sefin Nacional. O PDF da nota fica pronto para baixar.</p></li>
+    </ol>
+  </section>
+
+  <section class="base">
+    <div class="vidro checklist pousa">
+      <h2>Antes de emitir</h2>
+      <ol>
+        <li><span class="marca-li pend">1</span><span><a href="07-configuracoes.html">Configure o certificado A1</a> (.pfx) do prestador. Ele é exigido pela API da Sefin.</span></li>
+        <li><span class="marca-li pend">2</span><span>Importe uma nota anterior para criar o primeiro template.</span></li>
+        <li><span class="marca-li info">{{icon:flask}}</span><span>Você está em <b>produção restrita</b>: as notas são de teste, sem validade jurídica.</span></li>
+      </ol>
+    </div>
+    <div class="garantias">
+      <div class="vidro garantia pousa"><span class="ic">{{icon:shield-check}}</span><div><b>API oficial da Sefin Nacional</b><span>Sem intermediários: a DPS é assinada com o seu certificado A1.</span></div></div>
+      <div class="vidro garantia pousa"><span class="ic">{{icon:device-laptop}}</span><div><b>Tudo no seu computador</b><span>Certificado, templates e notas ficam na pasta <code>data/</code>.</span></div></div>
+      <div class="vidro garantia pousa"><span class="ic">{{icon:flask}}</span><div><b>Teste sem risco</b><span>Comece em produção restrita: as notas não têm validade jurídica.</span></div></div>
+    </div>
+  </section>
+</main>

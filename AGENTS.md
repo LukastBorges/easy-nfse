@@ -114,6 +114,20 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - `dCompet` ≤ data de `dhEmi` (E0015); `dhEmi` é enviado com 1 min de margem (E0008).
 - No DANFSe, o NIF impresso como `1`/`2` significa **cNaoNIF**, não um NIF.
 
+## Identidade visual ("Mata, mostarda e papel")
+
+- Especificação em `docs/design/README.md`, plano de implantação em etapas em `docs/design/plano.md`, telas de
+  referência em `docs/design/telas/` (fontes HTML em `docs/design/conceitos/`, regerar com `renderizar.py --png`).
+  **Em implantação**: telas ainda não migradas seguem com as classes antigas até a etapa delas.
+- Tela nova ou alterada segue a especificação: fundo verde-floresta com grão, painéis em vidro fosco, mostarda só na
+  ação principal e na marca, a nota em emissão como folha de papel. Nada de `slate`/`indigo`/`emerald` em telas novas.
+- Fontes: **Bricolage Grotesque** em títulos, valores e marca; **Public Sans** no resto. A marca é o lettering
+  `easyNFSe` (sem símbolo) com o ponto quadrado mostarda.
+- Movimento: uma entrada por página (não em trocas htmx), realce do menu que desliza entre os itens, hover dos
+  cards acende só a borda, tudo desligado com `prefers-reduced-motion`.
+- Os conceitos são HTML/CSS puros para referência de valores; na implementação os valores viram tokens e `@utility`
+  do Tailwind em `base.html`.
+
 ## Armadilhas técnicas já resolvidas (não "conserte" de volta)
 
 - **XSD oficial com `^...$` nos patterns**: em XSD isso é literal. Removido na cópia local (`tiposSimples_v1.01.xsd`).
