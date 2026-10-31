@@ -238,6 +238,13 @@ document.getElementById("sobre")?.addEventListener("click", (e) => {
   if (e.target.id === "sobre") e.target.close(); // clique no fundo fecha
 });
 
+// Diálogos simples abertos pelo menu: data-abrir-dialogo="id" (ex.: "apoie"). Clique no fundo fecha.
+document.addEventListener("click", (e) => {
+  const item = e.target.closest && e.target.closest("[data-abrir-dialogo]");
+  if (item) document.getElementById(item.dataset.abrirDialogo)?.showModal();
+  if (e.target.matches && e.target.matches("dialog[open]#apoie")) e.target.close();
+});
+
 // Notas de atualização: abre o diálogo e carrega o changelog (só quando pedido).
 document.addEventListener("click", (e) => {
   const item = e.target.closest && e.target.closest("[data-abrir-notas]");

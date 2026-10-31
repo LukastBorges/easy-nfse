@@ -393,6 +393,8 @@
             {{ icone('notes', 'size-4 shrink-0 text-rotulo') }}Notas de atualização</button>
           <a role="menuitem" href="https://github.com/LukastBorges/easy-nfse/issues" target="_blank" rel="noopener" class="menu-item">
             {{ icone('bug', 'size-4 shrink-0 text-rotulo') }}Reportar um problema{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-rotulo') }}</a>
+          <button role="menuitem" type="button" data-abrir-dialogo="apoie" class="menu-item">
+            {{ icone('heart', 'size-4 shrink-0 text-acento') }}Apoie o projeto</button>
           <div class="my-1 border-t border-borda" role="separator"></div>
           <button role="menuitem" type="button" data-abrir-sobre class="menu-item">
             {{ icone('info-circle', 'size-4 shrink-0 text-rotulo') }}Sobre o easyNFSe
@@ -425,6 +427,37 @@
         <button value="ok" id="confirmar-ok" class="btn-primary">Confirmar</button>
       </div>
     </form>
+  </dialog>
+  {# Apoio: o app é gratuito e de código aberto. PIX copia e cola (chave aleatória, sem valor fixo) e o QR em static/pix.svg,
+     gerado do mesmo código; os links abrem no navegador. #}
+  {% set pix = "00020126580014BR.GOV.BCB.PIX013651da61ad-b04d-429e-928e-b485dbc8bccd5204000053039865802BR5925Lucas Tarley Borges da Co6009SAO PAULO62140510ieMNg0S7d863040DFF" %}
+  <dialog id="apoie" aria-labelledby="apoie-titulo" class="w-[min(30rem,calc(100%-2rem))] dialogo">
+    <div class="p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4">
+        <h2 id="apoie-titulo" class="font-display text-2xl font-semibold text-texto">Apoie o easyNFSe</h2>
+        <form method="dialog"><button class="-mt-1 -mr-2 grid size-9 place-items-center rounded-lg text-rotulo hover:bg-vidro hover:text-texto" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button></form>
+      </div>
+      <p class="mt-3 text-sm leading-relaxed text-texto-2">O easyNFSe é gratuito e de código aberto: ninguém paga para usar e o código é de todos.
+        Para continuar evoluindo, conto com a ajuda de quem quiser patrocinar o projeto. Se ele poupa o seu tempo todo mês,
+        considere contribuir com o valor que achar justo.</p>
+      <div class="mt-5 grid items-center gap-5 sm:grid-cols-[auto_minmax(0,1fr)]">
+        <div class="papel justify-self-center rounded-[14px] p-2.5 sm:justify-self-start">
+          <img src="/static/pix.svg" width="168" height="168" alt="QR code PIX para apoiar o easyNFSe" class="block rounded-md">
+        </div>
+        <div class="min-w-0">
+          <p class="flex items-center gap-2 font-display text-base font-semibold text-texto">PIX</p>
+          <p class="mt-1 text-[13px] text-rotulo">Leia o QR code no app do seu banco ou copie o código e use o PIX copia e cola. Você escolhe o valor.</p>
+          <button type="button" class="btn-primary mt-3 w-full" data-copy="{{ pix }}">{{ icone('copy') }}Copiar código PIX</button>
+        </div>
+      </div>
+      <div class="mt-5 border-t border-dashed border-borda pt-4">
+        <p class="text-[13px] text-rotulo">Também dá para apoiar todo mês:</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <a href="https://github.com/sponsors/LukastBorges" target="_blank" rel="noopener" class="btn-ghost px-3.5 py-2">{{ icone('brand-github') }}GitHub Sponsors</a>
+          <a href="https://www.patreon.com/LukasBorges" target="_blank" rel="noopener" class="btn-ghost px-3.5 py-2">{{ icone('brand-patreon') }}Patreon</a>
+        </div>
+      </div>
+    </div>
   </dialog>
   <dialog id="sobre" aria-labelledby="sobre-titulo"
           class="w-[min(28rem,calc(100%-2rem))] dialogo">
