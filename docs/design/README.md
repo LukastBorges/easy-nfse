@@ -65,7 +65,11 @@ caminhos de arquivo).
 
 `easyNFSe` só em lettering, sem símbolo: "easy" em `papel` peso 700, "NFSe" em `mostarda-clara` peso 800, seguido de um
 ponto quadrado mostarda (7 px, raio 2 px, leve brilho). Bricolage Grotesque, 21 px no cabeçalho. A grafia é sempre
-`easyNFSe`. O ícone de app e o favicon ainda precisam de um símbolo derivado dessa marca (ver o plano).
+`easyNFSe`.
+
+**Ícone** (app, favicon, instalador): o ponto quadrado da marca ampliado, em gradiente mostarda, com o "e" da
+Bricolage (peso 800) em verde-mata ocupando metade da altura. No macOS segue o grid da Apple (824 de 1024 px, com
+sombra). Tudo sai de `scripts/icone.py`: não edite os PNG, `.icns` e `.ico` à mão.
 
 ![Logotipos estudados; o escolhido é "Só o lettering"](telas/04-logos-1440.jpg)
 

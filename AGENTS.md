@@ -118,7 +118,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 
 - Especificação em `docs/design/README.md`, plano de implantação em etapas em `docs/design/plano.md`, telas de
   referência em `docs/design/telas/` (fontes HTML em `docs/design/conceitos/`, regerar com `renderizar.py --png`).
-  Etapas 0 a 7 feitas; falta a 8 (ícone do app e favicon, aguardando a escolha do símbolo).
+  Implantada (etapas 0 a 8). O ícone (`static/logo.svg`, `favicon.svg`, PNGs e `packaging/icons/`) é gerado por
+  `uv run --with fonttools --with brotli --with playwright --with pillow python scripts/icone.py`: não edite à mão.
 - **Sem as paletas do Tailwind**: todas as telas usam as cores da identidade. `slate`, `indigo`, `amber`, `emerald`,
   `rose`, `sky` etc. voltaram às cores padrão do Tailwind e não combinam com nada: não use. Use as cores por variável
   (abaixo), que mudam com o tema, ou as fixas da identidade (`text-mostarda`, `bg-mata-2`, `text-papel`…).

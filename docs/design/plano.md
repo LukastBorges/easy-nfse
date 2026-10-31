@@ -25,7 +25,7 @@ exige redesenhar cada tela.
 | 5 | Feita (Templates com a bandeja de importação; Cadastros com abas, chips e fichas; formulários e diálogo) |
 | 6 | Feita (Histórico como livro-razão agrupado por mês; Configurações com cartões de ambiente, chave de TLS e régua de validade) |
 | 7 | Feita (tema claro mantido, contraste AA conferido, paletas antigas removidas) |
-| 8 | Aguardando a escolha do símbolo do ícone |
+| 8 | Feita (ícone opção A gerado por `scripts/icone.py`; capturas do README refeitas) |
 
 ## Etapa 0 — Fontes locais
 
