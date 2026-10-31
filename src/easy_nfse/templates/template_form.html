@@ -6,10 +6,10 @@
 <form method="post" action="/templates/{{ t.id }}" class="space-y-6 pb-24">
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div class="min-w-0 flex-1">
-      <a href="/templates" class="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">{{ icone('arrow-left') }}Templates</a>
+      <a href="/templates" class="inline-flex items-center gap-1 text-sm text-rotulo hover:text-texto">{{ icone('arrow-left') }}Templates</a>
       <input name="nome" value="{{ t.nome }}" aria-label="Nome do template"
-             class="mt-1 block w-full rounded-lg border-0 bg-transparent px-0 text-2xl font-semibold tracking-tight focus:ring-0 sm:text-3xl">
-      <p class="text-sm text-slate-500 dark:text-slate-400">
+             class="mt-2 block w-full rounded-lg border-0 bg-transparent px-0 font-display text-3xl font-semibold tracking-tight text-texto focus:outline-none focus-visible:bg-vidro focus-visible:px-2 sm:text-[34px]">
+      <p class="text-sm text-rotulo">
         {% if t.origem.tipo == 'pdf' %}Importado do PDF {{ t.origem.arquivo }}
         {% elif t.origem.tipo in ('xml', 'chave') %}Importado do XML oficial{% if t.origem.arquivo %} ({{ t.origem.arquivo }}){% endif %}
         {% else %}Template manual{% endif %}
@@ -32,9 +32,9 @@
   {% for papel, tipo, titulo, icone_secao, atual, opcoes in [
        ('prestador', 'prestadores', 'Prestador (emitente)', 'building', t.prestador if t.prestador.id else none, prestadores),
        ('tomador', 'tomadores', 'Tomador', 'user', t.tomador, tomadores)] %}
-  <section class="card p-6">
+  <section class="card pousa p-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="section-title flex items-center gap-2">{{ icone(icone_secao, 'size-5 text-slate-400 dark:text-slate-500') }}{{ titulo }}</h2>
+      <h2 class="section-title flex items-center gap-2">{{ icone(icone_secao, 'size-5 text-rotulo') }}{{ titulo }}</h2>
       <div class="flex gap-1.5">
         <button type="button" class="btn-ghost px-3 py-1.5" data-abrir-cadastro="{{ tipo }}" data-editar="{{ papel }}_id">{{ icone('pencil') }}Editar cadastro</button>
         <button type="button" class="btn-ghost px-3 py-1.5" data-abrir-cadastro="{{ tipo }}">{{ icone('plus') }}Novo</button>
@@ -56,8 +56,8 @@
   {% endfor %}
 
   {# ---------------------------------------------------------------- serviço #}
-  <section class="card p-6">
-    <h2 class="section-title flex items-center gap-2">{{ icone('briefcase', 'size-5 text-slate-400 dark:text-slate-500') }}Serviço</h2>
+  <section class="card pousa p-6">
+    <h2 class="section-title flex items-center gap-2">{{ icone('briefcase', 'size-5 text-rotulo') }}Serviço</h2>
     <div class="mt-5 grid gap-4 sm:grid-cols-6">
       {{ field('servico.c_trib_nac', 'Código de tributação nacional', s.c_trib_nac, cls='sm:col-span-2',
                hint=s.c_trib_nac_desc or 'Item da LC 116 + desdobro, 6 dígitos (ex.: 010101).') }}
@@ -81,8 +81,8 @@
   </section>
 
   {# ---------------------------------------------------------------- tributação #}
-  <section class="card p-6">
-    <h2 class="section-title flex items-center gap-2">{{ icone('receipt-tax', 'size-5 text-slate-400 dark:text-slate-500') }}Tributação municipal (ISSQN)</h2>
+  <section class="card pousa p-6">
+    <h2 class="section-title flex items-center gap-2">{{ icone('receipt-tax', 'size-5 text-rotulo') }}Tributação municipal (ISSQN)</h2>
     <div class="mt-5 grid gap-4 sm:grid-cols-6">
       {{ select('tributacao.trib_issqn', 'Tributação do ISSQN', TRIB_ISSQN, tr.trib_issqn, cls='sm:col-span-2') }}
       <div class="sm:col-span-4" data-show-if="tributacao.trib_issqn:2">
@@ -106,9 +106,9 @@
   </section>
 
   {# ---------------------------------------------------------------- comércio exterior #}
-  <section class="card p-6" data-show-if="tomador_id@tipo:NIF;tributacao.trib_issqn:3;servico.local_tipo:exterior">
-    <h2 class="section-title flex items-center gap-2">{{ icone('world', 'size-5 text-slate-400 dark:text-slate-500') }}Comércio exterior</h2>
-    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Obrigatório para tomador do exterior / exportação. O valor na moeda estrangeira é pedido a cada emissão.</p>
+  <section class="card pousa p-6" data-show-if="tomador_id@tipo:NIF;tributacao.trib_issqn:3;servico.local_tipo:exterior">
+    <h2 class="section-title flex items-center gap-2">{{ icone('world', 'size-5 text-rotulo') }}Comércio exterior</h2>
+    <p class="mt-1 text-sm text-rotulo">Obrigatório para tomador do exterior / exportação. O valor na moeda estrangeira é pedido a cada emissão.</p>
     <div class="mt-5 grid gap-4 sm:grid-cols-6">
       {{ select('com_ext.tp_moeda', 'Moeda', MOEDAS if c.tp_moeda in MOEDAS else dict(MOEDAS, **{c.tp_moeda: 'Código BACEN ' ~ c.tp_moeda}), c.tp_moeda, cls='sm:col-span-2') }}
       {{ select('com_ext.md_prestacao', 'Modo de prestação', MD_PRESTACAO, c.md_prestacao, cls='sm:col-span-2',
@@ -123,7 +123,7 @@
     </div>
   </section>
 
-  <div class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
+  <div class="fixed inset-x-0 bottom-0 z-20 border-t border-borda bg-[var(--cabecalho)] backdrop-blur-xl backdrop-saturate-150">
     <div class="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:px-6">
       <button class="btn-danger" formaction="/templates/{{ t.id }}/excluir" formnovalidate
               data-confirm="O template “{{ t.nome }}” será excluído. As notas já emitidas com ele continuam no histórico."

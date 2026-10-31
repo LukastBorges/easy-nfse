@@ -1,37 +1,36 @@
-{# Linha da lista de templates (página /templates). Precisa de: t #}
+{# Linha da lista de templates (página /templates). Precisa de: t, filtro_prestadores #}
+{% set c_trib = t.servico.c_trib_nac %}
 <li data-busca="{{ t.nome }} {{ t.tomador.nome if t.tomador else '' }} {{ t.prestador.nome }} {{ t.prestador.documento }}"
     data-prestador="{{ t.prestador_id }}" data-tomador="{{ t.tomador_id or 'sem' }}"
-    class="flex flex-wrap items-center transition-opacity [&.htmx-swapping]:opacity-0 gap-x-4 gap-y-3 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
-  <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">
+    class="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 px-5 py-4 transition-[background-color,opacity] duration-300 hover:bg-vidro [&.htmx-swapping]:opacity-0 md:grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_150px_auto] md:px-6">
+  <span class="grid size-11 place-items-center rounded-xl border border-mostarda/25 bg-mostarda/10 font-display text-lg font-semibold text-acento">
     {% if t.tomador_exterior %}{{ icone('world', 'size-5') }}{% else %}{{ ((t.tomador.nome if t.tomador else '') or t.nome)[:1]|upper }}{% endif %}
   </span>
-  <div class="min-w-0 flex-1 basis-56">
-    <a href="/templates/{{ t.id }}/editar" class="block truncate font-semibold hover:text-indigo-600 dark:hover:text-indigo-400" title="Editar {{ t.nome }}">{{ t.nome }}</a>
-    <p class="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-      <span class="truncate">
-        {% if t.tomador_exterior %}{{ t.tomador.nome }} · {{ PAISES.get(t.tomador.endereco.pais, 'Exterior') }}
-        {% elif t.tomador %}{{ t.tomador.nome }} · {{ t.tomador.documento|doc }}{% else %}Sem tomador identificado{% endif %}
-      </span>
-      {% if filtro_prestadores|length > 1 %}<span class="inline-flex min-w-0 items-center gap-1">{{ icone('building', 'size-3.5 shrink-0') }}<span class="truncate">{{ t.prestador.nome or (t.prestador.documento|doc) }}</span></span>{% endif %}
-      <span class="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">{{ t.servico.c_trib_nac[:2] }}.{{ t.servico.c_trib_nac[2:4] }}.{{ t.servico.c_trib_nac[4:] }}</span>
-      {% if t.exige_com_ext %}<span class="rounded-md bg-sky-50 dark:bg-sky-500/10 px-1.5 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-500/30">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, 'Exportação') }}</span>{% endif %}
-    </p>
-  </div>
-  <div class="w-32 text-left sm:text-right">
-    <div class="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">Último valor</div>
-    <div class="font-semibold tabular-nums">{{ t.ultimo_valor|money or '—' }}</div>
-  </div>
-  <div class="flex shrink-0 gap-1.5">
-    <a href="/templates/{{ t.id }}/editar" class="btn-ghost px-3" title="Editar template" aria-label="Editar template">
-      {{ icone('pencil', 'size-4') }}
+  <div class="min-w-0">
+    <a href="/templates/{{ t.id }}/editar" class="flex min-w-0 items-center gap-2 font-display text-base font-semibold text-texto hover:text-acento" title="Editar {{ t.nome }}">
+      <span class="truncate">{{ t.nome }}</span>
+      {% if t.exige_com_ext %}<span class="shrink-0 rounded-md border border-borda bg-vidro px-1.5 py-px font-sans text-[11px] font-semibold text-texto-2">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, 'Exportação') }}</span>{% endif %}
     </a>
-    <button type="button" class="btn-ghost px-3 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
+    <p class="mt-0.5 truncate text-sm text-rotulo">
+      {% if t.tomador_exterior %}{{ t.tomador.nome }}, {{ PAISES.get(t.tomador.endereco.pais, 'Exterior') }}
+      {% elif t.tomador %}{{ t.tomador.nome }}{% else %}Sem tomador identificado{% endif %}
+      {%- if filtro_prestadores|length > 1 %} para {{ t.prestador.nome or (t.prestador.documento|doc) }}{% endif %}</p>
+  </div>
+  <div class="col-start-2 min-w-0 text-sm md:col-start-auto">
+    <span class="block truncate text-texto-2">{{ c_trib[:2] }}.{{ c_trib[2:4] }}.{{ c_trib[4:] }}{% if t.servico.c_trib_nac_desc %}, {{ t.servico.c_trib_nac_desc }}{% endif %}</span>
+    <span class="block truncate text-xs text-rotulo">{{ TRIB_ISSQN.get(t.tributacao.trib_issqn, '') }}{% if t.servico.c_nbs %}, NBS {{ t.servico.c_nbs }}{% endif %}</span>
+  </div>
+  <div class="col-start-2 md:col-start-auto md:text-right">
+    <span class="block font-display text-lg leading-tight whitespace-nowrap text-texto tabular-nums">{{ t.ultimo_valor|money or '—' }}</span>
+    <span class="block text-xs text-rotulo">último valor</span>
+  </div>
+  <div class="col-start-2 flex items-center gap-1 md:col-start-auto md:justify-end">
+    <a href="/templates/{{ t.id }}/editar" class="grid size-9 place-items-center rounded-lg text-rotulo hover:bg-vidro hover:text-texto" title="Editar template" aria-label="Editar template">{{ icone('pencil', 'size-[18px]') }}</a>
+    <button type="button" class="grid size-9 place-items-center rounded-lg text-rotulo hover:bg-perigo/10 hover:text-perigo"
             title="Excluir template" aria-label="Excluir template"
             hx-post="/templates/{{ t.id }}/excluir" hx-target="closest li" hx-swap="outerHTML swap:150ms"
             hx-confirm="O template “{{ t.nome }}” será excluído. As notas já emitidas com ele continuam no histórico."
-            data-confirm-titulo="Excluir template?" data-confirm-acao="Excluir" data-confirm-perigo>
-      {{ icone('trash', 'size-4') }}
-    </button>
-    <a href="/templates/{{ t.id }}" class="btn-primary">{{ icone('send') }}Emitir</a>
+            data-confirm-titulo="Excluir template?" data-confirm-acao="Excluir" data-confirm-perigo>{{ icone('trash', 'size-[18px]') }}</button>
+    <a href="/templates/{{ t.id }}" class="btn-ghost ml-1 px-3.5 py-2">{{ icone('send') }}Emitir</a>
   </div>
 </li>

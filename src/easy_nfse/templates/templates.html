@@ -1,60 +1,61 @@
 {% extends "base.html" %}
 {% block title %}Templates · easyNFSe{% endblock %}
 {% block content %}
-<div>
-  <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Templates</h1>
-  <p class="mt-1 max-w-2xl text-slate-600 dark:text-slate-400">Cada template guarda o que se repete numa nota: prestador, tomador, serviço e
+<div class="pousa">
+  <h1 class="text-3xl font-semibold text-texto sm:text-[34px]">Templates</h1>
+  <p class="mt-2 max-w-[64ch] text-texto-2">Cada template guarda o que se repete numa nota: prestador, tomador, serviço e
     tributação. Crie um a partir de uma NFS-e que você já emitiu.</p>
 </div>
 
-<section class="mt-8">
-  <h2 class="section-title flex items-center gap-2">{{ icone('file-import', 'size-5 text-slate-400 dark:text-slate-500') }}Novo template a partir de uma nota</h2>
+<section class="pousa mt-7" aria-label="Novo template a partir de uma nota">
   {% include "_importador.html" %}
 </section>
 
-<section class="mt-12">
-  <h2 class="text-lg font-semibold tracking-tight">Seus templates</h2>
+<section class="mt-10">
   {% if templates %}
   {% set pre_prestador, pre_tomador = '', '' %}
-  <div data-filtro class="card mt-4">
-    {% if templates|length > 1 %}
-    <div class="flex flex-wrap items-center gap-3 border-b border-slate-100 dark:border-slate-800 px-5 py-4">
-      <label class="relative min-w-48 flex-1">
-        <span class="sr-only">Buscar template</span>
-        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
-        <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por template, tomador ou prestador">
-      </label>
-    {% if filtro_prestadores|length > 1 %}
-    <label class="flex min-w-0 items-center gap-2">
-      <span class="text-slate-400 dark:text-slate-500">{{ icone('building') }}<span class="sr-only">Filtrar por prestador</span></span>
-      <select data-filtro-por="prestador" class="input w-auto max-w-56 py-2">
-        <option value="">Todos os prestadores</option>
-        {% for c in filtro_prestadores %}<option value="{{ c.id }}" {{ 'selected' if pre_prestador == c.id }}>{{ c.nome or (c.documento|doc) }}</option>{% endfor %}
-      </select>
-    </label>
-    {% endif %}
-    {% if filtro_tomadores|length + (1 if filtro_sem_tomador else 0) > 1 %}
-    <label class="flex min-w-0 items-center gap-2">
-      <span class="text-slate-400 dark:text-slate-500">{{ icone('user') }}<span class="sr-only">Filtrar por tomador</span></span>
-      <select data-filtro-por="tomador" class="input w-auto max-w-56 py-2">
-        <option value="">Todos os tomadores</option>
-        {% for c in filtro_tomadores %}<option value="{{ c.id }}" {{ 'selected' if pre_tomador == c.id }}>{{ c.nome }}</option>{% endfor %}
-        {% if filtro_sem_tomador %}<option value="sem">Sem tomador</option>{% endif %}
-      </select>
-    </label>
-    {% endif %}
-      <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
+  <div data-filtro>
+    <div class="pousa flex flex-wrap items-end justify-between gap-4">
+      <h2 class="text-xl font-semibold text-texto">Seus templates</h2>
+      {% if templates|length > 1 %}
+      <div class="flex min-w-0 flex-wrap items-center gap-2.5">
+        <label class="relative w-full min-w-0 sm:w-[340px]">
+          <span class="sr-only">Buscar template</span>
+          <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-apagado">{{ icone('search') }}</span>
+          <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por template, tomador ou prestador">
+        </label>
+        {% if filtro_prestadores|length > 1 %}
+        <label class="flex min-w-0 items-center">
+          <span class="sr-only">Filtrar por prestador</span>
+          <select data-filtro-por="prestador" class="input w-auto max-w-56 py-2">
+            <option value="">Todos os prestadores</option>
+            {% for c in filtro_prestadores %}<option value="{{ c.id }}" {{ 'selected' if pre_prestador == c.id }}>{{ c.nome or (c.documento|doc) }}</option>{% endfor %}
+          </select>
+        </label>
+        {% endif %}
+        {% if filtro_tomadores|length + (1 if filtro_sem_tomador else 0) > 1 %}
+        <label class="flex min-w-0 items-center">
+          <span class="sr-only">Filtrar por tomador</span>
+          <select data-filtro-por="tomador" class="input w-auto max-w-56 py-2">
+            <option value="">Todos os tomadores</option>
+            {% for c in filtro_tomadores %}<option value="{{ c.id }}" {{ 'selected' if pre_tomador == c.id }}>{{ c.nome }}</option>{% endfor %}
+            {% if filtro_sem_tomador %}<option value="sem">Sem tomador</option>{% endif %}
+          </select>
+        </label>
+        {% endif %}
+        <span class="text-xs text-rotulo"><span data-filtro-contagem></span></span>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
-    <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+    <ul class="card pousa mt-4 divide-y divide-borda overflow-hidden">
       {% for t in templates %}{% include "_template_linha.html" %}{% endfor %}
     </ul>
-    <p data-filtro-vazio class="hidden px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum template encontrado.</p>
+    <p data-filtro-vazio class="mt-4 hidden rounded-2xl border border-dashed border-borda px-6 py-8 text-center text-sm text-rotulo">Nenhum template encontrado.</p>
   </div>
   {% else %}
-  <div class="mt-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-    Nenhum template ainda. Importe uma nota acima para começar.
-  </div>
+  <h2 class="text-xl font-semibold text-texto">Seus templates</h2>
+  <p class="mt-4 rounded-2xl border border-dashed border-borda px-6 py-10 text-center text-sm text-rotulo">
+    Nenhum template ainda. Importe uma nota acima para começar.</p>
   {% endif %}
 </section>
 {% endblock %}
