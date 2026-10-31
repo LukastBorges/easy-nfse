@@ -23,7 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
 function filtrarLista(box) {
   const sem = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const termos = sem(box.querySelector("[data-filtro-busca]")?.value || "").split(/\s+/).filter(Boolean);
-  const filtros = [...box.querySelectorAll("[data-filtro-por]")].filter((s) => s.value).map((s) => [s.dataset.filtroPor, s.value]);
+  // selects e grupos de rádio (chips): de um rádio, só conta o marcado
+  const filtros = [...box.querySelectorAll("[data-filtro-por]")].filter((s) => (s.type !== "radio" || s.checked) && s.value)
+    .map((s) => [s.dataset.filtroPor, s.value]);
   const itens = [...box.querySelectorAll("[data-busca]")];
   let visiveis = 0;
   itens.forEach((li) => {

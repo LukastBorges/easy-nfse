@@ -182,7 +182,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   alerta global.
 - **Busca/filtro de listas** (home, Templates, Cadastros e Configurações): `[data-filtro]` com `[data-filtro-busca]`,
   selects `[data-filtro-por="campo"]`, `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-<campo>`
-  (vários valores separados por espaço; ex.: `data-filtro-por="tomador"` + `data-tomador="<id>"`). A busca ignora acentos;
+  (vários valores separados por espaço; ex.: `data-filtro-por="tomador"` + `data-tomador="<id>"`). Filtro em chips: rádios do mesmo
+  grupo com `data-filtro-por` (só o marcado conta), como em Cadastros. A busca ignora acentos;
   `option[selected]` vinda do servidor já filtra ao abrir. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
   (depende das colunas e da altura dos cards), não fixe em CSS. Não combine com `auto-rows-fr`: com a altura limitada, as linhas `1fr` dividem
   essa altura e achatam os cards (o conteúdo vaza e é cortado).

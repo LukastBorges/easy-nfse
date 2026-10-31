@@ -6,9 +6,9 @@
 <form method="post" action="/cadastros/{{ cad.tipo }}{{ '/' ~ c.id if c.id }}" class="space-y-6 pb-24">
   <input type="hidden" name="voltar" value="{{ voltar }}">
   <div>
-    <a href="{{ voltar or '/cadastros/' ~ cad.tipo }}" class="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">{{ icone('arrow-left') }}{{ 'Voltar' if voltar else cad.titulo }}</a>
-    <h1 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{{ ('Novo ' ~ cad.papel) if novo else (c.nome or cad.rotulo(c)) }}</h1>
-    {% if usos %}<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Usado {{ 'pelo template' if usos|length == 1 else 'pelos ' ~ usos|length ~ ' templates' }}
+    <a href="{{ voltar or '/cadastros/' ~ cad.tipo }}" class="inline-flex items-center gap-1 text-sm text-rotulo hover:text-texto">{{ icone('arrow-left') }}{{ 'Voltar' if voltar else cad.titulo }}</a>
+    <h1 class="mt-2 text-3xl font-semibold text-texto sm:text-[34px]">{{ ('Novo ' ~ cad.papel) if novo else (c.nome or cad.rotulo(c)) }}</h1>
+    {% if usos %}<p class="mt-1 text-sm text-rotulo">Usado {{ 'pelo template' if usos|length == 1 else 'pelos ' ~ usos|length ~ ' templates' }}
       {{ usos|map(attribute='nome')|join(', ') }}: as mudanças valem para {{ 'ele' if usos|length == 1 else 'todos' }}.</p>{% endif %}
   </div>
 
@@ -17,12 +17,12 @@
   {% if salvo and afetados %}{{ alert('warn', 'Cadastro salvo. Estes templates ficaram com pendências', afetados) }}{% endif %}
   {% if not salvo and pendencias %}{{ alert('warn', 'Pendências para emitir', pendencias) }}{% endif %}
 
-  <section class="card p-6">
-    <h2 class="section-title flex items-center gap-2">{{ icone('building' if cad.papel == 'prestador' else 'user', 'size-5 text-slate-400 dark:text-slate-500') }}{{ 'Prestador (emitente)' if cad.papel == 'prestador' else 'Tomador' }}</h2>
+  <section class="card pousa p-6">
+    <h2 class="section-title flex items-center gap-2">{{ icone('building' if cad.papel == 'prestador' else 'user', 'size-5 text-rotulo') }}{{ 'Prestador (emitente)' if cad.papel == 'prestador' else 'Tomador' }}</h2>
     <div class="mt-5">{% include "_" ~ cad.papel ~ "_campos.html" %}</div>
   </section>
 
-  <div class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
+  <div class="fixed inset-x-0 bottom-0 z-20 border-t border-borda bg-[var(--cabecalho)] backdrop-blur-xl backdrop-saturate-150">
     <div class="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:px-6">
       {% if c.id %}
       <button class="btn-danger" formaction="/cadastros/{{ cad.tipo }}/{{ c.id }}/excluir" formnovalidate {{ 'disabled title="Usado por templates: troque-o neles antes de excluir"'|safe if usos }}

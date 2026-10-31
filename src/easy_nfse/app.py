@@ -539,7 +539,8 @@ def lista_cadastros(request: Request, tipo: str, ok: str = "", erro: str = ""):
             linha["cert"] = certificado_do_prestador(certs, c)
             linha["problema_cert"] = problema_certificado(certs, c, linha["cert"])
         linhas.append(linha)
-    return render(request, "cadastros.html", cfg=cfg, cad=cad, linhas=linhas, ok=ok, erro=erro)
+    totais = {"prestadores": len(storage.list_prestadores()), "tomadores": len(storage.list_tomadores())}  # nas abas
+    return render(request, "cadastros.html", cfg=cfg, cad=cad, linhas=linhas, ok=ok, erro=erro, totais=totais)
 
 
 def _form_cadastro(request: Request, cad: dict, c, dialogo: bool, voltar: str = "", status_code: int = 200,

@@ -36,6 +36,7 @@
     /* Camadas da transição: cabeçalho embaixo, o realce viajando no meio e os itens do menu (cada um com nome próprio,
        classe item-nav) por cima, para o realce passar por trás dos nomes sem escurecê-los. */
     ::view-transition-group(realce) { z-index: 1; animation-duration: .42s; animation-timing-function: cubic-bezier(.22, .72, .18, 1); }
+    ::view-transition-group(aba-cadastro) { z-index: 1; animation-duration: .42s; animation-timing-function: cubic-bezier(.22, .72, .18, 1); }
     ::view-transition-group(*.item-nav) { z-index: 2; animation-duration: .42s; }
     ::view-transition-group(conteudo) { animation-duration: .34s; }
     ::view-transition-old(conteudo) { animation: .18s cubic-bezier(.4, 0, 1, 1) both pagina-sai; }
@@ -284,7 +285,7 @@
       &:focus { border-color: rgba(213, 161, 26, .7); box-shadow: inset 0 2px 6px var(--campo-sombra), 0 0 0 3px rgba(213, 161, 26, .18); }
     }
     @utility hint { @apply mt-1 text-xs; color: var(--rotulo); }
-    @utility section-title { @apply font-display text-base font-semibold; color: var(--texto); }
+    @utility section-title { @apply font-display text-[17px] font-semibold; color: var(--texto); }
     @utility kv {
       & dt { @apply text-xs; color: var(--rotulo); }
       & dd { @apply text-sm font-medium break-words; color: var(--texto); }
@@ -312,6 +313,19 @@
       background: radial-gradient(100% 55% at 50% 100%, var(--luz-realce), transparent 72%), var(--vidro-1);
       box-shadow: inset 0 1px 0 var(--vidro-brilho);
       view-transition-name: realce;
+    }
+    /* Aba ativa (Cadastros): o mesmo realce do menu, com a luz nascendo da borda de cima. Fica num <span> atrás do
+       texto da aba, com nome próprio na View Transition, para deslizar de uma aba à outra. */
+    .aba-ativa {
+      position: absolute; inset: 0 0 -1px; z-index: -1; border: 1px solid var(--vidro-borda); border-bottom: 0;
+      border-radius: inherit; pointer-events: none; view-transition-name: aba-cadastro;
+      background: radial-gradient(100% 55% at 50% 0%, var(--luz-realce), transparent 72%), var(--vidro-1);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho);
+    }
+    .aba-ativa::after {
+      content: ""; position: absolute; left: 8px; right: 8px; top: 0; height: 1px; border-radius: 1px;
+      opacity: .75; background: linear-gradient(90deg, transparent, var(--color-mostarda-clara) 18%, var(--color-mostarda-clara) 82%, transparent);
+      box-shadow: 0 0 6px rgba(235, 194, 71, .35), 0 0 14px 2px rgba(213, 161, 26, .1);
     }
     .realce::after {
       content: ""; position: absolute; left: 6px; right: 6px; bottom: 0; height: 1px; border-radius: 1px;

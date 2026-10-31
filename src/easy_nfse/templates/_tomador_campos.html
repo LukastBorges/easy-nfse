@@ -15,9 +15,9 @@
   {{ field('tomador.email', 'E-mail', to.email, cls='sm:col-span-2', type='email') }}
 </div>
 
-<h3 class="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Endereço
-  <span class="font-normal normal-case tracking-normal" data-show-if="tomador.tipo_doc:CPF|CNPJ">(opcional; se preencher, preencha tudo)</span>
-  <span class="font-normal normal-case tracking-normal" data-show-if="tomador.tipo_doc:NIF">no exterior (obrigatório)</span>
+<h3 class="mt-7 border-t border-dashed border-borda pt-5 font-display text-[15px] font-semibold text-texto">Endereço
+  <span class="font-sans text-xs font-normal text-rotulo" data-show-if="tomador.tipo_doc:CPF|CNPJ">(opcional; se preencher, preencha tudo)</span>
+  <span class="font-sans text-xs font-normal text-rotulo" data-show-if="tomador.tipo_doc:NIF">no exterior (obrigatório)</span>
 </h3>
 <div class="mt-3 grid gap-4 sm:grid-cols-6" data-show-if="tomador.tipo_doc:CPF|CNPJ">
   {{ field('tomador.endereco.cep', 'CEP', e.cep, cls='sm:col-span-2') }}
