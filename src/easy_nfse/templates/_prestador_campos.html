@@ -5,7 +5,7 @@
   {% if p.id and p.documento %}
   <div class="sm:col-span-3">
     <label class="label" for="prestador.documento">CNPJ/CPF</label>
-    <input class="input bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400" id="prestador.documento" value="{{ p.tipo_doc }} {{ p.documento|doc }}" disabled>
+    <input class="input opacity-70" id="prestador.documento" value="{{ p.tipo_doc }} {{ p.documento|doc }}" disabled>
     <p class="hint">Não muda: a numeração da DPS e o certificado são deste documento. Para outro, cadastre um prestador novo.</p>
   </div>
   {% else %}
@@ -26,7 +26,7 @@
   {% for k in certs %}{% set _ = opcoes_cert.update({k.id: (k.titular ~ ' · ' ~ (k.documento|doc or 'sem documento') ~ (' · expirado' if k.vencido else ' · até ' ~ k.validade|data)) if k.ok else (k.arquivo ~ ' · não abre')}) %}{% endfor %}
   {% set dica_cert %}{% if cert_automatico %}No automático, usa o de <b>{{ cert_automatico.titular }}</b>{% if cert_automatico.vencido %} (expirado em {{ cert_automatico.validade|data }}){% endif %}.
     Escolha outro só se o prestador assinar com um certificado diferente.{% else %}Nenhum certificado de {{ p.documento|doc or 'este prestador' }}
-    em <a href="/configuracoes" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Configurações</a>: adicione o A1 do prestador para emitir.{% endif %}{% endset %}
+    em <a href="/configuracoes" class="font-medium text-acento hover:underline">Configurações</a>: adicione o A1 do prestador para emitir.{% endif %}{% endset %}
   {{ select('certificado_id', 'Certificado digital', opcoes_cert, p.certificado_id, cls='sm:col-span-6', blank='Automático (pelo CNPJ/CPF do prestador)', hint=dica_cert) }}
 </div>
 <p class="hint mt-4">O nome e o endereço do prestador não vão na DPS: a Sefin usa o cadastro nacional.</p>

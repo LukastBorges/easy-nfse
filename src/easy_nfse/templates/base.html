@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}easy-nfse{% endblock %}</title>
+  <title>{% block title %}easyNFSe{% endblock %}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="/static/vendor/fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/vendor/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
   <script>
     // Aplica o tema antes de pintar a página (evita "piscar" branco no modo escuro).
     (() => {
@@ -20,13 +20,119 @@
   </script>
   <script src="/static/vendor/tailwind-browser.js"></script>
   <script src="/static/vendor/htmx.min.js"></script>
+  <style>
+    /* Fontes da identidade (scripts/fontes.py): o app funciona sem internet. */
+    @font-face { font-family: "Public Sans"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/static/vendor/fonts/public-sans.woff2") format("woff2"); }
+    @font-face { font-family: "Public Sans"; font-style: italic; font-weight: 100 900; font-display: swap; src: url("/static/vendor/fonts/public-sans-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("/static/vendor/fonts/bricolage-grotesque.woff2") format("woff2"); }
+
+    /* Transição entre páginas (View Transitions entre documentos: Chrome/WebView2 126+, Safari/WKWebView 18.2+;
+       nos outros, a troca é instantânea). O cabeçalho fica parado; o fundo (root) faz a troca cruzada padrão, que
+       mantém a opacidade somada e não escurece; só o conteúdo sai subindo e entra subindo; o realce do menu desliza do
+       item antigo ao novo. */
+    @view-transition { navigation: auto; }
+    .cabecalho-app { view-transition-name: cabecalho; }
+    .conteudo-app { view-transition-name: conteudo; }
+    /* Camadas da transição: cabeçalho embaixo, o realce viajando no meio e os itens do menu (cada um com nome próprio,
+       classe item-nav) por cima, para o realce passar por trás dos nomes sem escurecê-los. */
+    ::view-transition-group(realce) { z-index: 1; animation-duration: .42s; animation-timing-function: cubic-bezier(.22, .72, .18, 1); }
+    ::view-transition-group(aba-cadastro) { z-index: 1; animation-duration: .42s; animation-timing-function: cubic-bezier(.22, .72, .18, 1); }
+    ::view-transition-group(*.item-nav) { z-index: 2; animation-duration: .42s; }
+    ::view-transition-group(conteudo) { animation-duration: .34s; }
+    ::view-transition-old(conteudo) { animation: .18s cubic-bezier(.4, 0, 1, 1) both pagina-sai; }
+    ::view-transition-new(conteudo) { animation: .34s cubic-bezier(.22, .72, .18, 1) .08s both pagina-entra; }
+    @keyframes pagina-sai { to { opacity: 0; transform: translateY(-6px); } }
+    @keyframes pagina-entra { from { opacity: 0; transform: translateY(10px); } }
+    @media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
+  </style>
   <style type="text/tailwindcss">
+    /* Identidade "Mata, mostarda e papel" (docs/design/README.md). */
     @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
     @theme {
-      --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+      --font-display: "Bricolage Grotesque", "Public Sans", ui-sans-serif, system-ui, sans-serif;
+      --ease-mesa: cubic-bezier(.22, .72, .18, 1);
+
+      /* Cores da identidade, para marcação nova. */
+      --color-mata-0: #0A150F; --color-mata-1: #10211A; --color-mata-2: #172D22; --color-mata-3: #1F3C2C;
+      --color-musgo: #2A4E39;
+      --color-mostarda: #D5A11A; --color-mostarda-clara: #EBC247; --color-mostarda-escura: #AE8210;
+      --color-papel: #EEE6D0; --color-papel-2: #C8C4AD; --color-erva: #8E9B8B; --color-erva-escura: #5E6E60;
+      --color-tinta: #15170F; --color-barro: #CF6F5B; --color-folha: #7FB889;
     }
-    :root { color-scheme: light; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E"); }
-    [data-theme=dark] { color-scheme: dark; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E"); }
+
+    /* Cores que mudam com o tema, como classes (text-texto, text-rotulo, bg-vidro, border-borda…): apontam para as
+       variáveis abaixo, então dispensam o par dark:. */
+    @theme inline {
+      --color-texto: var(--texto); --color-texto-2: var(--texto-2); --color-rotulo: var(--rotulo);
+      --color-apagado: var(--placeholder); --color-vidro: var(--vidro-1); --color-borda: var(--vidro-borda);
+      --color-acento: var(--acento); --color-perigo: var(--perigo); --color-sucesso: var(--sucesso);
+    }
+
+    /* Materiais que mudam com o tema. O escuro é a mesa à noite; o claro (provisório até a etapa 7) é papel. */
+    :root {
+      color-scheme: light;
+      --fundo: #EFE8D4;
+      --luz-1: rgba(255, 252, 240, .7); --luz-2: rgba(213, 161, 26, .08); --vinheta: rgba(80, 60, 20, .14);
+      --grao-opacidade: .16; --grao-mistura: multiply;
+      --vidro-1: rgba(255, 253, 246, .72); --vidro-2: rgba(255, 252, 242, .55);
+      --vidro-borda: rgba(23, 45, 34, .12); --vidro-brilho: rgba(255, 255, 255, .7); --vidro-sombra: rgba(40, 50, 30, .22);
+      --campo-fundo: rgba(255, 253, 246, .8); --campo-borda: rgba(23, 45, 34, .2); --campo-sombra: rgba(40, 40, 20, .06);
+      --texto: #172D22; --texto-2: #3A4E41; --rotulo: #55665A; --placeholder: #7F8C7C;
+      --cabecalho: rgba(243, 238, 223, .78);
+      --luz-realce: rgba(213, 161, 26, .15);
+      --acento: #7A5906;
+      --perigo: #923F30; --sucesso: #2F663D;
+      --folha: #F8F2E1;
+      --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2355665A'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
+    }
+    [data-theme=dark] {
+      color-scheme: dark;
+      --fundo: #10211A;
+      --luz-1: rgba(74, 124, 90, .55); --luz-2: rgba(213, 161, 26, .10); --vinheta: rgba(0, 0, 0, .35);
+      --grao-opacidade: .24; --grao-mistura: soft-light;
+      --vidro-1: rgba(238, 230, 208, .075); --vidro-2: rgba(238, 230, 208, .02);
+      --vidro-borda: rgba(238, 230, 208, .11); --vidro-brilho: rgba(255, 250, 235, .09); --vidro-sombra: rgba(0, 0, 0, .7);
+      --campo-fundo: rgba(10, 21, 15, .45); --campo-borda: rgba(238, 230, 208, .1); --campo-sombra: rgba(0, 0, 0, .35);
+      --texto: #EEE6D0; --texto-2: #C8C4AD; --rotulo: #8E9B8B; --placeholder: #5E6E60;
+      --cabecalho: rgba(16, 33, 26, .7);
+      --luz-realce: rgba(235, 194, 71, .11);
+      --acento: #EBC247;
+      --perigo: #E9A08F; --sucesso: #9CCB9F;
+      --folha: #EEE7D3;
+      --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238E9B8B'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
+    }
+
+    /* A mesa: luz, vinheta, grão fino e fibras largas, fixos atrás de tudo. */
+    /* O <html> também precisa do fundo: sem ele o navegador leva o fundo do body para a tela inteira, e o grão e
+       as fibras (mix-blend-mode) se misturam com transparência, clareando a página em vez de texturizá-la. */
+    html { background: var(--fundo); }
+    body { background: var(--fundo); isolation: isolate; }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(1100px 700px at 14% -8%, var(--luz-1) 0%, transparent 60%),
+        radial-gradient(900px 600px at 92% 110%, var(--luz-2) 0%, transparent 55%),
+        radial-gradient(1400px 900px at 50% 50%, transparent 40%, var(--vinheta) 100%);
+    }
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      opacity: var(--grao-opacidade); mix-blend-mode: var(--grao-mistura);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+      background-size: 300px 300px;
+    }
+    :root:not([data-theme=dark]) body::after { filter: invert(1) sepia(.4); }
+    .fibras {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .8; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .012' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .70 0 0 0 0 .50 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+      background-size: 900px 900px;
+    }
+
+    /* Títulos em Bricolage (os rótulos pequenos em caixa alta ficam na fonte da interface até a etapa de cada tela). */
+    :is(h1, h2, h3):not(.text-xs, .text-sm) { font-family: var(--font-display); letter-spacing: -.02em; }
+    h1 { letter-spacing: -.03em; }
+    .tabular-nums { font-variant-numeric: tabular-nums lining-nums; }
+
     /* seta própria nos selects: alinhada e com respiro, igual nos dois temas */
     select.input {
       appearance: none; -webkit-appearance: none;
@@ -34,27 +140,194 @@
       background-position: right 0.75rem center; background-size: 1.1rem;
       padding-right: 2.5rem; text-overflow: ellipsis;
     }
-    [data-theme=dark] select.input option { background: #0f172a; }
+    select.input option { background: #F3EEDF; color: var(--texto); }
+    [data-theme=dark] select.input option { background: var(--color-mata-2); }
     /* cursor de clique em tudo que é clicável (o preflight do Tailwind v4 usa o cursor padrão) */
     button, select, summary, [role=button], label:has(> input[type=file]),
     input[type=checkbox], input[type=radio], input[type=file], input[type=file]::file-selector-button,
     input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
     button:disabled, select:disabled, input:disabled { cursor: not-allowed; }
-    @utility btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed; }
-    @utility btn-primary { @apply btn bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600; }
-    @utility btn-success { @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-500; }
-    @utility btn-ghost { @apply btn bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40; }
-    @utility btn-danger { @apply btn text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10; }
-    @utility menu-item { @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800 focus-visible:outline-none; }
-    @utility card { @apply rounded-2xl bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-800; }
-    @utility label { @apply mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400; }
-    @utility input { @apply block w-full rounded-xl border-0 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 ring-1 ring-slate-300 dark:ring-slate-700 ring-inset placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-600 focus:ring-inset focus:outline-none; }
-    @utility hint { @apply mt-1 text-xs text-slate-500 dark:text-slate-400; }
-    @utility section-title { @apply text-sm font-semibold text-slate-900 dark:text-slate-100; }
-    @utility kv {
-      & dt { @apply text-xs text-slate-500 dark:text-slate-400; }
-      & dd { @apply text-sm font-medium break-words text-slate-900 dark:text-slate-100; }
+    [data-theme=dark] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.85) sepia(.3); }
+    [data-theme=dark] .papel input[type=date]::-webkit-calendar-picker-indicator { filter: none; }
+    :focus-visible { outline-color: var(--color-mostarda); }
+    :root { accent-color: var(--color-mostarda); }
+
+    /* ---------- botões ---------- */
+    @utility btn {
+      @apply inline-flex items-center justify-center gap-2 rounded-[11px] px-4 py-2.5 text-sm font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed;
+      transition: transform .18s var(--ease-mesa), box-shadow .3s var(--ease-mesa), background-color .3s var(--ease-mesa), color .3s var(--ease-mesa), filter .3s var(--ease-mesa);
     }
+    /* Mostarda: a ação principal. Um brilho atravessa no hover; pressionado, afunda como um carimbo. */
+    @utility btn-primary {
+      @apply btn relative overflow-hidden text-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mostarda;
+      background: linear-gradient(180deg, var(--color-mostarda-clara) 0%, var(--color-mostarda) 55%, var(--color-mostarda-escura) 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 245, 200, .55), inset 0 -1px 0 rgba(90, 60, 0, .35), 0 10px 22px -10px rgba(213, 161, 26, .55), 0 1px 2px rgba(0, 0, 0, .3);
+      &::after {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(110deg, transparent 30%, rgba(255, 250, 220, .45) 50%, transparent 70%);
+        transform: translateX(-120%); transition: transform .7s var(--ease-mesa);
+      }
+      &:hover:not(:disabled) { filter: brightness(1.04); }
+      &:hover:not(:disabled)::after { transform: translateX(120%); }
+      &:active:not(:disabled) { transform: translateY(1px) scale(.995); box-shadow: inset 0 2px 4px rgba(90, 60, 0, .35); }
+    }
+    @utility btn-success { @apply btn-primary; }
+    /* Vidro: ação secundária. */
+    @utility btn-ghost {
+      @apply btn;
+      color: var(--texto-2); background: var(--vidro-2); border: 1px solid var(--vidro-borda);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho);
+      &:hover:not(:disabled) { color: var(--texto); background: var(--vidro-1); }
+    }
+    /* Ação destrutiva confirmada (diálogo de confirmação): barro cheio. */
+    @utility btn-perigo {
+      @apply btn text-papel;
+      background: linear-gradient(180deg, #D9806C, var(--color-barro) 55%, #B4523F);
+      box-shadow: inset 0 1px 0 rgba(255, 225, 210, .4), 0 10px 22px -10px rgba(207, 111, 91, .55);
+      &:hover:not(:disabled) { filter: brightness(1.05); }
+    }
+    @utility btn-danger { @apply btn text-barro hover:bg-barro/10; }
+    @utility menu-item {
+      @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm focus-visible:outline-none;
+      color: var(--texto-2);
+      &:hover, &:focus-visible { background: var(--vidro-1); color: var(--texto); }
+    }
+
+    /* ---------- vidro fosco ---------- */
+    @utility vidro {
+      position: relative; border-radius: 18px; border: 1px solid var(--vidro-borda);
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .93 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 220px 220px,
+        linear-gradient(165deg, var(--vidro-1) 0%, var(--vidro-2) 100%);
+      -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho), 0 30px 50px -30px var(--vidro-sombra);
+      transition: border-color .35s var(--ease-mesa), box-shadow .35s var(--ease-mesa), transform .35s var(--ease-mesa);
+    }
+    @utility card { @apply vidro; }
+    /* Hover de card clicável: sobe 2 px e um anel de luz acende só na borda. */
+    :is(a, button).card:hover, .card.toque:hover { transform: translateY(-2px); }
+    :is(a, button).card::before, .card.toque::before {
+      content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; padding: 1.5px;
+      background: conic-gradient(from 215deg at 50% 50%, transparent 0%, rgba(255, 250, 235, .7) 12%, rgba(235, 194, 71, .45) 22%, transparent 34%, transparent 50%, rgba(255, 250, 235, .35) 62%, transparent 74%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+      opacity: 0; transition: opacity .55s var(--ease-mesa);
+    }
+    :root:not([data-theme=dark]) :is(a, button).card::before, :root:not([data-theme=dark]) .card.toque::before {
+      background: conic-gradient(from 215deg at 50% 50%, transparent 0%, rgba(174, 130, 16, .6) 14%, transparent 34%, transparent 50%, rgba(23, 45, 34, .25) 62%, transparent 74%);
+    }
+    :is(a, button).card:hover::before, .card.toque:hover::before { opacity: 1; }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .vidro, .card { background: #F3EEDF; }
+      [data-theme=dark] :is(.vidro, .card) { background: rgba(23, 45, 34, .92); }
+    }
+
+    /* ---------- papel: a nota (folha clara com grão), nos dois temas ---------- */
+    @utility papel {
+      --texto: #15170F; --texto-2: #3A3A28; --rotulo: #6B6A52; --placeholder: #9A9880;
+      --campo-fundo: rgba(255, 253, 246, .62); --campo-borda: rgba(23, 23, 15, .2); --campo-sombra: rgba(23, 23, 15, .06);
+      --vidro-1: rgba(23, 23, 15, .06); --vidro-2: rgba(23, 23, 15, .025); --vidro-borda: rgba(23, 23, 15, .17);
+      --vidro-brilho: rgba(255, 255, 255, .45); --acento: #7E5E06; --perigo: #923F30; --sucesso: #2F663D;
+      --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236B6A52'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
+      color-scheme: light;
+      position: relative; border-radius: 6px; color: var(--texto); background: var(--folha);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 40px 60px -30px rgba(0, 0, 0, .75), 0 2px 6px rgba(0, 0, 0, .3);
+      &::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .55; mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .5 0 0 0 0 .38 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+      }
+      & > * { position: relative; }
+    }
+    /* Carimbo do ambiente sobre a folha: círculo duplo de tinta, levemente girado. */
+    .carimbo {
+      display: grid; place-content: center; width: 88px; height: 88px; padding: 10px; border-radius: 50%; text-align: center;
+      border: 2px solid currentColor; box-shadow: inset 0 0 0 3px var(--folha), inset 0 0 0 4px currentColor;
+      font: 600 8px/1.25 var(--font-sans); letter-spacing: .03em; text-transform: uppercase;
+      transform: rotate(8deg); mix-blend-mode: multiply; opacity: .85; pointer-events: none;
+    }
+    .carimbo b { display: block; margin: 1px 0 2px; font: 600 16px/1 var(--font-display); letter-spacing: 0; text-transform: none; }
+
+    /* Marca-texto mostarda sobre o papel: desenha da esquerda para a direita (atraso em --atraso). */
+    .marca-texto { position: relative; }
+    .marca-texto::before {
+      content: ""; position: absolute; left: -3px; right: -3px; top: 52%; height: 62%; border-radius: 2px 6px 3px 7px;
+      background: rgba(213, 161, 26, .5); mix-blend-mode: multiply; transform-origin: left;
+      transform: translateY(-50%) scaleX(0); animation: marcar .55s var(--ease-mesa) var(--atraso, .6s) forwards;
+    }
+    @keyframes marcar { to { transform: translateY(-50%) scaleX(1); } }
+
+    /* ---------- campos e textos ---------- */
+    @utility label { @apply mb-1.5 block text-xs font-medium; color: var(--rotulo); }
+    @utility input {
+      @apply block w-full rounded-[11px] px-3.5 py-2.5 text-sm focus:outline-none;
+      color: var(--texto); background: var(--campo-fundo); border: 1px solid var(--campo-borda);
+      box-shadow: inset 0 2px 6px var(--campo-sombra);
+      transition: border-color .2s, box-shadow .2s;
+      &::placeholder { color: var(--placeholder); }
+      &:focus { border-color: rgba(213, 161, 26, .7); box-shadow: inset 0 2px 6px var(--campo-sombra), 0 0 0 3px rgba(213, 161, 26, .18); }
+    }
+    @utility hint { @apply mt-1 text-xs; color: var(--rotulo); }
+    @utility section-title { @apply font-display text-[17px] font-semibold; color: var(--texto); }
+    @utility kv {
+      & dt { @apply text-xs; color: var(--rotulo); }
+      & dd { @apply text-sm font-medium break-words; color: var(--texto); }
+    }
+    @utility dialogo {
+      @apply m-auto rounded-[20px] p-0 shadow-2xl;
+      color: var(--texto); border: 1px solid var(--vidro-borda);
+      background: linear-gradient(165deg, color-mix(in srgb, var(--fundo) 88%, white 4%), var(--fundo));
+      box-shadow: inset 0 1px 0 var(--vidro-brilho), 0 40px 80px -30px rgba(0, 0, 0, .6);
+      &::backdrop { background: rgba(10, 21, 15, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    }
+
+    /* ---------- cabeçalho ---------- */
+    /* sem font-size aqui: o tamanho vem das classes (CSS fora de camada ganharia dos utilitários do Tailwind) */
+    .marca { display: inline-flex; align-items: baseline; font-family: var(--font-display); font-weight: 700; line-height: 1; letter-spacing: -.02em; color: var(--texto); font-variation-settings: "opsz" 96; }
+    .marca span { font-weight: 800; color: #8F6A0A; } /* no papel: mostarda escurecida (contraste 3:1 para texto grande) */
+    [data-theme=dark] .marca span { color: var(--color-mostarda-clara); }
+    .marca i { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 2px; background: var(--color-mostarda); box-shadow: 0 0 10px -2px rgba(213, 161, 26, .8); }
+    /* Realce da página atual: vidro com uma luz mostarda que nasce da borda de baixo (brilho na beirada e um halo
+       subindo por dentro). Vem pronto do servidor, dentro do item ativo; entre páginas, a View Transition leva o
+       realce do item antigo ao novo (view-transition-name: realce). O <nav> tem py-2 para o halo não ser cortado pelo
+       overflow da rolagem horizontal. */
+    .realce {
+      position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+      background: radial-gradient(100% 55% at 50% 100%, var(--luz-realce), transparent 72%), var(--vidro-1);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho);
+      view-transition-name: realce;
+    }
+    /* Aba ativa (Cadastros): o mesmo realce do menu, com a luz nascendo da borda de cima. Fica num <span> atrás do
+       texto da aba, com nome próprio na View Transition, para deslizar de uma aba à outra. */
+    .aba-ativa {
+      position: absolute; inset: 0 0 -1px; z-index: -1; border: 1px solid var(--vidro-borda); border-bottom: 0;
+      border-radius: inherit; pointer-events: none; view-transition-name: aba-cadastro;
+      background: radial-gradient(100% 55% at 50% 0%, var(--luz-realce), transparent 72%), var(--vidro-1);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho);
+    }
+    .aba-ativa::after {
+      content: ""; position: absolute; left: 8px; right: 8px; top: 0; height: 1px; border-radius: 1px;
+      opacity: .75; background: linear-gradient(90deg, transparent, var(--color-mostarda-clara) 18%, var(--color-mostarda-clara) 82%, transparent);
+      box-shadow: 0 0 6px rgba(235, 194, 71, .35), 0 0 14px 2px rgba(213, 161, 26, .1);
+    }
+    .realce::after {
+      content: ""; position: absolute; left: 6px; right: 6px; bottom: 0; height: 1px; border-radius: 1px;
+      opacity: .75; background: linear-gradient(90deg, transparent, var(--color-mostarda-clara) 18%, var(--color-mostarda-clara) 82%, transparent);
+      box-shadow: 0 0 6px rgba(235, 194, 71, .35), 0 0 14px 2px rgba(213, 161, 26, .1);
+    }
+
+    /* ---------- entrada da página: os blocos pousam na mesa (só na carga, não em trocas htmx) ---------- */
+    @keyframes pousar { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: none; } }
+    .pousa { animation: pousar .7s var(--ease-mesa) both; }
+    .pousa:nth-child(2) { animation-delay: .08s; } .pousa:nth-child(3) { animation-delay: .16s; }
+    .pousa:nth-child(4) { animation-delay: .24s; } .pousa:nth-child(5) { animation-delay: .32s; }
+    .pousa:nth-child(n+6) { animation-delay: .4s; }
+    @media (prefers-reduced-motion: reduce) {
+      .pousa { animation: none; }
+      .marca-texto::before { animation: none; transform: translateY(-50%) scaleX(1); }
+      :is(a, button).card::before, .card.toque::before, .btn-primary::after { display: none; }
+      :is(a, button).card:hover, .card.toque:hover { transform: none; }
+    }
+
     [data-tema] #tema-btn [data-icone] { display: none; }
     [data-tema=sistema] #tema-btn [data-icone=sistema], [data-tema=claro] #tema-btn [data-icone=claro],
     [data-tema=escuro] #tema-btn [data-icone=escuro] { display: block; }
@@ -64,35 +337,42 @@
     .htmx-request .htmx-hide-on-request { display: none; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased">
-  <header class="sticky top-0 z-30 border-b border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur">
+<body class="min-h-screen font-sans text-[var(--texto)] antialiased">
+  <div class="fibras" aria-hidden="true"></div>
+  <header class="cabecalho-app sticky top-0 z-30 border-b border-[var(--vidro-borda)] bg-[var(--cabecalho)] backdrop-blur-xl backdrop-saturate-150">
     <div class="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-6 sm:px-6">
-      <a href="/" class="flex items-center gap-2.5">
-        <img src="/static/logo.svg" alt="" class="size-8 drop-shadow-sm sm:size-9">
-        <span class="hidden text-[17px] font-medium tracking-tight text-slate-900 dark:text-slate-100 sm:inline">easy<span class="font-bold text-indigo-600 dark:text-indigo-400">nfse</span></span>
-      </a>
-      {# no celular, os itens ficam só com o ícone (o nome segue para leitores de tela e no title) #}
-      <nav class="flex min-w-0 items-center gap-0.5 overflow-x-auto text-[13px] sm:gap-1 sm:text-sm">
+      <a href="/" class="marca shrink-0 text-[18px] sm:text-[21px]" aria-label="easyNFSe: início">easy<span>NFSe</span><i></i></a>
+      {# no celular, os itens ficam só com o ícone (o nome segue para leitores de tela e no title).
+         O item da página atual leva o .realce, que a View Transition faz deslizar entre os itens ao trocar de página. #}
+      <nav data-nav aria-label="Seções" class="relative flex min-w-0 items-center gap-0.5 overflow-x-auto py-2 text-[13px] sm:gap-1 sm:text-sm">
         {% set path = request.url.path %}
         {% set em_templates = path == '/templates' or path.endswith('/editar') %}
-        <a href="/" class="hidden shrink-0 rounded-lg px-2 py-1.5 font-medium sm:inline-flex sm:items-center sm:gap-1.5 sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path == '/' or (path.startswith('/templates/') and not em_templates) else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('home', 'size-4 shrink-0') }}Início</a>
-        <a href="/templates" title="Templates" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if em_templates else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('template', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Templates</span></a>
-        <a href="/cadastros" title="Cadastros" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/cadastros') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('address-book', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Cadastros</span></a>
-        <a href="/historico" title="Histórico" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/historico') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('history', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Histórico</span></a>
-        <a href="/configuracoes" title="Configurações" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/configuracoes') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('settings', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Configurações</span></a>
+        {% set icones_nav = {'Início': 'home', 'Templates': 'template', 'Cadastros': 'address-book', 'Histórico': 'history', 'Configurações': 'settings'} %}
+        {% set itens_nav = [
+          ('/', 'Início', path == '/' or (path.startswith('/templates/') and not em_templates)),
+          ('/templates', 'Templates', em_templates),
+          ('/cadastros', 'Cadastros', path.startswith('/cadastros')),
+          ('/historico', 'Histórico', path.startswith('/historico')),
+          ('/configuracoes', 'Configurações', path.startswith('/configuracoes')),
+        ] %}
+        {% for href, nome, ativo in itens_nav %}
+        <a href="{{ href }}" title="{{ nome }}" data-nav-item="{{ nome }}" {{ 'aria-current=page' if ativo }}
+           style="view-transition-name: nav-{{ loop.index }}; view-transition-class: item-nav"
+           class="relative z-[1] inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium transition-colors duration-300 sm:px-3 {{ 'text-[var(--texto)]' if ativo else 'text-[var(--rotulo)] hover:text-[var(--texto)]' }}">{% if ativo %}<span class="realce" aria-hidden="true"></span>{% endif %}{{ icone(icones_nav[nome], 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">{{ nome }}</span></a>
+        {% endfor %}
       </nav>
-      <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Alternar tema">
+      <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-[var(--rotulo)] hover:bg-[var(--vidro-1)] hover:text-[var(--texto)]" aria-label="Alternar tema">
         <span data-icone="sistema">{{ icone('device-desktop', 'size-[18px]') }}</span>
         <span data-icone="claro">{{ icone('sun', 'size-[18px]') }}</span>
         <span data-icone="escuro">{{ icone('moon', 'size-[18px]') }}</span>
       </button>
       <a href="/configuracoes" class="shrink-0">
         {% if cfg.ambiente == '1' %}
-          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 bg-rose-50 dark:bg-rose-500/10 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300 ring-1 ring-rose-200 dark:ring-rose-500/30">
+          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 bg-perigo/10 py-1 text-xs font-semibold text-perigo ring-1 ring-perigo/40">
             {{ icone('alert-triangle', 'hidden size-3.5 sm:block') }} Produção
           </span>
         {% else %}
-          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 bg-amber-50 dark:bg-amber-500/10 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30">
+          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 bg-mostarda/10 py-1 text-xs font-semibold text-acento ring-1 ring-mostarda/35">
             {{ icone('flask', 'hidden size-3.5 sm:block') }} <span class="sm:hidden">Teste</span><span class="hidden sm:inline">Produção restrita (testes)</span>
           </span>
         {% endif %}
@@ -100,44 +380,46 @@
       {% set versao = atualizacao.atual if atualizacao else '' %}
       <div class="relative shrink-0" data-menu>
         <button type="button" data-menu-botao aria-haspopup="menu" aria-expanded="false" aria-controls="menu-app"
-                class="relative grid size-8 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 sm:size-9"
+                class="relative grid size-8 place-items-center rounded-lg text-[var(--rotulo)] hover:bg-[var(--vidro-1)] hover:text-[var(--texto)] sm:size-9"
                 title="Mais opções" aria-label="Mais opções">
           {{ icone('dots-vertical', 'size-[18px]') }}
-          {% if atualizacao and atualizacao.nova %}<span class="absolute top-1 right-1 size-2 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-slate-950" aria-hidden="true"></span>{% endif %}
+          {% if atualizacao and atualizacao.nova %}<span class="absolute top-1 right-1 size-2 rounded-full bg-mostarda ring-2 ring-[var(--fundo)]" aria-hidden="true"></span>{% endif %}
         </button>
         <div id="menu-app" role="menu" hidden
-             class="absolute top-full right-0 z-40 mt-2 w-64 rounded-xl bg-white dark:bg-slate-900 p-1.5 shadow-lg ring-1 ring-slate-200 dark:ring-slate-800">
+             class="absolute top-full right-0 z-40 mt-2 w-64 rounded-[14px] border border-borda bg-[color-mix(in_srgb,var(--fundo)_92%,white_8%)] p-1.5 shadow-2xl backdrop-blur-xl">
           <a role="menuitem" href="https://github.com/LukastBorges/easy-nfse#readme" target="_blank" rel="noopener" class="menu-item">
-            {{ icone('help-circle', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Ajuda{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-slate-400 dark:text-slate-500') }}</a>
+            {{ icone('help-circle', 'size-4 shrink-0 text-rotulo') }}Ajuda{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-rotulo') }}</a>
           <button role="menuitem" type="button" data-abrir-notas class="menu-item">
-            {{ icone('notes', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Notas de atualização</button>
+            {{ icone('notes', 'size-4 shrink-0 text-rotulo') }}Notas de atualização</button>
           <a role="menuitem" href="https://github.com/LukastBorges/easy-nfse/issues" target="_blank" rel="noopener" class="menu-item">
-            {{ icone('bug', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Reportar um problema{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-slate-400 dark:text-slate-500') }}</a>
-          <div class="my-1 border-t border-slate-100 dark:border-slate-800" role="separator"></div>
+            {{ icone('bug', 'size-4 shrink-0 text-rotulo') }}Reportar um problema{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-rotulo') }}</a>
+          <button role="menuitem" type="button" data-abrir-dialogo="apoie" class="menu-item">
+            {{ icone('heart', 'size-4 shrink-0 text-acento') }}Apoie o projeto</button>
+          <div class="my-1 border-t border-borda" role="separator"></div>
           <button role="menuitem" type="button" data-abrir-sobre class="menu-item">
-            {{ icone('info-circle', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Sobre o easy-nfse
-            {% if atualizacao and atualizacao.nova %}<span class="ml-auto rounded-full bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300" title="Versão nova disponível">{{ atualizacao.nova }}</span>
-            {% else %}<span class="ml-auto text-xs tabular-nums text-slate-400 dark:text-slate-500">v{{ versao }}</span>{% endif %}</button>
+            {{ icone('info-circle', 'size-4 shrink-0 text-rotulo') }}Sobre o easyNFSe
+            {% if atualizacao and atualizacao.nova %}<span class="ml-auto rounded-full bg-mostarda/15 px-2 py-0.5 text-[11px] font-semibold text-acento" title="Versão nova disponível">{{ atualizacao.nova }}</span>
+            {% else %}<span class="ml-auto text-xs tabular-nums text-rotulo">v{{ versao }}</span>{% endif %}</button>
         </div>
       </div>
     </div>
   </header>
   {% if atualizacao %}{% include "_aviso_atualizacao.html" %}{% endif %}
 
-  <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+  <main class="conteudo-app mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
     {% block content %}{% endblock %}
   </main>
 
   <dialog id="confirmar" aria-labelledby="confirmar-titulo"
-          class="m-auto w-[min(28rem,calc(100%-2rem))] rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm">
+          class="w-[min(28rem,calc(100%-2rem))] dialogo">
     <form method="dialog" class="p-6">
       <div class="flex gap-4">
-        <span data-icone-perigo class="grid size-10 shrink-0 place-items-center rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
+        <span data-icone-perigo class="grid size-10 shrink-0 place-items-center rounded-full bg-perigo/10 text-perigo">
           {{ icone('alert-triangle', 'size-5') }}
         </span>
         <div class="min-w-0">
           <h2 id="confirmar-titulo" class="text-base font-semibold">Confirmar</h2>
-          <p id="confirmar-texto" class="mt-1.5 text-sm text-slate-600 dark:text-slate-400"></p>
+          <p id="confirmar-texto" class="mt-1.5 text-sm text-texto-2"></p>
         </div>
       </div>
       <div class="mt-6 flex justify-end gap-2">
@@ -146,19 +428,49 @@
       </div>
     </form>
   </dialog>
-  <dialog id="sobre" aria-labelledby="sobre-titulo"
-          class="m-auto w-[min(28rem,calc(100%-2rem))] rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm">
-    <div class="p-6">
-      <div class="flex items-center gap-4">
-        <img src="/static/logo.svg" alt="" class="size-14 drop-shadow-sm">
-        <div>
-          <h2 id="sobre-titulo" class="text-lg font-semibold">easy<span class="text-indigo-600 dark:text-indigo-400">nfse</span></h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Versão {{ versao }}</p>
+  {# Apoio: o app é gratuito e de código aberto. PIX copia e cola (chave aleatória, sem valor fixo) e o QR em static/pix.svg,
+     gerado do mesmo código; os links abrem no navegador. #}
+  {% set pix = "00020126580014BR.GOV.BCB.PIX013651da61ad-b04d-429e-928e-b485dbc8bccd5204000053039865802BR5925Lucas Tarley Borges da Co6009SAO PAULO62140510ieMNg0S7d863040DFF" %}
+  <dialog id="apoie" aria-labelledby="apoie-titulo" class="w-[min(30rem,calc(100%-2rem))] dialogo">
+    <div class="p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4">
+        <h2 id="apoie-titulo" class="font-display text-2xl font-semibold text-texto">Apoie o easyNFSe</h2>
+        <form method="dialog"><button class="-mt-1 -mr-2 grid size-9 place-items-center rounded-lg text-rotulo hover:bg-vidro hover:text-texto" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button></form>
+      </div>
+      <p class="mt-3 text-sm leading-relaxed text-texto-2">O easyNFSe é gratuito e de código aberto: ninguém paga para usar e o código é de todos.
+        Para continuar evoluindo, conto com a ajuda de quem quiser patrocinar o projeto. Se ele poupa o seu tempo todo mês,
+        considere contribuir com o valor que achar justo.</p>
+      <div class="mt-5 grid items-center gap-5 sm:grid-cols-[auto_minmax(0,1fr)]">
+        <div class="papel justify-self-center rounded-[14px] p-2.5 sm:justify-self-start">
+          <img src="/static/pix.svg" width="168" height="168" alt="QR code PIX para apoiar o easyNFSe" class="block rounded-md">
+        </div>
+        <div class="min-w-0">
+          <p class="flex items-center gap-2 font-display text-base font-semibold text-texto">PIX</p>
+          <p class="mt-1 text-[13px] text-rotulo">Leia o QR code no app do seu banco ou copie o código e use o PIX copia e cola. Você escolhe o valor.</p>
+          <button type="button" class="btn-primary mt-3 w-full" data-copy="{{ pix }}">{{ icone('copy') }}Copiar código PIX</button>
         </div>
       </div>
-      <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">Emissão de NFS-e do padrão nacional (Sefin Nacional) a partir de
+      <div class="mt-5 border-t border-dashed border-borda pt-4">
+        <p class="text-[13px] text-rotulo">Também dá para apoiar todo mês:</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <a href="https://github.com/sponsors/LukastBorges" target="_blank" rel="noopener" class="btn-ghost px-3.5 py-2">{{ icone('brand-github') }}GitHub Sponsors</a>
+          <a href="https://www.patreon.com/LukasBorges" target="_blank" rel="noopener" class="btn-ghost px-3.5 py-2">{{ icone('brand-patreon') }}Patreon</a>
+        </div>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="sobre" aria-labelledby="sobre-titulo"
+          class="w-[min(28rem,calc(100%-2rem))] dialogo">
+    <div class="p-6">
+      <div class="flex items-center gap-4">
+        <div>
+          <h2 id="sobre-titulo" class="marca text-[28px]">easy<span>NFSe</span><i></i></h2>
+          <p class="text-sm text-rotulo">Versão {{ versao }}</p>
+        </div>
+      </div>
+      <p class="mt-4 text-sm text-texto-2">Emissão de NFS-e do padrão nacional (Sefin Nacional) a partir de
         uma nota anterior. Roda só no seu computador: certificados, templates e notas não saem dele.</p>
-      <div class="mt-5 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-4 ring-1 ring-slate-200 dark:ring-slate-800">
+      <div class="mt-5 rounded-[12px] border border-borda bg-vidro p-4">
         <div class="flex items-center justify-between gap-3">
           <span class="text-sm font-semibold">Atualizações</span>
           <button type="button" id="sobre-verificar" class="btn-ghost px-3 py-1.5" hx-post="/atualizacao/verificar"
@@ -166,18 +478,18 @@
             <span class="htmx-hide-on-request inline-flex">{{ icone('refresh') }}</span><span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>Verificar agora</button>
         </div>
         <div id="sobre-atualizacao" class="mt-3 empty:hidden">{% if atualizacao and atualizacao.nova %}{% include "partials/atualizacao.html" %}{% endif %}</div>
-        <label class="mt-3 flex items-start gap-3 border-t border-slate-200 dark:border-slate-700 pt-3 text-sm">
+        <label class="mt-3 flex items-start gap-3 border-t border-borda pt-3 text-sm">
           <input type="checkbox" name="ativa" value="1" {{ 'checked' if cfg.verificar_atualizacoes }}
                  hx-post="/atualizacao/automatica" hx-trigger="change" hx-target="#sobre-auto-salvo" data-salva-sozinho
-                 class="mt-0.5 size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
+                 class="mt-0.5 size-4 rounded">
           <span>Verificar e baixar atualizações automaticamente
-            <span class="block text-xs text-slate-500 dark:text-slate-400">Consulta as versões publicadas no GitHub a cada 6 horas.
+            <span class="block text-xs text-rotulo">Consulta as versões publicadas no GitHub a cada 6 horas.
               A instalação só acontece quando você clica em "Reiniciar e atualizar" ou ao abrir o app.</span>
             <span id="sobre-auto-salvo" class="block text-xs font-medium empty:hidden" aria-live="polite"></span></span>
         </label>
       </div>
       <ul class="mt-4 space-y-1 text-sm">
-        <li><a href="https://github.com/LukastBorges/easy-nfse" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline">{{ icone('brand-github') }}Código-fonte</a></li>
+        <li><a href="https://github.com/LukastBorges/easy-nfse" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-acento hover:underline">{{ icone('brand-github') }}Código-fonte</a></li>
       </ul>
       <form method="dialog" class="mt-6 flex justify-end">
         <button class="btn-ghost" autofocus>Fechar</button>
@@ -186,19 +498,19 @@
   </dialog>
   {# altura definida (não só max-h): o WKWebView do macOS não recalcula a altura do diálogo quando as notas chegam #}
   <dialog id="notas" aria-labelledby="notas-titulo"
-          class="m-auto flex h-[min(44rem,calc(100dvh-2rem))] w-[min(40rem,calc(100%-2rem))] flex-col rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm [&:not([open])]:hidden">
-    <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
-      <h2 id="notas-titulo" class="flex items-center gap-2 text-base font-semibold">{{ icone('notes', 'size-5 text-slate-400 dark:text-slate-500') }}Notas de atualização</h2>
-      <form method="dialog"><button class="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button></form>
+          class="flex h-[min(44rem,calc(100dvh-2rem))] w-[min(40rem,calc(100%-2rem))] flex-col dialogo [&:not([open])]:hidden">
+    <div class="flex items-center justify-between gap-3 border-b border-borda px-6 py-4">
+      <h2 id="notas-titulo" class="flex items-center gap-2 text-base font-semibold">{{ icone('notes', 'size-5 text-rotulo') }}Notas de atualização</h2>
+      <form method="dialog"><button class="rounded-lg p-1.5 text-rotulo hover:bg-vidro" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button></form>
     </div>
     <div id="notas-conteudo" class="min-h-0 flex-1 overflow-y-auto px-6 py-5 focus:outline-none" tabindex="-1" autofocus></div>
-    <div class="border-t border-slate-100 dark:border-slate-800 px-6 py-3 text-right text-sm">
-      <a href="https://github.com/LukastBorges/easy-nfse/releases" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Todas as versões no GitHub{{ icone('external-link', 'size-3.5') }}</a>
+    <div class="border-t border-borda px-6 py-3 text-right text-sm">
+      <a href="https://github.com/LukastBorges/easy-nfse/releases" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-medium text-acento hover:underline">Todas as versões no GitHub{{ icone('external-link', 'size-3.5') }}</a>
     </div>
   </dialog>
   {# cadastro de prestador/tomador aberto do template ou da emissão; altura definida pelo mesmo motivo das notas #}
   <dialog id="cadastro" aria-labelledby="cadastro-titulo"
-          class="m-auto flex h-[min(46rem,calc(100dvh-2rem))] w-[min(46rem,calc(100%-2rem))] flex-col rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm [&:not([open])]:hidden">
+          class="flex h-[min(46rem,calc(100dvh-2rem))] w-[min(46rem,calc(100%-2rem))] flex-col dialogo [&:not([open])]:hidden">
     <div id="cadastro-conteudo" class="flex min-h-0 flex-1 flex-col"></div>
   </dialog>
   <script src="/static/app.js"></script>

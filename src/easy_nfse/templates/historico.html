@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% from "_macros.html" import alert %}
-{% block title %}Histórico · easy-nfse{% endblock %}
+{% block title %}Histórico · easyNFSe{% endblock %}
 {% block content %}
-<div class="flex flex-wrap items-end justify-between gap-4">
-  <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Histórico de emissões</h1>
-  <form method="post" action="/danfse" enctype="multipart/form-data" class="flex items-center gap-2 text-sm">
+{% set MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'] %}
+<div class="pousa flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-3xl font-semibold text-texto sm:text-[34px]">Histórico</h1>
+    <p class="mt-2 text-texto-2">Tudo o que saiu deste computador, nos dois ambientes.</p>
+  </div>
+  <form method="post" action="/danfse" enctype="multipart/form-data">
     <label class="btn-ghost cursor-pointer" title="Gera o DANFSe (PDF) de qualquer XML de NFS-e do padrão nacional">
       <input type="file" name="arquivo" accept=".xml,text/xml,application/xml" class="sr-only" onchange="this.form.submit()">
       {{ icone('file-type-pdf') }}Gerar PDF de um XML…
@@ -12,36 +16,51 @@
   </form>
 </div>
 {% if erro %}<div class="mt-6">{{ alert('error', erro, []) }}</div>{% endif %}
+
 {% if emissoes %}
-<div class="card mt-6 overflow-x-auto">
-  <table class="min-w-full text-sm">
-    <thead class="border-b border-slate-200 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+{# livro-razão: linhas dentro de um vidro, agrupadas pelo mês em que a nota foi emitida (lista já vem da mais nova) #}
+<div class="card pousa mt-7 overflow-x-auto">
+  <table class="w-full min-w-[760px] text-sm">
+    <thead class="border-b border-borda text-left text-xs text-rotulo">
       <tr>
         <th class="px-5 py-3 font-medium">Emitida em</th>
-        <th class="px-5 py-3 font-medium">NFS-e</th>
         <th class="px-5 py-3 font-medium">Tomador</th>
+        <th class="px-5 py-3 font-medium">NFS-e</th>
         <th class="px-5 py-3 font-medium">Competência</th>
         <th class="px-5 py-3 text-right font-medium">Valor</th>
-        <th class="px-5 py-3"></th>
+        <th class="px-5 py-3"><span class="sr-only">Ações</span></th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    <tbody>
+      {% set ns = namespace(mes='') %}
       {% for e in emissoes %}
-      <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-        <td class="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-400">{{ e.emitida_em|datahora }}</td>
-        <td class="whitespace-nowrap px-5 py-3">
-          <span class="font-medium">{{ e.numero_nfse or '—' }}</span>
-          {% if e.ambiente == '2' %}<span class="ml-1 rounded bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">teste</span>{% endif %}
-          <div class="font-mono text-[11px] text-slate-400 dark:text-slate-500" title="{{ e.chave_acesso }}">{{ e.chave_acesso[:12] }}…</div>
+      {% set mes = MESES[e.emitida_em.month - 1] ~ ' de ' ~ e.emitida_em.year %}
+      {% if mes != ns.mes %}{% set ns.mes = mes %}
+      <tr><td colspan="6" class="px-5 pt-5 pb-1.5 font-display text-[15px] font-semibold text-texto-2">{{ mes[:1]|upper ~ mes[1:] }}</td></tr>
+      {% endif %}
+      <tr class="border-t border-borda/60 transition-colors hover:bg-vidro">
+        <td class="px-5 py-3.5 whitespace-nowrap text-rotulo tabular-nums">{{ e.emitida_em|datahora }}</td>
+        <td class="max-w-[280px] px-5 py-3.5">
+          <span class="block truncate font-medium text-texto" title="{{ e.tomador }}">{{ e.tomador or '—' }}</span>
+          <span class="block truncate text-xs text-rotulo" title="{{ e.template_nome }}">{{ e.template_nome }}</span>
         </td>
-        <td class="px-5 py-3">{{ e.tomador or '—' }}<div class="text-xs text-slate-500 dark:text-slate-400">{{ e.template_nome }}</div></td>
-        <td class="whitespace-nowrap px-5 py-3 text-slate-600 dark:text-slate-400">{{ e.competencia[8:10] }}/{{ e.competencia[5:7] }}/{{ e.competencia[:4] }}</td>
-        <td class="whitespace-nowrap px-5 py-3 text-right font-semibold tabular-nums">{{ e.valor|money }}{% if e.valor_moeda %}<div class="text-xs font-normal text-slate-500 dark:text-slate-400">{{ e.moeda }} {{ (e.valor_moeda|money)[3:] }}</div>{% endif %}</td>
-        <td class="whitespace-nowrap px-5 py-3 text-right">
-          <a class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline" href="/emissoes/{{ e.chave_acesso }}/danfse.pdf" target="_blank" rel="noopener">PDF</a>
-          <a class="ml-3 text-indigo-600 dark:text-indigo-400 hover:underline" href="/emissoes/{{ e.chave_acesso }}/nfse.xml">XML</a>
-          {% if e.ambiente == '1' %}<a class="ml-3 text-indigo-600 dark:text-indigo-400 hover:underline" href="{{ consulta_publica(e.chave_acesso) }}" target="_blank" rel="noopener">Portal{{ icone('external-link', 'ml-0.5 inline size-3.5 align-[-2px]') }}</a>{% endif %}
-          <button type="button" class="ml-3 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100" data-copy="{{ e.chave_acesso }}">Copiar chave</button>
+        <td class="px-5 py-3.5 whitespace-nowrap">
+          <span class="text-texto-2 tabular-nums">{{ e.numero_nfse or '—' }}</span>
+          {% if e.ambiente == '2' %}<span class="ml-1.5 rounded border border-mostarda/30 bg-mostarda/10 px-1.5 py-px text-[11px] font-semibold text-acento">teste</span>
+          {% else %}<span class="ml-1.5 rounded border border-sucesso/35 bg-sucesso/10 px-1.5 py-px text-[11px] font-semibold text-sucesso">autorizada</span>{% endif %}
+          <span class="block text-[11px] text-apagado tabular-nums" title="{{ e.chave_acesso }}">{{ e.chave_acesso[:12] }}…</span>
+        </td>
+        <td class="px-5 py-3.5 whitespace-nowrap text-texto-2 tabular-nums">{{ e.competencia[8:10] }}/{{ e.competencia[5:7] }}/{{ e.competencia[:4] }}</td>
+        <td class="px-5 py-3.5 text-right whitespace-nowrap">
+          <span class="font-display text-base text-texto tabular-nums">{{ e.valor|money }}</span>
+          {% if e.valor_moeda %}<span class="block text-xs text-rotulo tabular-nums">{{ e.moeda }} {{ (e.valor_moeda|money)[3:] }}</span>{% endif %}
+        </td>
+        <td class="px-4 py-3.5 text-right whitespace-nowrap">
+          {% set acao = 'inline-grid size-9 place-items-center rounded-lg align-middle text-rotulo hover:bg-vidro hover:text-texto' %}
+          <a class="{{ acao }}" href="/emissoes/{{ e.chave_acesso }}/danfse.pdf" target="_blank" rel="noopener" title="PDF da nota" aria-label="PDF da nota">{{ icone('file-type-pdf', 'size-5') }}</a>
+          <a class="{{ acao }}" href="/emissoes/{{ e.chave_acesso }}/nfse.xml" title="XML da nota" aria-label="XML da nota">{{ icone('file-code', 'size-5') }}</a>
+          <button type="button" class="{{ acao }}" data-copy="{{ e.chave_acesso }}" title="Copiar chave de acesso" aria-label="Copiar chave de acesso">{{ icone('copy', 'size-5') }}<span data-copiado hidden><span class="text-sucesso">{{ icone('check', 'size-5') }}</span></span></button>
+          {% if e.ambiente == '1' %}<a class="{{ acao }}" href="{{ consulta_publica(e.chave_acesso) }}" target="_blank" rel="noopener" title="Ver no portal nacional" aria-label="Ver no portal nacional">{{ icone('external-link', 'size-5') }}</a>{% endif %}
         </td>
       </tr>
       {% endfor %}
@@ -49,6 +68,7 @@
   </table>
 </div>
 {% else %}
-<div class="mt-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Nenhuma nota emitida ainda.</div>
+<p class="mt-7 rounded-2xl border border-dashed border-borda px-6 py-10 text-center text-sm text-rotulo">
+  Nenhuma nota emitida ainda. As notas emitidas aparecem aqui, com o PDF e o XML.</p>
 {% endif %}
 {% endblock %}

@@ -23,7 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
 function filtrarLista(box) {
   const sem = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const termos = sem(box.querySelector("[data-filtro-busca]")?.value || "").split(/\s+/).filter(Boolean);
-  const filtros = [...box.querySelectorAll("[data-filtro-por]")].filter((s) => s.value).map((s) => [s.dataset.filtroPor, s.value]);
+  // selects e grupos de rádio (chips): de um rádio, só conta o marcado
+  const filtros = [...box.querySelectorAll("[data-filtro-por]")].filter((s) => (s.type !== "radio" || s.checked) && s.value)
+    .map((s) => [s.dataset.filtroPor, s.value]);
   const itens = [...box.querySelectorAll("[data-busca]")];
   let visiveis = 0;
   itens.forEach((li) => {
@@ -90,7 +92,10 @@ document.addEventListener("click", (e) => {
   if (!btn) return;
   navigator.clipboard.writeText(btn.dataset.copy);
   const old = btn.innerHTML;
-  btn.textContent = "Copiado!";
+  // botão só com ícone: troca pelo ícone de confirmação que vem escondido nele ([data-copiado])
+  const confirma = btn.querySelector("[data-copiado]");
+  if (confirma) btn.innerHTML = confirma.innerHTML;
+  else btn.textContent = "Copiado!";
   setTimeout(() => (btn.innerHTML = old), 1200);
 });
 
@@ -165,7 +170,7 @@ function confirmar(texto, opcoes = {}) {
   dlg.querySelector("#confirmar-texto").textContent = texto;
   const ok = dlg.querySelector("#confirmar-ok");
   ok.textContent = opcoes.acao || "Confirmar";
-  ok.className = opcoes.perigo ? "btn bg-rose-600 text-white shadow-sm hover:bg-rose-500" : "btn-primary";
+  ok.className = opcoes.perigo ? "btn-perigo" : "btn-primary";
   dlg.querySelector("[data-icone-perigo]").classList.toggle("hidden", !opcoes.perigo);
   dlg.returnValue = "";
   dlg.showModal();
@@ -233,13 +238,20 @@ document.getElementById("sobre")?.addEventListener("click", (e) => {
   if (e.target.id === "sobre") e.target.close(); // clique no fundo fecha
 });
 
+// Diálogos simples abertos pelo menu: data-abrir-dialogo="id" (ex.: "apoie"). Clique no fundo fecha.
+document.addEventListener("click", (e) => {
+  const item = e.target.closest && e.target.closest("[data-abrir-dialogo]");
+  if (item) document.getElementById(item.dataset.abrirDialogo)?.showModal();
+  if (e.target.matches && e.target.matches("dialog[open]#apoie")) e.target.close();
+});
+
 // Notas de atualização: abre o diálogo e carrega o changelog (só quando pedido).
 document.addEventListener("click", (e) => {
   const item = e.target.closest && e.target.closest("[data-abrir-notas]");
   if (!item) return;
   document.getElementById("sobre")?.close();
   const dlg = document.getElementById("notas");
-  dlg.querySelector("#notas-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Carregando…</p>';
+  dlg.querySelector("#notas-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-rotulo">Carregando…</p>';
   dlg.showModal();
   htmx.ajax("GET", "/notas", "#notas-conteudo");
 });
@@ -251,7 +263,7 @@ function falhaAoSalvar(e) {
   if (!el.matches || !el.matches("[data-salva-sozinho]")) return;
   if (el.type === "checkbox") el.checked = !el.checked;
   const alvo = document.querySelector(el.getAttribute("hx-target"));
-  if (alvo) alvo.innerHTML = '<span class="text-rose-700 dark:text-rose-300">Não foi possível salvar. Feche e abra o easy-nfse e tente de novo.</span>';
+  if (alvo) alvo.innerHTML = '<span class="text-perigo">Não foi possível salvar. Feche e abra o easyNFSe e tente de novo.</span>';
 }
 document.addEventListener("htmx:responseError", falhaAoSalvar);
 document.addEventListener("htmx:sendError", falhaAoSalvar);
@@ -277,7 +289,7 @@ document.addEventListener("click", (e) => {
     url = `/cadastros/${btn.dataset.abrirCadastro}/${id}?dialogo=1`;
   }
   const dlg = document.getElementById("cadastro");
-  dlg.querySelector("#cadastro-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Carregando…</p>';
+  dlg.querySelector("#cadastro-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-rotulo">Carregando…</p>';
   dlg.showModal();
   htmx.ajax("GET", url, "#cadastro-conteudo");
 });

@@ -20,15 +20,15 @@
 {%- endmacro %}
 
 {% macro alert(kind, title, items) -%}
+{# cores por variável: funcionam no fundo do app, nos diálogos e sobre a folha de papel #}
 {% set styles = {
-  'error': 'bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-200 ring-rose-200 dark:ring-rose-500/30',
-  'warn': 'bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 ring-amber-200 dark:ring-amber-500/30',
-  'info': 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-900 dark:text-indigo-200 ring-indigo-200 dark:ring-indigo-500/30',
-  'ok': 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 ring-emerald-200 dark:ring-emerald-500/30',
+  'error': 'border-perigo/40 bg-perigo/10', 'warn': 'border-mostarda/40 bg-mostarda/10',
+  'info': 'border-borda bg-vidro', 'ok': 'border-sucesso/40 bg-sucesso/10',
 } %}
+{% set cor_icone = {'error': 'text-perigo', 'warn': 'text-acento', 'info': 'text-texto-2', 'ok': 'text-sucesso'} %}
 {% set icones = {'error': 'alert-circle', 'warn': 'alert-triangle', 'info': 'info-circle', 'ok': 'circle-check'} %}
-<div class="flex gap-3 rounded-2xl p-4 text-sm ring-1 {{ styles[kind] }}">
-  {{ icone(icones[kind], 'mt-px size-5 shrink-0') }}
+<div class="flex gap-3 rounded-2xl border p-4 text-sm text-texto {{ styles[kind] }}">
+  {{ icone(icones[kind], 'mt-px size-5 shrink-0 ' ~ cor_icone[kind]) }}
   <div class="min-w-0 flex-1">
     {% if title %}<p class="font-semibold">{{ title }}</p>{% endif %}
     {% if items %}

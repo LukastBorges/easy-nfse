@@ -1,30 +1,30 @@
 {# Resumo do prestador/tomador escolhido no template. Precisa de: papel, c, pendencias (e cert, problema_cert do prestador) #}
 {% if c %}
-<div class="rounded-xl bg-slate-50 dark:bg-slate-800/40 p-4 text-sm ring-1 ring-slate-200 dark:ring-slate-800">
+<div class="rounded-[12px] border border-borda bg-vidro p-4 text-sm">
   {% if papel == 'prestador' %}
     <p class="font-semibold">{{ c.nome or 'Sem nome' }}</p>
-    <p class="text-slate-600 dark:text-slate-400">{{ c.tipo_doc }} {{ c.documento|doc }} · {{ OP_SIMP_NAC.get(c.op_simp_nac) }} · {{ c.municipio or c.cod_municipio or 'município não informado' }}</p>
+    <p class="text-texto-2">{{ c.tipo_doc }} {{ c.documento|doc }} · {{ OP_SIMP_NAC.get(c.op_simp_nac) }} · {{ c.municipio or c.cod_municipio or 'município não informado' }}</p>
     {% if problema_cert %}
-    <p class="mt-2 flex items-start gap-1.5 text-rose-700 dark:text-rose-300">{{ icone('certificate-off', 'mt-0.5 size-4 shrink-0') }}<span class="min-w-0">{{ problema_cert }}</span></p>
+    <p class="mt-2 flex items-start gap-1.5 text-perigo">{{ icone('certificate-off', 'mt-0.5 size-4 shrink-0') }}<span class="min-w-0">{{ problema_cert }}</span></p>
     {% elif cert %}
-    <p class="mt-2 flex items-start gap-1.5 {{ 'text-amber-700 dark:text-amber-300' if cert.vence_em_breve else 'text-slate-500 dark:text-slate-400' }}">{{ icone('clock-exclamation' if cert.vence_em_breve else 'certificate', 'mt-0.5 size-4 shrink-0') }}<span class="min-w-0">Certificado de {{ cert.titular }} · {{ 'vence em ' ~ cert.dias ~ ' dias' if cert.vence_em_breve else 'válido até ' ~ cert.validade|data }}</span></p>
+    <p class="mt-2 flex items-start gap-1.5 {{ 'text-acento' if cert.vence_em_breve else 'text-rotulo' }}">{{ icone('clock-exclamation' if cert.vence_em_breve else 'certificate', 'mt-0.5 size-4 shrink-0') }}<span class="min-w-0">Certificado de {{ cert.titular }} · {{ 'vence em ' ~ cert.dias ~ ' dias' if cert.vence_em_breve else 'válido até ' ~ cert.validade|data }}</span></p>
     {% endif %}
   {% else %}
     {% set e = c.endereco %}
     <p class="flex items-center gap-2 font-semibold">{{ c.nome or 'Sem nome' }}
-      {% if c.exterior %}<span class="rounded bg-sky-50 dark:bg-sky-500/10 px-1.5 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-500/30">exterior</span>{% endif %}</p>
-    <p class="text-slate-600 dark:text-slate-400">
+      {% if c.exterior %}<span class="rounded-md border border-borda bg-vidro px-1.5 py-px text-[11px] font-semibold text-texto-2">exterior</span>{% endif %}</p>
+    <p class="text-texto-2">
       {% if c.exterior %}{{ ('NIF ' ~ c.documento) if c.documento else C_NAO_NIF.get(c.c_nao_nif, 'Sem NIF') }}{% else %}{{ c.tipo_doc }} {{ c.documento|doc }}{% endif %}
       {% if e.exterior %} · {{ e.cidade }}{{ ', ' ~ e.estado_prov if e.estado_prov }} · {{ PAISES.get(e.pais, e.pais) }}{% elif e.municipio %} · {{ e.municipio }}{% endif %}</p>
   {% endif %}
   {% if pendencias %}
-  <ul class="mt-2 list-disc space-y-0.5 pl-5 text-amber-800 dark:text-amber-300">
+  <ul class="mt-2 list-disc space-y-0.5 pl-5 text-acento">
     {% for x in pendencias %}<li>{{ x }}</li>{% endfor %}
   </ul>
   {% endif %}
 </div>
 {% elif papel == 'prestador' %}
-<p class="text-sm text-slate-500 dark:text-slate-400">Escolha o prestador que emite a nota, ou cadastre um novo.</p>
+<p class="text-sm text-rotulo">Escolha o prestador que emite a nota, ou cadastre um novo.</p>
 {% else %}
-<p class="text-sm text-slate-500 dark:text-slate-400">Sem tomador identificado: a nota sai sem os dados do tomador.</p>
+<p class="text-sm text-rotulo">Sem tomador identificado: a nota sai sem os dados do tomador.</p>
 {% endif %}

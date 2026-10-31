@@ -46,7 +46,7 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
 | `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
 | `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema, diálogo de cadastro) |
-| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão, com troca do prestador/tomador só para a nota), `/templates/{id}/editar`, `/cadastros/{prestadores|tomadores}` (lista, `/novo`, `/{id}`; `?dialogo=1` devolve o formulário para o diálogo), `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
+| Páginas | `/` home (boas-vindas sem templates; com templates: busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão, com troca do prestador/tomador só para a nota), `/templates/{id}/editar`, `/cadastros/{prestadores|tomadores}` (lista, `/novo`, `/{id}`; `?dialogo=1` devolve o formulário para o diálogo), `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
 | Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html`, `_prestador_campos.html`, `_tomador_campos.html`, `partials/resumo_cadastro.html` |
 
 ## Regras que NÃO podem ser quebradas
@@ -114,6 +114,37 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - `dCompet` ≤ data de `dhEmi` (E0015); `dhEmi` é enviado com 1 min de margem (E0008).
 - No DANFSe, o NIF impresso como `1`/`2` significa **cNaoNIF**, não um NIF.
 
+## Identidade visual ("Mata, mostarda e papel")
+
+- Especificação em `docs/design/README.md`, plano de implantação em etapas em `docs/design/plano.md`, telas de
+  referência em `docs/design/telas/` (fontes HTML em `docs/design/conceitos/`, regerar com `renderizar.py --png`).
+  Implantada (etapas 0 a 8). O ícone (`static/logo.svg`, `favicon.svg`, PNGs e `packaging/icons/`) é gerado por
+  `uv run --with fonttools --with brotli --with playwright --with pillow python scripts/icone.py`: não edite à mão.
+- **Sem as paletas do Tailwind**: todas as telas usam as cores da identidade. `slate`, `indigo`, `amber`, `emerald`,
+  `rose`, `sky` etc. voltaram às cores padrão do Tailwind e não combinam com nada: não use. Use as cores por variável
+  (abaixo), que mudam com o tema, ou as fixas da identidade (`text-mostarda`, `bg-mata-2`, `text-papel`…).
+- Utilitários: `btn-primary` (mostarda, um por área de decisão), `btn-ghost` (vidro), `btn-perigo` (barro, só para
+  confirmar ação destrutiva), `card`/`vidro` (vidro fosco; em
+  `<a>`/`<button>` ou com `.toque`, o hover acende a borda), `dialogo` (todo `<dialog>`), `input`, `label`, `hint`.
+- **Cores por variável como classes**: `text-texto`, `text-texto-2`, `text-rotulo`, `text-apagado`, `bg-vidro`,
+  `border-borda`, `text-acento` (mostarda legível no tema), `text-perigo`, `text-sucesso` (e `/10`, `/40`…). Mudam
+  com o tema e **dentro da folha de papel**, então dispensam `dark:`.
+- **Folha de papel** (`papel`, na emissão): redefine as variáveis de tema (texto, rótulos, campos, vidro, estados) para
+  tinta sobre papel nos dois temas. Tudo que o htmx põe no `#painel` (revisão, sucesso, erro, DPS já usada) precisa
+  usar essas classes, nunca `slate`/`dark:`, senão fica claro sobre claro no tema escuro. O carimbo do ambiente fica
+  fora do `#painel` (sobrevive às trocas); aviso que abre a folha recebe margem para não passar por baixo dele.
+- Fontes locais em `static/vendor/fonts` (`uv run python scripts/fontes.py`), nunca do Google Fonts: o app roda sem
+  internet. Dados fictícios para conferir telas: `EASY_NFSE_DATA=/tmp/x uv run python scripts/dados_demo.py`.
+- Tela nova ou alterada segue a especificação: fundo verde-floresta com grão, painéis em vidro fosco, mostarda só na
+  ação principal e na marca, a nota em emissão como folha de papel. Nada de `slate`/`indigo`/`emerald` em telas novas.
+- Fontes: **Bricolage Grotesque** em títulos, valores e marca; **Public Sans** no resto. A marca é o lettering
+  `easyNFSe` (sem símbolo) com o ponto quadrado mostarda.
+- Movimento: troca de página por View Transitions (CSS em `base.html`; o realce do menu desliza entre os itens pelo
+  `view-transition-name: realce`), uma entrada por página (não em trocas htmx), hover dos
+  cards acende só a borda, tudo desligado com `prefers-reduced-motion`.
+- Os conceitos são HTML/CSS puros para referência de valores; na implementação os valores viram tokens e `@utility`
+  do Tailwind em `base.html`.
+
 ## Armadilhas técnicas já resolvidas (não "conserte" de volta)
 
 - **XSD oficial com `^...$` nos patterns**: em XSD isso é literal. Removido na cópia local (`tiposSimples_v1.01.xsd`).
@@ -123,9 +154,23 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - **signxml** não serve: no modo sem prefixo cria elementos fora do namespace ds. A assinatura é feita à mão em
   `Certificado.assinar` (enveloped, RSA-SHA256, C14N 1.0, `Signature` sem prefixo, irmã de `infDPS`).
   Qualquer mudança na assinatura **precisa** passar no teste com `xmlsec` (`test_assinatura_valida_com_xmlsec`).
+- **Fundo com textura**: o `<html>` precisa de `background` próprio. Sem ele o navegador leva o fundo do `body` para
+  a tela inteira, e o grão e as fibras (com `mix-blend-mode`) se misturam com transparência: a página inteira fica
+  ~30 pontos mais clara em vez de texturizada.
+- **CSS fora de camada ganha dos utilitários**: regras soltas no `<style type="text/tailwindcss">` (ex.: `.marca`)
+  vencem classes como `text-[18px]`, que ficam em `@layer utilities`. Não ponha nelas o que deve variar por classe
+  (o tamanho da marca vem das classes).
+- **View Transitions**: `view-transition-name` precisa ser único na página (só o item ativo leva o `.realce`). O realce
+  viaja numa camada acima do cabeçalho; os itens do menu têm nomes próprios (`nav-N`, classe `item-nav`) com
+  `z-index` maior para o realce passar por trás dos nomes. `mix-blend-mode: screen` resolvia no escuro, mas apagava
+  o texto no tema claro. Animar o `root` (que inclui o fundo) escurece a tela no meio da troca: anime o `main`
+  (`.conteudo-app`). O Firefox não tem a transição entre documentos e ainda pisca na troca de página; não é motor
+  do app.
+- **Animação de entrada usa `translate`**, não `transform`: `transform` no keyframe apagaria a rotação das folhas de
+  papel (`.pousa` + `rotate`).
 - **Tailwind v4**: classes reutilizáveis são `@utility` (não `@layer components` + `@apply` de classe custom — quebra
   todo o CSS). Modo escuro via `@custom-variant dark` + `data-theme` no `<html>`; **toda classe de cor nova precisa do par
-  `dark:`**. Preflight remove `cursor: pointer` (regra global em `base.html`).
+  `dark:`**, exceto as variáveis de tema (`var(--texto)` etc., ver "Identidade visual"). Preflight remove `cursor: pointer` (regra global em `base.html`).
 - **htmx**: formulários com `hx-*` recebem fragmentos (`templates/partials/`); formulários sem htmx precisam de página completa
   (ex.: erro em `/danfse` renderiza `historico.html`). Redirecionamento após htmx: header `HX-Redirect`.
 - **Ícones**: só [Tabler](https://tabler.io/icons) (outline), via `{{ icone('nome', 'classes') }}` (helper em `app.py`, SVG
@@ -133,13 +178,16 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `uv run python scripts/icones_tabler.py` (baixa os usados da versão fixada, apaga os sem uso). O script só enxerga nomes
   em linhas que contêm `icone`: ao escolher o ícone por variável/dicionário, nomeie-a `icone_*`/`icones_*`.
   `test_icones_dos_templates_existem` confere os nomes literais.
-- **Aviso da home** é só para o que é global (ambiente). Estado de certificado vai no card do template (e na página de
-  emissão), nunca numa lista no alerta.
+- **Sem aviso de ambiente na home**: o selo do cabeçalho já mostra produção/produção restrita em toda página (e a
+  folha da emissão leva o carimbo). Estado de certificado vai no card do template (e na página de emissão), nunca num
+  alerta global.
 - **Busca/filtro de listas** (home, Templates, Cadastros e Configurações): `[data-filtro]` com `[data-filtro-busca]`,
   selects `[data-filtro-por="campo"]`, `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-<campo>`
-  (vários valores separados por espaço; ex.: `data-filtro-por="tomador"` + `data-tomador="<id>"`). A busca ignora acentos;
+  (vários valores separados por espaço; ex.: `data-filtro-por="tomador"` + `data-tomador="<id>"`). Filtro em chips: rádios do mesmo
+  grupo com `data-filtro-por` (só o marcado conta), como em Cadastros. A busca ignora acentos;
   `option[selected]` vinda do servidor já filtra ao abrir. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
-  (depende das colunas e da altura dos cards), não fixe em CSS.
+  (depende das colunas e da altura dos cards), não fixe em CSS. Não combine com `auto-rows-fr`: com a altura limitada, as linhas `1fr` dividem
+  essa altura e achatam os cards (o conteúdo vaza e é cortado).
 - **Salvar sozinho** (campo fora de formulário com botão, ex.: opção de atualização no Sobre): `hx-post` + `hx-trigger="change"`
   + `data-salva-sozinho`; a rota responde a confirmação. Se a gravação falhar, `app.js` desfaz a mudança e avisa.
 - **WKWebView (janela do app no macOS)** não recalcula a altura de um `<dialog>` em coluna flex (`max-h` + filho

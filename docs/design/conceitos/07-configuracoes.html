@@ -1,0 +1,132 @@
+<!-- titulo: easyNFSe — Configurações -->
+<style>
+.cabeca p { margin: 8px 0 0; color: var(--p2); }
+.secao { margin-top: 30px; }
+.secao > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.secao > header p { margin: 6px 0 0; color: var(--p3); max-width: 70ch; }
+.secao > header p a { color: var(--m-clara); }
+
+/* ambiente: duas chaves de escolha */
+.emissao { margin-top: 16px; padding: 22px; display: grid; gap: 18px; }
+.ambientes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.amb {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; padding: 16px 18px; border-radius: 14px; cursor: pointer;
+  border: 1px solid rgba(238, 230, 208, .12); background: rgba(10, 21, 15, .35); transition: border-color .3s var(--ease), background .3s var(--ease);
+}
+.amb .radio { grid-row: span 2; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid rgba(238, 230, 208, .3); margin-top: 2px; display: grid; place-items: center; }
+.amb b { font: 600 15px var(--titulo); letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+.amb b svg { width: 17px; height: 17px; }
+.amb span.t { color: var(--p3); font-size: 13px; }
+.amb.on { border-color: rgba(213, 161, 26, .55); background: rgba(213, 161, 26, .07); box-shadow: inset 0 1px 0 rgba(255, 245, 200, .06); }
+.amb.on .radio { border-color: var(--m); }
+.amb.on .radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--m); box-shadow: 0 0 8px rgba(213, 161, 26, .7); }
+.amb.on b { color: var(--m-clara); }
+.amb.perigo b svg { color: var(--barro); }
+
+.chave { display: flex; align-items: flex-start; gap: 14px; }
+.toggle { flex: none; width: 40px; height: 24px; border-radius: 999px; background: var(--f4); border: 1px solid rgba(238, 230, 208, .15); position: relative; margin-top: 1px; }
+.toggle.on { background: linear-gradient(180deg, var(--m-clara), var(--m-escura)); border-color: transparent; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--p); box-shadow: 0 1px 3px rgba(0, 0, 0, .5); transition: transform .3s var(--ease); }
+.toggle.on::after { transform: translateX(16px); background: #FFF8E2; }
+.chave b { font-weight: 600; display: block; }
+.chave span { color: var(--p3); font-size: 13px; }
+.emissao .fim { display: flex; justify-content: flex-end; padding-top: 16px; border-top: 1px dashed rgba(238, 230, 208, .12); }
+
+/* adicionar certificado */
+.adicionar {
+  margin-top: 16px; padding: 16px 18px; display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 220px) auto; gap: 14px; align-items: center;
+  border: 1.5px dashed rgba(213, 161, 26, .35); border-radius: 16px; background: rgba(213, 161, 26, .04);
+}
+.adicionar .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: var(--m-clara); background: rgba(213, 161, 26, .1); border: 1px solid rgba(213, 161, 26, .25); }
+.adicionar .ic svg { width: 20px; height: 20px; }
+.adicionar p { margin: 0; color: var(--p3); font-size: 13px; }
+.adicionar p b { color: var(--p); font-weight: 600; display: block; font-size: 14px; }
+
+.filtros { margin-top: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filtros .entrada { width: 280px; }
+.filtros .entrada.sel { width: auto; min-width: 170px; justify-content: space-between; }
+
+/* certificado: um cartão com a validade como régua */
+.certs { margin-top: 14px; display: grid; gap: 12px; }
+.cert { padding: 18px 20px; display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) 170px; gap: 18px; align-items: center; }
+.cert .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: rgba(238, 230, 208, .06); border: 1px solid rgba(238, 230, 208, .12); color: var(--p2); }
+.cert .ic svg { width: 21px; height: 21px; }
+.cert h3 { font: 600 16px/1.25 var(--titulo); letter-spacing: -.015em; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cert .doc { margin-top: 3px; color: var(--p3); font-size: 13px; }
+.validade .rotulo { display: flex; justify-content: space-between; }
+.regua { margin-top: 8px; height: 6px; border-radius: 999px; background: rgba(238, 230, 208, .08); overflow: hidden; }
+.regua i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5E8F67, #7FB889); }
+.cert.vencendo .regua i { background: linear-gradient(90deg, var(--m-escura), var(--m-clara)); }
+.cert.vencido .regua i { background: var(--barro); opacity: .7; }
+.cert.vencido { opacity: .72; }
+.validade small { display: block; margin-top: 6px; font-size: 12.5px; color: var(--p3); }
+.cert.vencendo .validade small { color: var(--m-clara); }
+.dps { text-align: right; }
+.dps .num { display: block; font-size: 26px; line-height: 1; }
+.dps .num small { font: 500 13px 'Public Sans'; color: var(--p3); margin-right: 4px; }
+.dps a { display: inline-block; margin-top: 6px; font-size: 12.5px; color: var(--m-clara); text-decoration: none; }
+.pill.erro { color: #E9A08F; background: rgba(207, 111, 91, .12); border-color: rgba(207, 111, 91, .35); }
+
+.nota { margin-top: 18px; display: flex; gap: 10px; align-items: flex-start; color: var(--p3); font-size: 13px; max-width: 80ch; }
+.nota svg { width: 16px; height: 16px; margin-top: 2px; flex: none; }
+.nota code { font: 500 12px ui-monospace, Menlo, monospace; color: var(--p2); background: rgba(238, 230, 208, .06); padding: 1px 5px; border-radius: 5px; }
+</style>
+{{header:Configurações}}
+<main class="conteudo pagina">
+  <div class="cabeca pousa">
+    <h1>Configurações</h1>
+    <p>O ambiente vale para todas as notas. Cada prestador emite com o próprio certificado.</p>
+  </div>
+
+  <section class="secao pousa">
+    <header><div><h2>Emissão</h2><p>Valem para todos os templates e certificados.</p></div></header>
+    <div class="vidro emissao">
+      <div class="ambientes" role="radiogroup" aria-label="Ambiente">
+        <div class="amb on" role="radio" aria-checked="true"><span class="radio"></span><b>{{icon:flask}}Produção restrita</b><span class="t">Para testes. Notas sem validade jurídica.</span></div>
+        <div class="amb perigo" role="radio" aria-checked="false"><span class="radio"></span><b>{{icon:alert-triangle}}Produção</b><span class="t">Notas reais, com validade fiscal. Só cancelamento desfaz.</span></div>
+      </div>
+      <div class="chave"><span class="toggle on" role="switch" aria-checked="true"></span><div><b>Verificar o certificado TLS do servidor da Sefin</b><span>Desative só se a conexão falhar por cadeia de certificado desconhecida.</span></div></div>
+      <div class="fim"><span class="btn btn-mostarda">{{icon:device-floppy}}Salvar</span></div>
+    </div>
+  </section>
+
+  <section class="secao pousa">
+    <header><div><h2>Certificados digitais A1</h2><p>Arquivos .pfx ou .p12 ICP-Brasil dos prestadores. Cada prestador usa o certificado do seu CNPJ ou CPF, o de validade mais longa se houver mais de um, ou o escolhido no <a href="#">cadastro dele</a>.</p></div></header>
+
+    <div class="adicionar">
+      <span class="ic">{{icon:key}}</span>
+      <p><b>Adicionar certificado</b>Arraste o .pfx aqui ou escolha o arquivo. A senha fica guardada só neste computador.</p>
+      <div class="entrada">{{icon:key}}<span class="ph">Senha do certificado</span></div>
+      <span class="btn btn-vidro">{{icon:plus}}Adicionar</span>
+    </div>
+
+    <div class="filtros">
+      <div class="entrada">{{icon:search}}<span class="ph">Buscar por titular ou CNPJ</span></div>
+      <div class="entrada sel">{{icon:filter}}<span>Todos os estados</span>{{icon:adjustments-horizontal:ico-sm}}</div>
+      <span class="rotulo">3 certificados</span>
+    </div>
+
+    <div class="certs">
+      <article class="vidro cert">
+        <span class="ic">{{icon:certificate}}</span>
+        <div style="min-width:0"><h3>Jatobá Tecnologia ME <span class="pill ok">Válido</span></h3><p class="doc">CNPJ 12.345.678/0001-90, emitido pela AC Certisign</p></div>
+        <div class="validade"><span class="rotulo"><span>15/03/2026</span><span>14/03/2027</span></span><div class="regua"><i style="width:63%"></i></div><small>Vence em 135 dias</small></div>
+        <div class="dps"><span class="num"><small>Próxima DPS</small>42</span><a href="#">Ajustar numeração</a></div>
+      </article>
+      <article class="vidro cert vencendo">
+        <span class="ic">{{icon:clock-exclamation}}</span>
+        <div style="min-width:0"><h3>Estúdio Ipê Ltda <span class="pill teste">Vence em 21 dias</span></h3><p class="doc">CNPJ 45.678.901/0001-23, emitido pela AC Serasa</p></div>
+        <div class="validade"><span class="rotulo"><span>21/11/2025</span><span>20/11/2026</span></span><div class="regua"><i style="width:94%"></i></div><small>Renove e adicione o novo; o prestador troca sozinho.</small></div>
+        <div class="dps"><span class="num"><small>Próxima DPS</small>17</span><a href="#">Ajustar numeração</a></div>
+      </article>
+      <article class="vidro cert vencido">
+        <span class="ic">{{icon:certificate-off}}</span>
+        <div style="min-width:0"><h3>Jatobá Tecnologia ME <span class="pill erro">Expirado</span></h3><p class="doc">CNPJ 12.345.678/0001-90, substituído pelo de 2027</p></div>
+        <div class="validade"><span class="rotulo"><span>13/03/2025</span><span>12/03/2026</span></span><div class="regua"><i style="width:100%"></i></div><small>Expirou em 12/03/2026. Pode ser removido.</small></div>
+        <div class="dps"><span class="btn btn-vidro">{{icon:trash}}Remover</span></div>
+      </article>
+    </div>
+
+    <p class="nota">{{icon:shield-check}}<span>Certificados ficam em <code>data/certificados</code> com permissão 600, junto com as senhas. A numeração da DPS avança só quando a Sefin aceita a nota; nota rejeitada não consome número.</span></p>
+  </section>
+</main>

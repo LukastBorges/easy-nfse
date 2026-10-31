@@ -1,7 +1,7 @@
 {% from "_macros.html" import alert %}
 {{ alert('error', titulo or 'Não foi possível continuar', mensagens) }}
 {% if t is defined and t %}
-<div class="mt-4 flex gap-2">
+<div class="mt-5 flex flex-wrap gap-2">
   <a href="{{ url_emissao(t) }}" class="btn-ghost">{{ icone('arrow-left') }}Voltar</a>
   <a href="/templates/{{ t.id }}/editar" class="btn-ghost">{{ icone('pencil') }}Editar template</a>
 </div>

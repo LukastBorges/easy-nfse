@@ -1,0 +1,161 @@
+<!-- titulo: easyNFSe — Início -->
+<style>
+.cabeca { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.cabeca p { margin: 8px 0 0; color: var(--p2); font-size: 15px; max-width: 48ch; }
+.filtros { margin-top: 26px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filtros .entrada { width: 340px; }
+.filtros .entrada.sel { width: auto; min-width: 200px; justify-content: space-between; }
+.grade { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; align-items: start; }
+/* cards de mesmo tamanho: colunas iguais, linhas iguais, o botão sempre no pé */
+.cartao { padding: 22px 22px 20px; display: flex; flex-direction: column; min-width: 0; height: 100%; text-decoration: none; color: inherit; }
+.cartao .quem { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cartao .quem > div { min-width: 0; flex: 1; }
+.reticencias { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inicial {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex: none;
+  font: 500 20px var(--titulo); font-variation-settings: "SOFT" 100, "opsz" 24; color: var(--m-clara);
+  background: rgba(213, 161, 26, .09); border: 1px solid rgba(213, 161, 26, .22);
+  box-shadow: inset 0 1px 0 rgba(255, 245, 200, .1);
+}
+.inicial svg { width: 20px; height: 20px; }
+.cartao h3 { font: 500 17px/1.25 var(--titulo); font-variation-settings: "SOFT" 70, "opsz" 20; }
+.cartao .quem p { margin: 3px 0 0; color: var(--p3); font-size: 13px; }
+.cartao .moeda { margin-left: auto; flex: none; align-self: flex-start; }
+.valores { margin-top: 20px; padding-top: 16px; border-top: 1px dashed rgba(238, 230, 208, .14); display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.valores .num { font-size: 30px; line-height: 1; color: var(--p); font-weight: 400; }
+.valores .num small { font-size: 15px; color: var(--p3); margin-right: 4px; font-family: 'Public Sans'; }
+.valores .dir { text-align: right; }
+.valores > div:first-child { min-width: 0; }
+.valores .dir { flex: none; }
+.valores .dir b { display: block; font-weight: 500; color: var(--p2); font-size: 14px; white-space: nowrap; }
+.cert { margin-top: 16px; display: flex; gap: 7px; align-items: center; font-size: 12.5px; color: var(--p3); min-width: 0; }
+.cert span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cert svg { flex: none; }
+.cert.alerta { color: var(--m-clara); }
+.cert.alerta svg { color: var(--m-clara); }
+.cartao .btn { margin-top: auto; width: 100%; }
+.cartao .cert { margin-bottom: 18px; }
+.cartao.sem { padding: 22px; display: grid; place-items: center; border-style: dashed; background: transparent; text-align: center; color: var(--p3); }
+.cartao.sem .btn { width: auto; margin-top: 12px; }
+
+.lado { padding: 22px; }
+.lado h2 { font-size: 16px; }
+.lado .total { margin-top: 10px; display: flex; align-items: baseline; gap: 8px; }
+.lado .total .num { font-size: 38px; font-weight: 300; line-height: 1; }
+.lado .total small { color: var(--p3); }
+.razao { list-style: none; margin: 18px 0 0; padding: 0; }
+.razao li { display: grid; grid-template-columns: 54px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid rgba(238, 230, 208, .08); font-size: 13px; }
+.razao li:first-child { border-top: 0; }
+.razao .d { color: var(--p3); font-variant-numeric: tabular-nums; }
+.razao .n { color: var(--p2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.razao .v { font-variant-numeric: tabular-nums; color: var(--p); }
+.lado .mais { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; color: var(--m-clara); text-decoration: none; font-weight: 500; font-size: 13px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; margin-top: 22px; align-items: start; }
+.layout .grade { margin-top: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; align-items: stretch; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .layout .grade { grid-template-columns: 1fr; }
+  .topo .faixa { padding: 0 16px; gap: 14px; height: 60px; }
+  .nav a span { display: none; }
+  .marca b { font-size: 17px; }
+  .topo .faixa { gap: 8px; }
+  .topo .direita { gap: 2px; }
+  .icone-btn { width: 30px; }
+  .ambiente { padding: 6px 8px; }
+  .nav a { padding: 8px; }
+  .ambiente b { display: none; }
+  main.conteudo { padding: 24px 16px 40px; }
+  h1 { font-size: 28px; }
+  .filtros .entrada { width: 100%; }
+}
+</style>
+{{header:Início}}
+<main class="conteudo pagina">
+  <div class="cabeca pousa">
+    <div>
+      <h1>Suas notas</h1>
+      <p>Três templates prontos para emitir. A última nota saiu há 12 dias, para a Acme.</p>
+    </div>
+    <a class="btn btn-vidro" href="05-templates.html">{{icon:file-import}}Importar outra nota</a>
+  </div>
+
+  <div class="filtros pousa">
+    <div class="entrada">{{icon:search}}<span class="ph">Buscar por tomador, prestador ou CNPJ</span></div>
+    <div class="entrada sel">{{icon:user}}<span>Todos os tomadores</span>{{icon:adjustments-horizontal:ico-sm}}</div>
+    <span class="rotulo">3 templates</span>
+  </div>
+
+  <div class="layout">
+    <div class="grade">
+      <a class="vidro toque cartao pousa" href="02-emissao.html">
+        <div class="quem">
+          <span class="inicial">{{icon:world}}</span>
+          <div style="min-width:0">
+            <h3 class="reticencias" title="Consultoria em TI para a Acme">Consultoria em TI para a Acme</h3>
+            <p class="reticencias">Acme Corporation, Inc. (Delaware, EUA)</p>
+          </div>
+          <span class="pill moeda">USD</span>
+        </div>
+        <div class="valores">
+          <div><span class="rotulo">Última emissão</span><div class="num"><small>R$</small>38.420,00</div></div>
+          <div class="dir"><span class="rotulo">Competência</span><b>30/09/2026</b></div>
+        </div>
+        <p class="cert">{{icon:certificate:ico-sm}}<span>Certificado válido até 14/03/2027</span></p>
+        <span class="btn btn-mostarda">{{icon:send}}Emitir nota</span>
+      </a>
+
+      <a class="vidro toque cartao pousa" href="02-emissao.html">
+        <div class="quem">
+          <span class="inicial">{{icon:world}}</span>
+          <div style="min-width:0">
+            <h3 class="reticencias" title="Desenvolvimento sob demanda e manutenção evolutiva">Desenvolvimento sob demanda e manutenção evolutiva</h3>
+            <p class="reticencias">Pixel Labs LLC (Austin, Texas, Estados Unidos)</p>
+          </div>
+          <span class="pill moeda">USD</span>
+        </div>
+        <div class="valores">
+          <div><span class="rotulo">Última emissão</span><div class="num"><small>R$</small>12.150,00</div></div>
+          <div class="dir"><span class="rotulo">Competência</span><b>15/10/2026</b></div>
+        </div>
+        <p class="cert alerta">{{icon:clock-exclamation:ico-sm}}<span title="Certificado vence em 21 dias (20/11/2026)">Certificado vence em 21 dias (20/11/2026)</span></p>
+        <span class="btn btn-mostarda">{{icon:send}}Emitir nota</span>
+      </a>
+
+      <a class="vidro toque cartao pousa" href="02-emissao.html">
+        <div class="quem">
+          <span class="inicial">H</span>
+          <div style="min-width:0">
+            <h3 class="reticencias" title="Suporte mensal">Suporte mensal</h3>
+            <p class="reticencias">Horta Digital Ltda (Belo Horizonte)</p>
+          </div>
+        </div>
+        <div class="valores">
+          <div><span class="rotulo">Última emissão</span><div class="num"><small>R$</small>4.800,00</div></div>
+          <div class="dir"><span class="rotulo">Competência</span><b>01/10/2026 <span class="pill teste" style="margin-left:4px">teste</span></b></div>
+        </div>
+        <p class="cert">{{icon:certificate:ico-sm}}<span>Certificado válido até 14/03/2027</span></p>
+        <span class="btn btn-mostarda">{{icon:send}}Emitir nota</span>
+      </a>
+
+      <a class="vidro cartao sem pousa" href="05-templates.html">
+        <div>
+          {{icon:file-import:ico-lg}}
+          <p style="margin:10px 0 0">Tem outra nota recorrente?<br>Importe o PDF ou o XML e ela vira um template.</p>
+          <span class="btn btn-vidro">Importar nota</span>
+        </div>
+      </a>
+    </div>
+
+    <aside class="vidro lado pousa">
+      <h2>Emitidas em outubro</h2>
+      <div class="total"><span class="num">R$ 55.370</span><small>em 3 notas</small></div>
+      <ul class="razao">
+        <li><span class="d">18/10</span><span class="n">Acme Corporation</span><span class="v">38.420,00</span></li>
+        <li><span class="d">15/10</span><span class="n">Pixel Labs</span><span class="v">12.150,00</span></li>
+        <li><span class="d">01/10</span><span class="n">Horta Digital <span class="pill teste">teste</span></span><span class="v">4.800,00</span></li>
+      </ul>
+      <a class="mais" href="03-historico.html">Ver o histórico completo {{icon:arrow-right:ico-sm}}</a>
+    </aside>
+  </div>
+</main>

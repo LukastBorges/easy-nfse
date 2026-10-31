@@ -1,0 +1,157 @@
+<!-- titulo: easy-nfse — Emitir -->
+<style>
+.volta { display: inline-flex; align-items: center; gap: 6px; color: var(--p3); text-decoration: none; font-size: 13px; }
+.volta:hover { color: var(--p); }
+.cabeca { margin-top: 10px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.cabeca p { margin: 6px 0 0; color: var(--p3); }
+.layout { margin-top: 30px; display: grid; grid-template-columns: 520px 1fr; gap: 26px; align-items: start; }
+
+/* ------- a folha: papel sobre a mesa ------- */
+.folha {
+  position: relative; color: var(--tinta);
+  background: #EEE7D3;
+  border-radius: 6px;
+  padding: 34px 36px 32px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, .5) inset,
+    0 40px 60px -30px rgba(0, 0, 0, .85),
+    0 2px 6px rgba(0, 0, 0, .4);
+  transform: rotate(-.35deg);
+  transform-origin: 50% 0;
+}
+.folha::before { /* grão do papel */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .55; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .5 0 0 0 0 .38 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+.folha::after { /* a sombra da luminária sobre o papel */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 252, 240, .5) 0%, rgba(255, 252, 240, 0) 40%, rgba(80, 60, 20, .08) 100%);
+}
+.folha > * { position: relative; z-index: 1; }
+.folha .cabecalho { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 18px; border-bottom: 1.5px solid rgba(23, 23, 15, .55); }
+.folha h2 { font: 500 24px/1.1 var(--titulo); font-variation-settings: "SOFT" 60, "opsz" 36; color: var(--tinta); }
+.folha .cabecalho small { display: block; margin-top: 5px; color: #6B6A52; font-size: 12.5px; }
+.carimbo {
+  flex: none; width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+  border: 2px solid rgba(165, 120, 10, .75); color: #8F6C08; transform: rotate(8deg);
+  font: 600 9.5px/1.2 'Public Sans', sans-serif; letter-spacing: .04em; text-transform: uppercase;
+  box-shadow: inset 0 0 0 3px #EEE7D3, inset 0 0 0 4px rgba(165, 120, 10, .5);
+  mix-blend-mode: multiply; opacity: .9;
+}
+.carimbo b { display: block; font: 500 20px/1 var(--titulo); margin: 2px 0; letter-spacing: 0; text-transform: none; }
+.campos { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; }
+.campos .c2 { grid-column: 1 / -1; }
+.folha .campo span { color: #6B6A52; font-size: 12.5px; font-weight: 500; }
+.folha .entrada {
+  background: rgba(255, 253, 246, .55); border: 1px solid rgba(23, 23, 15, .18); box-shadow: inset 0 1px 2px rgba(23, 23, 15, .08);
+  color: var(--tinta); border-radius: 8px; padding: 11px 13px;
+}
+.folha .entrada svg { color: #9A9880; }
+.folha .entrada .num { font-size: 20px; line-height: 1; font-weight: 400; }
+.folha .entrada.foco { border-color: rgba(165, 120, 10, .8); box-shadow: inset 0 1px 2px rgba(23, 23, 15, .08), 0 0 0 3px rgba(213, 161, 26, .22); }
+.folha .ptax { margin-top: 10px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: #6B6A52; }
+.folha .ptax .btn { padding: 8px 12px; font-size: 13px; }
+.assinar { margin-top: 26px; padding-top: 22px; border-top: 1px dashed rgba(23, 23, 15, .3); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.assinar p { margin: 0; font-size: 12.5px; color: #6B6A52; max-width: 26ch; }
+.furos { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 70px; z-index: 0; }
+.furos i { width: 9px; height: 9px; border-radius: 50%; background: var(--f1); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); display: block; }
+
+/* ------- painéis de vidro ------- */
+.paineis { display: grid; gap: 16px; }
+.painel { padding: 20px 22px; }
+.painel h2 { display: flex; align-items: center; gap: 8px; font: 600 12.5px 'Public Sans', sans-serif; color: var(--p3); }
+.painel h2 svg { width: 15px; height: 15px; }
+.painel .nome { margin-top: 10px; font: 500 18px/1.25 var(--titulo); font-variation-settings: "SOFT" 70, "opsz" 20; }
+.kv { margin: 12px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; font-size: 13px; }
+.kv dt { color: var(--p3); font-size: 12px; }
+.kv dd { margin: 1px 0 0; color: var(--p2); }
+.kv dd.cheio { color: var(--p); }
+.painel .trocar { position: absolute; top: 18px; right: 18px; font-size: 12.5px; color: var(--m-clara); text-decoration: none; font-weight: 500; }
+.hist { list-style: none; margin: 10px 0 0; padding: 0; }
+.hist li { display: grid; grid-template-columns: 70px 1fr auto auto; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid rgba(238, 230, 208, .08); font-size: 13px; }
+.hist li:first-child { border-top: 0; }
+.hist .d { color: var(--p3); font-variant-numeric: tabular-nums; }
+.hist .v { font-variant-numeric: tabular-nums; }
+.hist .acoes { display: flex; gap: 4px; }
+.hist .acoes a { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; color: var(--p3); }
+.hist .acoes a:hover { color: var(--p); background: rgba(238, 230, 208, .08); }
+.dois { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+</style>
+{{header:Início}}
+<main class="conteudo pagina">
+  <a class="volta pousa" href="01-inicio.html">{{icon:arrow-left:ico-sm}}Início</a>
+  <div class="cabeca pousa">
+    <div>
+      <h1>Consultoria em TI para a Acme</h1>
+      <p>Exportação de serviço, cobrada em dólar. Só a competência e o valor mudam a cada nota.</p>
+    </div>
+    <a class="btn btn-vidro" href="#">{{icon:pencil}}Editar template</a>
+  </div>
+
+  <div class="layout">
+    <section class="folha pousa">
+      <div class="cabecalho">
+        <div>
+          <h2>Nova NFS-e</h2>
+          <small>DPS série 1, número 42. Emitida por Jatobá Tecnologia ME.</small>
+        </div>
+        <span class="carimbo">Produção<b>restrita</b>sem valor<br>jurídico</span>
+      </div>
+      <div class="campos">
+        <label class="campo"><span>Data de competência</span><div class="entrada">{{icon:history}}31/10/2026</div></label>
+        <label class="campo"><span>Valor do serviço</span><div class="entrada foco"><span class="num">R$ 38.420,00</span></div></label>
+        <label class="campo c2"><span>Valor na moeda do contrato (USD)</span><div class="entrada"><span class="num">$ 7.000,00</span></div>
+          <div class="ptax"><span class="btn btn-papel">{{icon:refresh}}Converter pela PTAX</span><span>Cotação de 29/10/2026: 5,4886. O valor em reais acima já usa essa taxa.</span></div>
+        </label>
+      </div>
+      <div class="assinar">
+        <p>Assina com o certificado de Jatobá Tecnologia ME e envia à Sefin Nacional.</p>
+        <span class="btn btn-mostarda grande">{{icon:signature}}Assinar e emitir</span>
+      </div>
+    </section>
+
+    <div class="paineis">
+      <div class="dois">
+        <section class="vidro painel pousa">
+          <h2>{{icon:user}}Tomador</h2>
+          <a class="trocar" href="#">Trocar só nesta nota</a>
+          <div class="nome">Acme Corporation, Inc.</div>
+          <dl class="kv">
+            <div><dt>NIF</dt><dd>12-3456789</dd></div>
+            <div><dt>País</dt><dd>Estados Unidos</dd></div>
+            <div style="grid-column:1/-1"><dt>Endereço</dt><dd>2711 Centerville Rd, Wilmington, Delaware 19808</dd></div>
+          </dl>
+        </section>
+        <section class="vidro painel pousa">
+          <h2>{{icon:briefcase}}Serviço</h2>
+          <div class="nome">Consultoria em tecnologia da informação</div>
+          <dl class="kv">
+            <div><dt>Código nacional</dt><dd>01.07.00</dd></div>
+            <div><dt>NBS</dt><dd>1.1501.00.00</dd></div>
+            <div><dt>Prestado em</dt><dd>Belo Horizonte, MG</dd></div>
+            <div><dt>Resultado no país</dt><dd>Estados Unidos</dd></div>
+          </dl>
+        </section>
+      </div>
+      <section class="vidro painel pousa">
+        <h2>{{icon:building}}Prestador e tributação</h2>
+        <a class="trocar" href="#">Trocar só nesta nota</a>
+        <div class="nome">Jatobá Tecnologia ME</div>
+        <dl class="kv" style="grid-template-columns:repeat(4,1fr)">
+          <div><dt>CNPJ</dt><dd>12.345.678/0001-90</dd></div>
+          <div><dt>Regime</dt><dd>Simples Nacional, ME/EPP</dd></div>
+          <div><dt>ISSQN</dt><dd>Exportação, sem retenção</dd></div>
+          <div><dt>Certificado</dt><dd class="cheio linha">{{icon:certificate:ico-sm}}Válido até 14/03/2027</dd></div>
+        </dl>
+      </section>
+      <section class="vidro painel pousa">
+        <h2>{{icon:history}}Emitidas com este template</h2>
+        <ul class="hist">
+          <li><span class="d">30/09/26</span><span>NFS-e 3123 0004 2271 <span class="pill ok">Autorizada</span></span><span class="v">R$ 38.420,00</span><span class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a></span></li>
+          <li><span class="d">31/08/26</span><span>NFS-e 3123 0004 1180 <span class="pill ok">Autorizada</span></span><span class="v">R$ 38.420,00</span><span class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a></span></li>
+          <li><span class="d">31/07/26</span><span>NFS-e 3123 0003 9912 <span class="pill ok">Autorizada</span></span><span class="v">R$ 36.900,00</span><span class="acoes"><a href="#">{{icon:file-type-pdf}}</a><a href="#">{{icon:file-code}}</a></span></li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
