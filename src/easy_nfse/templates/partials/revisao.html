@@ -1,40 +1,34 @@
 {% from "_macros.html" import alert %}
-<div class="flex items-start justify-between gap-4">
-  <div>
-    <h2 class="text-lg font-semibold">Confira antes de emitir</h2>
-    <p class="text-sm text-slate-500 dark:text-slate-400">Depois de emitida, a NFS-e só pode ser cancelada ou substituída.</p>
-  </div>
-  {% if cfg.ambiente == '1' %}
-    <span class="shrink-0 rounded-full bg-rose-50 dark:bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-700 dark:text-rose-300 ring-1 ring-rose-200 dark:ring-rose-500/30">PRODUÇÃO</span>
-  {% else %}
-    <span class="shrink-0 rounded-full bg-amber-50 dark:bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-500/30">TESTE</span>
-  {% endif %}
+{# Revisão, dentro da folha de papel da emissão: as cores vêm das variáveis do papel. #}
+<div class="border-b-[1.5px] border-tinta/50 pr-24 pb-5">
+  <h2 class="text-2xl font-semibold">Confira antes de emitir</h2>
+  <p class="mt-1.5 text-[13px] text-rotulo">Depois de emitida, a NFS-e só pode ser cancelada ou substituída.</p>
 </div>
 
-<div class="mt-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-5 ring-1 ring-slate-200 dark:ring-slate-800">
-  <div class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Valor do serviço</div>
-  <div class="mt-1 text-3xl font-semibold tabular-nums tracking-tight">{{ d.valor|money }}</div>
-  {% if d.valor_moeda %}<div class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, t.com_ext.tp_moeda) }} {{ (d.valor_moeda|money)[3:] }} · exportação de serviço</div>{% endif %}
-  <dl class="kv mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+<div class="mt-6">
+  <div class="text-xs text-rotulo">Valor do serviço</div>
+  <div class="mt-1 font-display text-4xl leading-none tabular-nums"><small class="mr-1 font-sans text-base text-rotulo">R$</small>{{ (d.valor|money)[3:] }}</div>
+  {% if d.valor_moeda %}<div class="mt-2 text-sm text-texto-2">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, t.com_ext.tp_moeda) }} {{ (d.valor_moeda|money)[3:] }}, exportação de serviço</div>{% endif %}
+  <dl class="kv mt-5 grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-3">
     <div><dt>Competência</dt><dd>{{ d.competencia|data }}</dd></div>
     <div><dt>Tomador</dt><dd>{{ t.tomador.nome if t.tomador else 'Não identificado' }}</dd></div>
-    <div><dt>DPS</dt><dd>série {{ d.serie }} · nº {{ d.n_dps }}</dd></div>
-    {% if cert and cert.ok %}<div class="col-span-2 sm:col-span-3"><dt>Assinada com o certificado de</dt><dd>{{ cert.titular }} · {{ cert.documento|doc }}</dd></div>{% endif %}
+    <div><dt>DPS</dt><dd>série {{ d.serie }}, nº {{ d.n_dps }}</dd></div>
+    {% if cert and cert.ok %}<div class="col-span-2 sm:col-span-3"><dt>Assinada com o certificado de</dt><dd>{{ cert.titular }}, {{ cert.documento|doc }}</dd></div>{% endif %}
   </dl>
   <div class="mt-4">
-    <div class="text-xs text-slate-500 dark:text-slate-400">Descrição</div>
-    <p class="mt-1 whitespace-pre-line text-sm">{{ d.descricao }}</p>
+    <div class="text-xs text-rotulo">Descrição</div>
+    <p class="mt-1 text-sm whitespace-pre-line">{{ d.descricao }}</p>
   </div>
 </div>
 
-{% if alertas %}<div class="mt-4">{{ alert('error', 'Não é possível emitir ainda', alertas) }}</div>{% endif %}
+{% if alertas %}<div class="mt-5">{{ alert('error', 'Não é possível emitir ainda', alertas) }}</div>{% endif %}
 
-<details class="mt-4 rounded-xl ring-1 ring-slate-200 dark:ring-slate-800">
-  <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300">Ver XML da DPS (antes da assinatura)</summary>
-  <pre class="max-h-80 overflow-auto border-t border-slate-100 dark:border-slate-800 bg-slate-950 p-4 text-[11px] leading-relaxed text-slate-100 rounded-b-xl">{{ xml }}</pre>
+<details class="mt-5 rounded-[11px] border border-borda">
+  <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-texto-2">Ver XML da DPS (antes da assinatura)</summary>
+  <pre class="max-h-80 overflow-auto rounded-b-[11px] border-t border-borda bg-mata-1 p-4 text-[11px] leading-relaxed text-papel">{{ xml }}</pre>
 </details>
 
-<form class="mt-6 flex flex-wrap items-center justify-end gap-2"
+<form class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-dashed border-tinta/30 pt-6"
       hx-post="/templates/{{ t.id }}/emitir" hx-target="#painel" hx-disabled-elt="find button"
       {% if cfg.ambiente == '1' %}hx-confirm="A NFS-e de {{ d.valor|money }} será emitida em PRODUÇÃO, com validade fiscal. Depois, só é possível cancelar ou substituir."
       data-confirm-titulo="Emitir em produção?" data-confirm-acao="Emitir NFS-e"{% endif %}>
@@ -47,7 +41,7 @@
   <input type="hidden" name="prestador_id" value="{{ t.prestador_id }}">
   <input type="hidden" name="tomador_id" value="{{ t.tomador_id or 'sem' }}">
   <a href="{{ url_emissao(t) }}" class="btn-ghost">{{ icone('arrow-left') }}Voltar</a>
-  <button class="btn-success" {{ 'disabled' if not pode_emitir }}>
+  <button class="btn-primary px-5 py-3 text-[15px]" {{ 'disabled' if not pode_emitir }}>
     <span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>
     <span class="htmx-hide-on-request inline-flex">{{ icone('signature') }}</span>Assinar e emitir NFS-e
   </button>
