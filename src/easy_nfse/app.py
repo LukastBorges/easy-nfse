@@ -1053,7 +1053,7 @@ def atualizacao_automatica(ativa: str = Form("")):
     if cfg.verificar_atualizacoes:  # ligou: já verifica, sem esperar o próximo ciclo
         threading.Thread(target=atualizacao.verificar_e_baixar, daemon=True).start()
     texto = "Ligada. Preferência salva." if cfg.verificar_atualizacoes else "Desligada. Preferência salva."
-    return HTMLResponse(f'<span class="text-emerald-700 dark:text-emerald-300">{texto}</span>')
+    return HTMLResponse(f'<span class="text-sucesso">{texto}</span>')
 
 
 @app.post("/atualizacao/instalar", response_class=HTMLResponse)

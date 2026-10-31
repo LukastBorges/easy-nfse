@@ -20,6 +20,15 @@ Três regras sustentam o conceito:
 
 O app é escuro por padrão. Os verdes empilhados fazem o papel do preto; não use `#000` nem cinzas neutros.
 
+**Tema claro ("papel").** O app tem os temas escuro, claro e igual ao sistema. No claro, o fundo é papel `#EFE8D4` com
+a mesma luz e o grão em `multiply`, o vidro é papel quase opaco com borda de tinta verde a 12 % e o texto é `mata-2`.
+As cores que mudam com o tema são variáveis (`--texto`, `--texto-2`, `--rotulo`, `--acento`, `--perigo`, `--sucesso`,
+`--vidro-1`, `--vidro-borda`), expostas como classes (`text-texto`, `text-rotulo`, `text-acento`, `bg-vidro`,
+`border-borda`). Contraste no fundo claro, todos acima de 4,5:1 para texto: `texto` 12:1, `texto-2` 7,3:1, `rotulo` 5:1,
+`acento` (`#7A5906`) 5,3:1, `perigo` 5,8:1, `sucesso` 5,6:1. O "NFSe" da marca no claro usa `#8F6A0A` (4,3:1, texto grande).
+
+![Início no tema claro](telas/claro-inicio-1440.jpg)
+
 | Token | Valor | Uso |
 |---|---|---|
 | `mata-0` | `#0A150F` | Fundo mais profundo, sombra de campos, tinta sobre mostarda |
@@ -83,6 +92,7 @@ restrita, sem valor jurídico") é um círculo duplo em mostarda escura girado 8
 |---|---|
 | Botão principal | Gradiente `mostarda-clara` → `mostarda` → `mostarda-escura`, texto `tinta` 600, raio 11 px, brilho interno no topo, sombra mostarda difusa |
 | Botão secundário | Vidro: `papel` a 6 %, borda a 13 %, texto `papel-2` |
+| Botão destrutivo | Só no diálogo de confirmação: gradiente de `barro`, texto `papel` |
 | Botão sobre papel | Transparente, borda de tinta a 22 % |
 | Card / painel | Vidro fosco; hover acende a borda (abaixo) |
 | Card de template na Início | Todos do mesmo tamanho: colunas e linhas iguais na grade, botão sempre no pé. Título, tomador e estado do certificado em uma linha, com reticências e o texto completo no `title` |
@@ -145,6 +155,7 @@ Cada tela abre com um título e uma frase que diz o que há nela. Um botão diz 
 | Histórico | [03-historico-1440.jpg](telas/03-historico-1440.jpg) |
 | Configurações | [07-configuracoes-1440.jpg](telas/07-configuracoes-1440.jpg) |
 | Prancha de identidade | [00-identidade-1440.jpg](telas/00-identidade-1440.jpg) |
+| Tema claro (capturas do app) | [início](telas/claro-inicio-1440.jpg), [boas-vindas](telas/claro-boas-vindas-1440.jpg), [emissão](telas/claro-emissao-1440.jpg), [cadastros](telas/claro-cadastros-1440.jpg) |
 
 Os dados das telas são fictícios. Para regerar as imagens:
 

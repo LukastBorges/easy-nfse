@@ -1,7 +1,7 @@
 {# Checklist "Antes de emitir". Precisa de: certs, templates, cfg #}
 {% set validos = certs|selectattr('ok')|rejectattr('vencido')|list %}
 {# marcadores: feito (folha), pendente (número em borda tracejada mostarda) e aviso de ambiente #}
-{% set feito = 'grid size-[26px] shrink-0 place-items-center rounded-lg border border-folha/40 bg-folha/15 text-emerald-700 dark:text-folha' %}
+{% set feito = 'grid size-[26px] shrink-0 place-items-center rounded-lg border border-folha/40 bg-folha/15 text-sucesso' %}
 {% set pendente = 'grid size-[26px] shrink-0 place-items-center rounded-lg border border-dashed border-mostarda/60 text-xs font-bold text-acento' %}
 <div class="card p-6">
   <h2 class="text-[17px] font-semibold text-texto">Antes de emitir</h2>

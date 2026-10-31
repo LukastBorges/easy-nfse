@@ -170,7 +170,7 @@ function confirmar(texto, opcoes = {}) {
   dlg.querySelector("#confirmar-texto").textContent = texto;
   const ok = dlg.querySelector("#confirmar-ok");
   ok.textContent = opcoes.acao || "Confirmar";
-  ok.className = opcoes.perigo ? "btn bg-rose-600 text-white shadow-sm hover:bg-rose-500" : "btn-primary";
+  ok.className = opcoes.perigo ? "btn-perigo" : "btn-primary";
   dlg.querySelector("[data-icone-perigo]").classList.toggle("hidden", !opcoes.perigo);
   dlg.returnValue = "";
   dlg.showModal();
@@ -244,7 +244,7 @@ document.addEventListener("click", (e) => {
   if (!item) return;
   document.getElementById("sobre")?.close();
   const dlg = document.getElementById("notas");
-  dlg.querySelector("#notas-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Carregando…</p>';
+  dlg.querySelector("#notas-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-rotulo">Carregando…</p>';
   dlg.showModal();
   htmx.ajax("GET", "/notas", "#notas-conteudo");
 });
@@ -256,7 +256,7 @@ function falhaAoSalvar(e) {
   if (!el.matches || !el.matches("[data-salva-sozinho]")) return;
   if (el.type === "checkbox") el.checked = !el.checked;
   const alvo = document.querySelector(el.getAttribute("hx-target"));
-  if (alvo) alvo.innerHTML = '<span class="text-rose-700 dark:text-rose-300">Não foi possível salvar. Feche e abra o easy-nfse e tente de novo.</span>';
+  if (alvo) alvo.innerHTML = '<span class="text-perigo">Não foi possível salvar. Feche e abra o easyNFSe e tente de novo.</span>';
 }
 document.addEventListener("htmx:responseError", falhaAoSalvar);
 document.addEventListener("htmx:sendError", falhaAoSalvar);
@@ -282,7 +282,7 @@ document.addEventListener("click", (e) => {
     url = `/cadastros/${btn.dataset.abrirCadastro}/${id}?dialogo=1`;
   }
   const dlg = document.getElementById("cadastro");
-  dlg.querySelector("#cadastro-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400">Carregando…</p>';
+  dlg.querySelector("#cadastro-conteudo").innerHTML = '<p class="py-6 text-center text-sm text-rotulo">Carregando…</p>';
   dlg.showModal();
   htmx.ajax("GET", url, "#cadastro-conteudo");
 });

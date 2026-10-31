@@ -118,12 +118,12 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 
 - Especificação em `docs/design/README.md`, plano de implantação em etapas em `docs/design/plano.md`, telas de
   referência em `docs/design/telas/` (fontes HTML em `docs/design/conceitos/`, regerar com `renderizar.py --png`).
-  **Em implantação** (etapas 0 a 2 feitas: fontes, tokens, utilitários, cabeçalho e diálogos).
-- **Paletas remapeadas**: o `@theme` de `base.html` redefine `slate`, `indigo`, `violet`, `amber`, `emerald`, `rose`,
-  `sky` e `white` com as cores da identidade, para as telas antigas já saírem no visual novo. Em marcação nova, prefira
-  as cores da identidade (`text-mostarda`, `bg-mata-2`…) e as variáveis de tema (`text-[var(--texto)]`,
-  `text-[var(--rotulo)]`, `bg-[var(--vidro-1)]`), que já mudam com o tema e **dispensam o par `dark:`**.
-- Utilitários: `btn-primary` (mostarda, um por área de decisão), `btn-ghost` (vidro), `card`/`vidro` (vidro fosco; em
+  Etapas 0 a 7 feitas; falta a 8 (ícone do app e favicon, aguardando a escolha do símbolo).
+- **Sem as paletas do Tailwind**: todas as telas usam as cores da identidade. `slate`, `indigo`, `amber`, `emerald`,
+  `rose`, `sky` etc. voltaram às cores padrão do Tailwind e não combinam com nada: não use. Use as cores por variável
+  (abaixo), que mudam com o tema, ou as fixas da identidade (`text-mostarda`, `bg-mata-2`, `text-papel`…).
+- Utilitários: `btn-primary` (mostarda, um por área de decisão), `btn-ghost` (vidro), `btn-perigo` (barro, só para
+  confirmar ação destrutiva), `card`/`vidro` (vidro fosco; em
   `<a>`/`<button>` ou com `.toque`, o hover acende a borda), `dialogo` (todo `<dialog>`), `input`, `label`, `hint`.
 - **Cores por variável como classes**: `text-texto`, `text-texto-2`, `text-rotulo`, `text-apagado`, `bg-vidro`,
   `border-borda`, `text-acento` (mostarda legível no tema), `text-perigo`, `text-sucesso` (e `/10`, `/40`…). Mudam
