@@ -166,6 +166,22 @@ uv run --group desktop --group build pyinstaller packaging/easy-nfse.spec --noco
 As instruções para agentes de código e as convenções do projeto, incluindo o padrão **Conventional Commits**,
 estão em [AGENTS.md](AGENTS.md).
 
+## Contribua
+
+O easyNFSe é gratuito e de código aberto. Há duas formas de ajudar:
+
+- **Com código ou relatos:** abra uma [issue](https://github.com/LukastBorges/easy-nfse/issues) com o problema ou a
+  sugestão, ou mande um pull request seguindo o [AGENTS.md](AGENTS.md). Notas e certificados reais nunca vão em
+  issues: use dados fictícios.
+- **Com uma doação:** pelo [GitHub Sponsors](https://github.com/sponsors/LukastBorges), pelo
+  [Patreon](https://www.patreon.com/LukasBorges) ou por PIX, no valor que quiser. Leia o QR code no app do seu banco ou use o PIX copia e cola abaixo.
+
+<p><img src="docs/apoio/pix.svg" width="200" alt="QR code PIX para doar ao easyNFSe"></p>
+
+```text
+00020126580014BR.GOV.BCB.PIX013651da61ad-b04d-429e-928e-b485dbc8bccd5204000053039865802BR5925Lucas Tarley Borges da Co6009SAO PAULO62140510ieMNg0S7d863040DFF
+```
+
 ## Aviso
 
 Este projeto não tem vínculo com a Receita Federal, a Sefin Nacional nem com prefeituras. A responsabilidade pelas
