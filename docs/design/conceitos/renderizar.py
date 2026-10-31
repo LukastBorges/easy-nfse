@@ -26,51 +26,10 @@ NAV = [("home", "Início", "01-inicio.html"), ("template", "Templates", "05-temp
 MARCA = '<a class="marca" href="#"><b>easy<span>NFSe</span><i></i></b></a>'
 MARCA_MOVEL = "/* ---------- celular"
 
-# Indicador do menu: um único realce que desliza até o item clicado. Ao clicar, ele corre até o destino e só
-# então a página troca; ao abrir uma página por outro caminho, ele sai do item da página anterior (sessionStorage).
+# Dentro da página de conceitos (iframe), avisa qual tela está aberta para as abas de fora acompanharem. A troca de
+# página e o realce do menu são só CSS (View Transitions, em base.css).
 SCRIPT = """
-(() => {
-  const ler = k => { try { return sessionStorage.getItem(k); } catch { return null; } };
-  const gravar = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {} };
-  const nav = document.querySelector('.nav');
-  if (nav) document.fonts.ready.then(() => {
-    const luz = nav.querySelector('.nav-luz');
-    const links = [...nav.querySelectorAll('a[data-nav]')];
-    const ativo = links.find(a => a.classList.contains('ativo'));
-    const calmo = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const por = (a, animar) => {
-      luz.classList.toggle('sem-transicao', !animar || calmo);
-      luz.style.width = a.offsetWidth + 'px';
-      luz.style.transform = 'translateX(' + a.offsetLeft + 'px)';
-      void luz.offsetWidth;
-    };
-    nav.classList.add('com-luz');
-    const anterior = links.find(a => a.dataset.nav === ler('nav-anterior'));
-    const jaMovido = ler('nav-movido') === (ativo && ativo.dataset.nav);
-    gravar('nav-movido', null);
-    if (ativo) {
-      luz.style.opacity = 1;
-      if (anterior && anterior !== ativo && !jaMovido && !calmo) {
-        por(anterior, false);
-        requestAnimationFrame(() => por(ativo, true));
-      } else por(ativo, false);
-      gravar('nav-anterior', ativo.dataset.nav);
-    }
-    links.forEach(a => a.addEventListener('click', e => {
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button || a === ativo) return;
-      e.preventDefault();
-      links.forEach(l => { l.classList.toggle('ativo', l === a); l.toggleAttribute('aria-current', l === a); });
-      if (!ativo) { por(a, false); luz.style.opacity = 1; }
-      por(a, true);
-      gravar('nav-anterior', a.dataset.nav);
-      gravar('nav-movido', a.dataset.nav);
-      setTimeout(() => { location.href = a.href; }, calmo ? 0 : 420);
-    }));
-    addEventListener('resize', () => { const a = nav.querySelector('a.ativo'); if (a) por(a, false); });
-  });
-  // dentro da página de conceitos (iframe), avisa qual tela está aberta para as abas de fora acompanharem
-  try { if (parent !== window) parent.postMessage({ tela: location.pathname.split('/').pop() }, '*'); } catch {}
-})();
+try { if (parent !== window) parent.postMessage({ tela: location.pathname.split('/').pop() }, '*'); } catch {}
 """
 
 # (tela, largura, altura, página inteira)
@@ -91,9 +50,12 @@ def icone(nome: str, classes: str = "ico") -> str:
 def cabecalho(ativo: str) -> str:
     links = "".join(
         f'<a href="{h}" data-nav="{n}" class="{"ativo" if n == ativo else ""}"'
-        f'{' aria-current="page"' if n == ativo else ""}>{icone(i)}<span>{n}</span></a>' for i, n, h in NAV)
+        f' style="view-transition-name: nav-{k}; view-transition-class: item-nav"'
+        f'{' aria-current="page"' if n == ativo else ""}>'
+        f'{'<span class="realce" aria-hidden="true"></span>' if n == ativo else ""}{icone(i)}<span>{n}</span></a>'
+        for k, (i, n, h) in enumerate(NAV, 1))
     return (f'<header class="topo"><div class="faixa">{MARCA.replace("#", "01-inicio.html")}'
-            f'<nav class="nav"><span class="nav-luz" aria-hidden="true"></span>{links}</nav>'
+            f'<nav class="nav">{links}</nav>'
             f'<div class="direita"><span class="ambiente">{icone("flask")}<b>Produção restrita</b></span>'
             f'<button class="icone-btn" aria-label="Tema">{icone("moon")}</button>'
             f'<button class="icone-btn" aria-label="Mais opções">{icone("dots-vertical")}</button></div></div></header>')

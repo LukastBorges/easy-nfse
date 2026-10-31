@@ -106,10 +106,13 @@ Curva única: `cubic-bezier(.22, .72, .18, 1)`.
 - **Entrada da página:** os blocos "pousam na mesa", de 14 px abaixo e transparentes até o lugar, 700 ms, com 80 ms
   entre um bloco e o próximo. Só na carga da página, não em trocas por htmx. A animação usa a propriedade
   `translate`, não `transform`, para não desfazer a rotação das folhas de papel.
-- **Menu do cabeçalho:** a página atual é marcada por um único realce (vidro com fio mostarda embaixo) que desliza
-  até o item clicado em 420 ms e só então troca de página. Quando a página muda por outro caminho (link, card,
-  voltar), o realce nasce no item da página anterior e desliza até o atual; o item anterior fica em
-  `sessionStorage`. Sem JavaScript, o item ativo tem o próprio fundo.
+- **Troca de página:** View Transitions entre documentos (`@view-transition { navigation: auto; }`). O cabeçalho
+  fica parado, o fundo faz a troca cruzada padrão (não escurece) e só o conteúdo sai subindo 6 px e entra subindo
+  10 px, em cerca de 340 ms. Sem suporte (Firefox, Safari anterior ao 18.2), a troca é instantânea.
+- **Menu do cabeçalho:** a página atual é marcada por um realce (vidro com uma luz mostarda nascendo da borda de
+  baixo: um brilho de 1 px de lado a lado e um halo sutil que sobe por dentro), renderizado pelo servidor dentro do
+  item ativo. Na troca de página ele desliza do item antigo ao novo em 420 ms (`view-transition-name: realce`),
+  passando por trás dos nomes do menu.
 - **Hover em card:** sobe 2 px e um anel de luz acende só na borda (gradiente cônico mascarado, mais forte no canto
   superior esquerdo, com um toque de mostarda); o miolo não muda.
 - **Botão mostarda:** um brilho atravessa o botão em 700 ms no hover; pressionado, afunda 1 px como um carimbo.

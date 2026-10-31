@@ -29,8 +29,14 @@ def test_fontes_sao_locais_e_existem():
     ("/configuracoes", "Configurações"),
 ])
 def test_menu_marca_so_a_pagina_atual(dados, caminho, item):
-    """O realce deslizante (app.js) parte do item com aria-current="page": precisa haver exatamente um."""
+    """Só o item da página atual leva o realce (view-transition-name único, que desliza entre as páginas)."""
     html = TestClient(webapp.app).get(caminho).text
     marcados = re.findall(r'data-nav-item="([^"]+)"\s+aria-current=page', html)
     assert marcados == [item]
-    assert 'class="nav-luz"' in html
+    assert html.count('class="realce"') == 1
+    assert re.search(r'aria-current=page[^>]*>\s*<span class="realce"', html)
+
+
+def test_transicao_entre_paginas():
+    base = (PACOTE / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "@view-transition { navigation: auto; }" in base and "view-transition-name: realce" in base

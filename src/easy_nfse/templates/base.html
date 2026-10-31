@@ -25,6 +25,24 @@
     @font-face { font-family: "Public Sans"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/static/vendor/fonts/public-sans.woff2") format("woff2"); }
     @font-face { font-family: "Public Sans"; font-style: italic; font-weight: 100 900; font-display: swap; src: url("/static/vendor/fonts/public-sans-italic.woff2") format("woff2"); }
     @font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("/static/vendor/fonts/bricolage-grotesque.woff2") format("woff2"); }
+
+    /* Transição entre páginas (View Transitions entre documentos: Chrome/WebView2 126+, Safari/WKWebView 18.2+;
+       nos outros, a troca é instantânea). O cabeçalho fica parado; o fundo (root) faz a troca cruzada padrão, que
+       mantém a opacidade somada e não escurece; só o conteúdo sai subindo e entra subindo; o realce do menu desliza do
+       item antigo ao novo. */
+    @view-transition { navigation: auto; }
+    .cabecalho-app { view-transition-name: cabecalho; }
+    .conteudo-app { view-transition-name: conteudo; }
+    /* Camadas da transição: cabeçalho embaixo, o realce viajando no meio e os itens do menu (cada um com nome próprio,
+       classe item-nav) por cima, para o realce passar por trás dos nomes sem escurecê-los. */
+    ::view-transition-group(realce) { z-index: 1; animation-duration: .42s; animation-timing-function: cubic-bezier(.22, .72, .18, 1); }
+    ::view-transition-group(*.item-nav) { z-index: 2; animation-duration: .42s; }
+    ::view-transition-group(conteudo) { animation-duration: .34s; }
+    ::view-transition-old(conteudo) { animation: .18s cubic-bezier(.4, 0, 1, 1) both pagina-sai; }
+    ::view-transition-new(conteudo) { animation: .34s cubic-bezier(.22, .72, .18, 1) .08s both pagina-entra; }
+    @keyframes pagina-sai { to { opacity: 0; transform: translateY(-6px); } }
+    @keyframes pagina-entra { from { opacity: 0; transform: translateY(10px); } }
+    @media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
   </style>
   <style type="text/tailwindcss">
     /* Identidade "Mata, mostarda e papel" (docs/design/README.md). */
@@ -78,6 +96,7 @@
       --campo-fundo: rgba(255, 253, 246, .8); --campo-borda: rgba(23, 45, 34, .2); --campo-sombra: rgba(40, 40, 20, .06);
       --texto: #172D22; --texto-2: #3A4E41; --rotulo: #55665A; --placeholder: #8E9B8B;
       --cabecalho: rgba(243, 238, 223, .78);
+      --luz-realce: rgba(213, 161, 26, .15);
       --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2355665A'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
     }
     [data-theme=dark] {
@@ -90,6 +109,7 @@
       --campo-fundo: rgba(10, 21, 15, .45); --campo-borda: rgba(238, 230, 208, .1); --campo-sombra: rgba(0, 0, 0, .35);
       --texto: #EEE6D0; --texto-2: #C8C4AD; --rotulo: #8E9B8B; --placeholder: #5E6E60;
       --cabecalho: rgba(16, 33, 26, .7);
+      --luz-realce: rgba(235, 194, 71, .11);
       --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238E9B8B'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
     }
 
@@ -234,13 +254,21 @@
     .marca span { font-weight: 800; color: var(--color-mostarda-escura); }
     [data-theme=dark] .marca span { color: var(--color-mostarda-clara); }
     .marca i { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 2px; background: var(--color-mostarda); box-shadow: 0 0 10px -2px rgba(213, 161, 26, .8); }
-    .nav-luz {
-      position: absolute; left: 0; top: 0; bottom: 0; width: 0; opacity: 0; border-radius: .5rem; pointer-events: none;
-      background: var(--vidro-1); box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 -2px 0 rgba(213, 161, 26, .85);
-      transition: transform .42s var(--ease-mesa), width .42s var(--ease-mesa), opacity .2s;
+    /* Realce da página atual: vidro com uma luz mostarda que nasce da borda de baixo (brilho na beirada e um halo
+       subindo por dentro). Vem pronto do servidor, dentro do item ativo; entre páginas, a View Transition leva o
+       realce do item antigo ao novo (view-transition-name: realce). O <nav> tem py-2 para o halo não ser cortado pelo
+       overflow da rolagem horizontal. */
+    .realce {
+      position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+      background: radial-gradient(100% 55% at 50% 100%, var(--luz-realce), transparent 72%), var(--vidro-1);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho);
+      view-transition-name: realce;
     }
-    .nav-luz.sem-transicao { transition: none; }
-    nav.com-luz a[aria-current=page] { background: transparent; }
+    .realce::after {
+      content: ""; position: absolute; left: 6px; right: 6px; bottom: 0; height: 1px; border-radius: 1px;
+      opacity: .75; background: linear-gradient(90deg, transparent, var(--color-mostarda-clara) 18%, var(--color-mostarda-clara) 82%, transparent);
+      box-shadow: 0 0 6px rgba(235, 194, 71, .35), 0 0 14px 2px rgba(213, 161, 26, .1);
+    }
 
     /* ---------- entrada da página: os blocos pousam na mesa (só na carga, não em trocas htmx) ---------- */
     @keyframes pousar { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: none; } }
@@ -250,7 +278,6 @@
     .pousa:nth-child(n+6) { animation-delay: .4s; }
     @media (prefers-reduced-motion: reduce) {
       .pousa { animation: none; }
-      .nav-luz { transition: none; }
       :is(a, button).card::before, .card.toque::before, .btn-primary::after { display: none; }
       :is(a, button).card:hover, .card.toque:hover { transform: none; }
     }
@@ -266,13 +293,12 @@
 </head>
 <body class="min-h-screen font-sans text-[var(--texto)] antialiased">
   <div class="fibras" aria-hidden="true"></div>
-  <header class="sticky top-0 z-30 border-b border-[var(--vidro-borda)] bg-[var(--cabecalho)] backdrop-blur-xl backdrop-saturate-150">
+  <header class="cabecalho-app sticky top-0 z-30 border-b border-[var(--vidro-borda)] bg-[var(--cabecalho)] backdrop-blur-xl backdrop-saturate-150">
     <div class="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-6 sm:px-6">
       <a href="/" class="marca shrink-0 text-[18px] sm:text-[21px]" aria-label="easyNFSe: início">easy<span>NFSe</span><i></i></a>
       {# no celular, os itens ficam só com o ícone (o nome segue para leitores de tela e no title).
-         A página atual é marcada pelo .nav-luz, que desliza entre os itens (app.js); sem JS, o próprio item tem fundo. #}
-      <nav data-nav aria-label="Seções" class="relative flex min-w-0 items-center gap-0.5 overflow-x-auto text-[13px] sm:gap-1 sm:text-sm">
-        <span class="nav-luz" aria-hidden="true"></span>
+         O item da página atual leva o .realce, que a View Transition faz deslizar entre os itens ao trocar de página. #}
+      <nav data-nav aria-label="Seções" class="relative flex min-w-0 items-center gap-0.5 overflow-x-auto py-2 text-[13px] sm:gap-1 sm:text-sm">
         {% set path = request.url.path %}
         {% set em_templates = path == '/templates' or path.endswith('/editar') %}
         {% set icones_nav = {'Início': 'home', 'Templates': 'template', 'Cadastros': 'address-book', 'Histórico': 'history', 'Configurações': 'settings'} %}
@@ -285,7 +311,8 @@
         ] %}
         {% for href, nome, ativo in itens_nav %}
         <a href="{{ href }}" title="{{ nome }}" data-nav-item="{{ nome }}" {{ 'aria-current=page' if ativo }}
-           class="relative z-[1] inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium transition-colors duration-300 sm:px-3 {{ 'bg-[var(--vidro-1)] text-[var(--texto)]' if ativo else 'text-[var(--rotulo)] hover:text-[var(--texto)]' }}">{{ icone(icones_nav[nome], 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">{{ nome }}</span></a>
+           style="view-transition-name: nav-{{ loop.index }}; view-transition-class: item-nav"
+           class="relative z-[1] inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium transition-colors duration-300 sm:px-3 {{ 'text-[var(--texto)]' if ativo else 'text-[var(--rotulo)] hover:text-[var(--texto)]' }}">{% if ativo %}<span class="realce" aria-hidden="true"></span>{% endif %}{{ icone(icones_nav[nome], 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">{{ nome }}</span></a>
         {% endfor %}
       </nav>
       <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-[var(--rotulo)] hover:bg-[var(--vidro-1)] hover:text-[var(--texto)]" aria-label="Alternar tema">
@@ -331,7 +358,7 @@
   </header>
   {% if atualizacao %}{% include "_aviso_atualizacao.html" %}{% endif %}
 
-  <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+  <main class="conteudo-app mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
     {% block content %}{% endblock %}
   </main>
 

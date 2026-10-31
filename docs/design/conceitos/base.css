@@ -177,23 +177,40 @@ body::after {
 .marca b span { font-weight: 800; color: var(--m-clara); }
 .marca b i { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 2px; background: var(--m); box-shadow: 0 0 10px -2px rgba(213, 161, 26, .8); }
 .nav { display: flex; gap: 4px; position: relative; }
-/* o realce da página atual: um só elemento que desliza entre os itens */
-.nav-luz {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 0; opacity: 0; border-radius: 9px; pointer-events: none;
-  background: rgba(238, 230, 208, .07);
-  box-shadow: inset 0 1px 0 rgba(255, 250, 235, .06), inset 0 -2px 0 rgba(213, 161, 26, .85);
-  transition: transform .42s var(--ease), width .42s var(--ease), opacity .2s;
+/* o realce da página atual: vem pronto dentro do item ativo; na troca de página, a View Transition o leva ao novo item */
+.realce {
+  position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(100% 55% at 50% 100%, rgba(235, 194, 71, .11), transparent 72%), rgba(238, 230, 208, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 235, .06);
+  view-transition-name: realce;
 }
-.nav-luz.sem-transicao { transition: none; }
+.realce::after {
+  content: ""; position: absolute; left: 6px; right: 6px; bottom: 0; height: 1px; border-radius: 1px; opacity: .75;
+  background: linear-gradient(90deg, transparent, var(--m-clara) 18%, var(--m-clara) 82%, transparent);
+  box-shadow: 0 0 6px rgba(235, 194, 71, .35), 0 0 14px 2px rgba(213, 161, 26, .1);
+}
 .nav a { position: relative; z-index: 1; }
-.nav.com-luz a.ativo { background: transparent; box-shadow: none; }
+
+/* troca de página: View Transitions entre documentos. Cabeçalho parado, fundo com a troca cruzada padrão,
+   conteúdo saindo e entrando, realce deslizando por trás dos nomes do menu (cada item tem nome próprio, acima dele) */
+@view-transition { navigation: auto; }
+.topo { view-transition-name: cabecalho; }
+main.conteudo { view-transition-name: conteudo; }
+::view-transition-group(realce) { z-index: 1; animation-duration: .42s; animation-timing-function: var(--ease); }
+::view-transition-group(*.item-nav) { z-index: 2; animation-duration: .42s; }
+::view-transition-group(conteudo) { animation-duration: .34s; }
+::view-transition-old(conteudo) { animation: .18s cubic-bezier(.4, 0, 1, 1) both pagina-sai; }
+::view-transition-new(conteudo) { animation: .34s var(--ease) .08s both pagina-entra; }
+@keyframes pagina-sai { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes pagina-entra { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 .nav a {
   display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 9px;
   color: var(--p3); text-decoration: none; font-weight: 500; transition: color .25s, background .25s;
 }
 .nav a svg { width: 16px; height: 16px; }
 .nav a:hover { color: var(--p); }
-.nav a.ativo { color: var(--p); background: rgba(238, 230, 208, .07); box-shadow: inset 0 1px 0 rgba(255, 250, 235, .06); }
+.nav a.ativo { color: var(--p); }
 .topo .direita { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .icone-btn { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--p3); background: transparent; border: 0; cursor: pointer; }
 .icone-btn svg { width: 18px; height: 18px; }

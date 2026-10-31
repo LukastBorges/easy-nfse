@@ -72,11 +72,11 @@ Commit: `feat(ui): adotar tokens e utilitários da identidade mata, mostarda e p
 
 - Cabeçalho: marca em lettering, selo de ambiente (mostarda em produção restrita; `barro` em produção), botão de
   tema e menu ⋮ em vidro.
-- Realce deslizante do menu: um `<span class="nav-luz">` dentro do `<nav>` e o script em `app.js` (referência em
-  `docs/design/conceitos/renderizar.py`, constante `SCRIPT`). O app é multipágina, então o clique segura a navegação
-  por 420 ms enquanto o realce corre, e a página nova parte do item anterior guardado em `sessionStorage`. Respeitar
-  clique com Ctrl/Cmd (nova aba), `prefers-reduced-motion` e o `aria-current="page"`. Itens de rotas aninhadas
-  (emissão marca Início; `/templates/{id}/editar` marca Templates) seguem a regra que já está em `base.html`.
+- Transições entre páginas com View Transitions entre documentos (CSS em `base.html`, sem JavaScript): cabeçalho
+  parado, conteúdo (`main`) saindo e entrando, e o realce do menu (`<span class="realce">` no item ativo, com
+  `view-transition-name: realce`) deslizando de um item ao outro. Os itens do menu têm nomes próprios
+  (`nav-1`…`nav-5`, classe `item-nav`) numa camada acima do realce, para ele passar por trás dos nomes.
+  Itens de rotas aninhadas (emissão marca Início; `/templates/{id}/editar` marca Templates) seguem a regra de `base.html`.
 - Diálogos `#confirmar`, `#cadastro`, notas de atualização e sobre: vidro mais opaco, `backdrop` com desfoque.
   Manter a altura definida do diálogo de Notas (armadilha do WKWebView no `AGENTS.md`).
 - `_aviso_atualizacao.html`, `partials/atualizacao.html`, foco visível global, cursor.

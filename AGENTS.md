@@ -131,7 +131,8 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   ação principal e na marca, a nota em emissão como folha de papel. Nada de `slate`/`indigo`/`emerald` em telas novas.
 - Fontes: **Bricolage Grotesque** em títulos, valores e marca; **Public Sans** no resto. A marca é o lettering
   `easyNFSe` (sem símbolo) com o ponto quadrado mostarda.
-- Movimento: uma entrada por página (não em trocas htmx), realce do menu que desliza entre os itens, hover dos
+- Movimento: troca de página por View Transitions (CSS em `base.html`; o realce do menu desliza entre os itens pelo
+  `view-transition-name: realce`), uma entrada por página (não em trocas htmx), hover dos
   cards acende só a borda, tudo desligado com `prefers-reduced-motion`.
 - Os conceitos são HTML/CSS puros para referência de valores; na implementação os valores viram tokens e `@utility`
   do Tailwind em `base.html`.
@@ -151,6 +152,12 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - **CSS fora de camada ganha dos utilitários**: regras soltas no `<style type="text/tailwindcss">` (ex.: `.marca`)
   vencem classes como `text-[18px]`, que ficam em `@layer utilities`. Não ponha nelas o que deve variar por classe
   (o tamanho da marca vem das classes).
+- **View Transitions**: `view-transition-name` precisa ser único na página (só o item ativo leva o `.realce`). O realce
+  viaja numa camada acima do cabeçalho; os itens do menu têm nomes próprios (`nav-N`, classe `item-nav`) com
+  `z-index` maior para o realce passar por trás dos nomes. `mix-blend-mode: screen` resolvia no escuro, mas apagava
+  o texto no tema claro. Animar o `root` (que inclui o fundo) escurece a tela no meio da troca: anime o `main`
+  (`.conteudo-app`). O Firefox não tem a transição entre documentos e ainda pisca na troca de página; não é motor
+  do app.
 - **Animação de entrada usa `translate`**, não `transform`: `transform` no keyframe apagaria a rotação das folhas de
   papel (`.pousa` + `rotate`).
 - **Tailwind v4**: classes reutilizáveis são `@utility` (não `@layer components` + `@apply` de classe custom — quebra
