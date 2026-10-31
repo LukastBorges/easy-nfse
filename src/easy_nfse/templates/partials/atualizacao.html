@@ -11,9 +11,14 @@
   {% elif erro %}
     {% call linha('alert-circle', 'text-rose-600 dark:text-rose-400') %}<span class="text-rose-700 dark:text-rose-300">{{ erro }}</span>{% endcall %}
   {% elif st.nova and st.pronta %}
+    {% if st.erro %}
+    {% call linha('alert-circle', 'text-rose-600 dark:text-rose-400') %}<span class="text-rose-700 dark:text-rose-300">{{ st.erro }}</span> Tente de novo.{% endcall %}
+    {% else %}
     {% call linha('circle-check', 'text-emerald-600 dark:text-emerald-400') %}Versão <b>{{ st.nova }}</b> baixada e verificada.{% endcall %}
+    {% endif %}
+    {# desabilita todos os botões de instalar (faixa do topo e Sobre): duas instalações juntas se atrapalham #}
     <button class="btn-primary px-3 py-1.5" hx-post="/atualizacao/instalar" hx-target="closest div" hx-swap="outerHTML"
-            hx-disabled-elt="this" hx-confirm="O easy-nfse vai fechar e reabrir na versão {{ st.nova }}. Seus certificados, templates e notas não são alterados."
+            hx-disabled-elt="[hx-post='/atualizacao/instalar']" hx-confirm="O easy-nfse vai fechar e reabrir na versão {{ st.nova }}. Seus certificados, templates e notas não são alterados."
             data-confirm-titulo="Atualizar agora?" data-confirm-acao="Reiniciar e atualizar">{{ icone('refresh') }}Reiniciar e atualizar</button>
   {% elif acompanhar %}
     {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. Baixando em segundo plano…{% endcall %}

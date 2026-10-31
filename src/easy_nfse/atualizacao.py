@@ -38,6 +38,7 @@ URL_RELEASES = os.environ.get(
 )
 INTERVALO = timedelta(hours=6)
 _trava = threading.Lock()
+_instalando = threading.Lock()  # uma instalação por vez: a segunda apagaria o .novo da primeira
 
 
 class AtualizacaoError(Exception):
@@ -289,15 +290,47 @@ def _extrair(pacote: Path, novo: Path) -> None:
                 raise AtualizacaoError("Pacote sem easy-nfse.exe.")
             raiz.parent.replace(novo)
     elif pacote.suffix == ".dmg":  # macOS: monta só para leitura e copia o .app
-        with tempfile.TemporaryDirectory(prefix="easy-nfse-dmg-") as ponto:
-            subprocess.run(["hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", ponto, str(pacote)],
-                           check=True, capture_output=True)
+        # uma instalação interrompida (app fechado no meio da cópia) deixa a imagem montada, e montá-la de novo falha
+        # com "Resource busy": desmonta o que tiver sobrado deste pacote antes
+        for ponto_velho in _montagens(pacote):
+            _desmontar(ponto_velho)
+        with tempfile.TemporaryDirectory(prefix="easy-nfse-dmg-", ignore_cleanup_errors=True) as ponto:
+            r = subprocess.run(["hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", ponto, str(pacote)],
+                               capture_output=True, text=True)
+            if r.returncode:
+                raise AtualizacaoError(f"Não foi possível abrir o pacote da atualização: {_ultima_linha(r.stderr)}")
             try:
                 subprocess.run(["ditto", str(Path(ponto) / "easy-nfse.app"), str(novo)], check=True, capture_output=True)
             finally:
-                subprocess.run(["hdiutil", "detach", ponto, "-force"], capture_output=True)
+                _desmontar(ponto)
     else:
         raise AtualizacaoError(f"Pacote desconhecido: {pacote.name}")
+
+
+def _ultima_linha(texto: str) -> str:
+    linhas = [l.strip() for l in (texto or "").splitlines() if l.strip()]
+    return linhas[-1] if linhas else "erro desconhecido"
+
+
+def _montagens(pacote: Path) -> list[str]:
+    """Pontos de montagem em que este .dmg já está montado (macOS)."""
+    import plistlib
+
+    r = subprocess.run(["hdiutil", "info", "-plist"], capture_output=True)
+    if r.returncode:
+        return []
+    alvo = str(pacote.resolve())
+    pontos = []
+    for img in plistlib.loads(r.stdout).get("images", []):
+        if str(Path(img.get("image-path", "")).resolve()) == alvo:
+            pontos += [ent["mount-point"] for ent in img.get("system-entities", []) if ent.get("mount-point")]
+    return pontos
+
+
+def _desmontar(ponto: str) -> None:
+    r = subprocess.run(["hdiutil", "detach", ponto, "-force"], capture_output=True, text=True)
+    if r.returncode:
+        log.warning("Não foi possível desmontar %s: %s", ponto, _ultima_linha(r.stderr))
 
 
 def script_troca(pid: int, atual: Path, novo: Path, reabrir: bool = True) -> tuple[Path, list[str]]:
@@ -349,15 +382,24 @@ def instalar() -> None:
     pode, motivo = instalavel()
     if not pode:
         raise AtualizacaoError(motivo)
-    st, e = status(), _ler()
-    if not st["pronta"]:
-        raise AtualizacaoError("A atualização ainda não foi baixada.")
-    atual = pasta_do_app()
-    novo = atual.with_name(atual.name + ".novo")
-    _extrair(Path(e["arquivo"]), novo)
-    _, comando = script_troca(os.getpid(), atual, novo)
-    e["tentou_instalar"] = e["versao"]
-    _gravar(e)
+    # Uma por vez: o app fecha 1,5 s depois de uma instalação começar, e uma segunda chamada nesse intervalo apagaria
+    # o .novo da primeira e seria interrompida no meio da cópia. A trava não é solta em caso de sucesso: o app vai fechar.
+    if not _instalando.acquire(blocking=False):
+        raise AtualizacaoError("A atualização já está sendo instalada. O app vai fechar e reabrir em instantes.")
+    try:
+        st, e = status(), _ler()
+        if not st["pronta"]:
+            raise AtualizacaoError("A atualização ainda não foi baixada.")
+        atual = pasta_do_app()
+        novo = atual.with_name(atual.name + ".novo")
+        _extrair(Path(e["arquivo"]), novo)
+        _, comando = script_troca(os.getpid(), atual, novo)
+        e["tentou_instalar"] = e["versao"]
+        e.pop("erro", None)
+        _gravar(e)
+    except BaseException:
+        _instalando.release()
+        raise
     flags = 0x00000008 | 0x00000200 if sys.platform == "win32" else 0  # DETACHED_PROCESS | NEW_PROCESS_GROUP
     with (_pasta() / "trocar.log").open("w", encoding="utf-8") as saida:  # o script roda escondido: erros ficam aqui
         subprocess.Popen(comando, creationflags=flags, start_new_session=sys.platform != "win32", close_fds=True,
@@ -379,6 +421,15 @@ def ao_abrir() -> bool:
             velho.unlink(missing_ok=True)
         _gravar(e)
         return False
+    # a última tentativa não trocou a versão: o script de troca deixa o motivo no trocar.log (vazio quando dá certo)
+    if e.get("tentou_instalar") and e.get("tentou_instalar") == e.get("versao") and not e.get("erro"):
+        try:
+            motivo = (_pasta() / "trocar.log").read_text(encoding="utf-8")
+        except OSError:
+            motivo = ""
+        if motivo.strip():
+            e["erro"] = f"A instalação da versão {'.'.join(map(str, versao(e['versao'])))} não terminou ({_ultima_linha(motivo)})."
+            _gravar(e)
     # instala o que ficou baixado, mas só uma vez por versão (se falhou, não entra em laço)
     if desativada() or not status()["pronta"] or e.get("tentou_instalar") == e.get("versao"):
         return False
