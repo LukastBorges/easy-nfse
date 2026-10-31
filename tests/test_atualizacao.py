@@ -275,3 +275,104 @@ def test_rota_de_notas_mostra_a_versao_nova_e_a_instalada(amb, monkeypatch):
     assert "Versão 0.4.0" in html and "disponível" in html and "Atualizar o app automaticamente" in html
     assert "Versão 0.3.0" in html and "instalada" in html and "Só ajustes internos" in html
     assert "abc1234" not in html
+
+
+def _fingir_popen(monkeypatch):
+    class Popen:
+        def __init__(self, *a, **k):
+            pass
+    monkeypatch.setattr(atualizacao.subprocess, "Popen", Popen)
+
+
+def test_instalar_uma_de_cada_vez(amb, monkeypatch):
+    """Duas instalações juntas: a segunda apagaria o .novo da primeira e seria morta no meio da cópia (bug da 0.4.2)."""
+    atualizacao.verificar_e_baixar()
+    _fingir_popen(monkeypatch)
+    copiando, liberar = threading.Event(), threading.Event()
+
+    def extrair(pacote, novo):
+        copiando.set()
+        liberar.wait(5)
+        novo.mkdir()
+
+    monkeypatch.setattr(atualizacao, "_extrair", extrair)
+    primeira = threading.Thread(target=atualizacao.instalar)
+    primeira.start()
+    assert copiando.wait(5)
+    with pytest.raises(atualizacao.AtualizacaoError, match="já está sendo instalada"):
+        atualizacao.instalar()
+    liberar.set()
+    primeira.join(5)
+    assert atualizacao._ler()["tentou_instalar"] == "easy-nfse-v0.4.0"
+    atualizacao._instalando.release()  # no app, a trava fica presa até o processo sair
+
+
+def test_instalar_que_falha_solta_a_trava(amb, monkeypatch):
+    atualizacao.verificar_e_baixar()
+    _fingir_popen(monkeypatch)
+
+    def extrair(pacote, novo):
+        raise atualizacao.AtualizacaoError("pacote quebrado")
+
+    monkeypatch.setattr(atualizacao, "_extrair", extrair)
+    for _ in range(2):  # a segunda tentativa não pode dar "já está sendo instalada"
+        with pytest.raises(atualizacao.AtualizacaoError, match="pacote quebrado"):
+            atualizacao.instalar()
+    assert not atualizacao._instalando.locked()
+
+
+def test_extrair_dmg_desmonta_o_que_sobrou(tmp_path, monkeypatch):
+    """Uma instalação interrompida deixa o .dmg montado; montar de novo dava "Resource busy"."""
+    import plistlib
+
+    pacote = tmp_path / "easy-nfse-v0.4.2-macos-arm64.dmg"
+    pacote.write_bytes(b"dmg")
+    chamadas = []
+
+    def run(cmd, **kw):
+        chamadas.append(cmd[:2])
+        if cmd[:2] == ["hdiutil", "info"]:
+            info = {"images": [{"image-path": str(pacote), "system-entities": [{"mount-point": "/ponto/velho"}]},
+                               {"image-path": "/outro.dmg", "system-entities": [{"mount-point": "/ponto/outro"}]}]}
+            return subprocess.CompletedProcess(cmd, 0, plistlib.dumps(info), b"")
+        if cmd[0] == "ditto":
+            (tmp_path / "novo").mkdir()
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(atualizacao.subprocess, "run", run)
+    atualizacao._extrair(pacote, tmp_path / "novo")
+    desmontados = [c for c in chamadas if c == ["hdiutil", "detach"]]
+    assert chamadas.index(["hdiutil", "detach"]) < chamadas.index(["hdiutil", "attach"])  # o que sobrou sai antes
+    assert len(desmontados) == 2  # o que sobrou (só deste pacote) e o desta instalação
+
+
+def test_extrair_dmg_explica_quando_nao_monta(tmp_path, monkeypatch):
+    pacote = tmp_path / "x.dmg"
+    pacote.write_bytes(b"dmg")
+
+    def run(cmd, **kw):
+        if cmd[:2] == ["hdiutil", "attach"]:
+            return subprocess.CompletedProcess(cmd, 1, "", "hdiutil: attach failed - Resource busy\n")
+        return subprocess.CompletedProcess(cmd, 0, b"<plist><dict/></plist>" if "-plist" in cmd else "", "")
+
+    monkeypatch.setattr(atualizacao.subprocess, "run", run)
+    with pytest.raises(atualizacao.AtualizacaoError, match="Resource busy"):
+        atualizacao._extrair(pacote, tmp_path / "novo")
+
+
+def test_ao_abrir_avisa_quando_a_troca_falhou(amb, monkeypatch):
+    """O script de troca desfez a instalação: em vez de só mostrar "versão nova", explica e oferece tentar de novo."""
+    monkeypatch.setattr(webapp.atualizacao, "status", atualizacao.status)
+    atualizacao.verificar_e_baixar()
+    e = atualizacao._ler()
+    e["tentou_instalar"] = e["versao"]
+    atualizacao._gravar(e)
+    (atualizacao._pasta() / "trocar.log").write_text(
+        "mv: rename /x/easy-nfse.app.novo to /x/easy-nfse.app: No such file or directory\n", encoding="utf-8")
+
+    assert atualizacao.ao_abrir() is False  # não tenta sozinho de novo (sem laço)
+    st = atualizacao.status()
+    assert "A instalação da versão 0.4.0 não terminou" in st["erro"] and "No such file" in st["erro"]
+    assert st["pronta"]
+    pagina = TestClient(webapp.app).get("/historico").text
+    assert "não terminou" in pagina and "Tente de novo" in pagina and 'hx-post="/atualizacao/instalar"' in pagina

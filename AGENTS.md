@@ -176,6 +176,11 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   atrás (`.antigo`) e reabre. Tenta instalar na abertura **uma vez por versão** (evita laço se falhar). Depende dos nomes
   `easy-nfse-vX.Y.Z-<plataforma>.(dmg|zip)` e do `.zip` do Windows conter a pasta `easy-nfse/`: se mudar o empacotamento,
   ajuste `atualizacao.plataforma`/`_extrair`. O script sh limita a espera (~2 min): `kill -0` responde para processo zumbi.
+  **Uma instalação por vez** (`_instalando`): o app fecha 1,5 s depois de `instalar()` e uma segunda chamada nesse
+  intervalo apagava o `.novo` da primeira e era morta no meio da cópia, deixando o `.dmg` montado (a troca falhava e o
+  app voltava à versão velha; a próxima tentativa dava "hdiutil: attach failed - Resource busy"). Por isso: a trava, os
+  botões de instalar desabilitam todos juntos, `_extrair` desmonta montagens que sobraram do mesmo pacote e `ao_abrir`
+  transforma o `trocar.log` de uma troca que falhou em erro visível ("não terminou", com "Tente de novo").
   O download roda em thread; enquanto `status()["baixando"]` (a `_trava` presa), `partials/atualizacao.html` consulta
   `GET /atualizacao/estado` a cada 2 s e se troca sozinho (baixada → "Reiniciar e atualizar"; falhou → erro + "Tentar de novo").
 - **Menu ⋮ do cabeçalho** (`base.html`): Ajuda (README), Notas de atualização, Reportar um problema (issues) e, por último,
