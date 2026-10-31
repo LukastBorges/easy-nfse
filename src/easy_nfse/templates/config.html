@@ -2,97 +2,98 @@
 {% from "_macros.html" import alert, field %}
 {% block title %}Configurações · easyNFSe{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Configurações</h1>
-<div class="mt-6 space-y-4">
-  {% if ok %}{{ alert('ok', ok, []) }}{% endif %}
-  {% if erro %}{{ alert('error', erro, []) }}{% endif %}
+<div class="pousa">
+  <h1 class="text-3xl font-semibold text-texto sm:text-[34px]">Configurações</h1>
+  <p class="mt-2 text-texto-2">O ambiente vale para todas as notas. Cada prestador emite com o próprio certificado.</p>
 </div>
+<div class="mt-6 space-y-4 empty:hidden">{% if ok %}{{ alert('ok', ok, []) }}{% endif %}{% if erro %}{{ alert('error', erro, []) }}{% endif %}</div>
 
 {# ------------------------------------------------------------ emissão (global) #}
-<section class="card mt-6 p-6">
-  <h2 class="section-title flex items-center gap-2">{{ icone('adjustments-horizontal', 'size-5 text-slate-400 dark:text-slate-500') }}Emissão</h2>
-  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Valem para todos os templates e certificados.</p>
-  <form class="mt-5" method="post" action="/configuracoes">
-    <div class="grid gap-6 lg:grid-cols-2">
-      <fieldset>
-        <legend class="label">Ambiente</legend>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label
-            class="flex cursor-pointer items-start gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-amber-50 dark:has-[:checked]:bg-amber-500/10 has-[:checked]:ring-2 has-[:checked]:ring-amber-400">
-            <input type="radio" name="ambiente" value="2" {{ 'checked' if cfg.ambiente=='2' }}
-              class="mt-0.5 text-amber-500 focus:ring-amber-500">
-            <span><span class="flex items-center gap-1.5 text-sm font-semibold">{{ icone('flask', 'size-4 text-amber-600 dark:text-amber-400') }}Produção restrita</span><span
-                class="text-xs text-slate-500 dark:text-slate-400">Para testes. Notas sem validade jurídica.</span></span>
-          </label>
-          <label
-            class="flex cursor-pointer items-start gap-3 rounded-xl p-4 ring-1 ring-slate-200 dark:ring-slate-800 has-[:checked]:bg-rose-50 dark:has-[:checked]:bg-rose-500/10 has-[:checked]:ring-2 has-[:checked]:ring-rose-400">
-            <input type="radio" name="ambiente" value="1" {{ 'checked' if cfg.ambiente=='1' }}
-              class="mt-0.5 text-rose-600 dark:text-rose-400 focus:ring-rose-600">
-            <span><span class="flex items-center gap-1.5 text-sm font-semibold">{{ icone('building-bank', 'size-4 text-rose-600 dark:text-rose-400') }}Produção</span><span
-                class="text-xs text-slate-500 dark:text-slate-400">Notas reais, com validade fiscal.</span></span>
-          </label>
-        </div>
-      </fieldset>
-      <div class="space-y-5">
-        {{ field('serie', 'Série da DPS', cfg.serie, hint='Faixa de aplicativo próprio: 1 a 49999. O Emissor Web usa outra faixa, então a numeração deste app não colide com a dele.') }}
-        <label class="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="verificar_tls" value="1" {{ 'checked' if cfg.verificar_tls }}
-            class="mt-0.5 size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
-          <span>Verificar o certificado TLS do servidor da Sefin <span
-              class="block text-xs text-slate-500 dark:text-slate-400">Desative só se a conexão falhar por cadeia de
-              certificado desconhecida.</span></span>
+<section class="pousa mt-8">
+  <h2 class="text-xl font-semibold text-texto">Emissão</h2>
+  <p class="mt-1 text-sm text-rotulo">Valem para todos os templates e certificados.</p>
+  <form class="card mt-4 grid gap-6 p-6" method="post" action="/configuracoes">
+    <fieldset>
+      <legend class="label">Ambiente</legend>
+      {# cartões de escolha: o marcado ganha a borda e o ponto mostarda; produção leva o alerta em barro #}
+      {% set opcao = 'grid cursor-pointer grid-cols-[auto_1fr] content-start items-start gap-x-3.5 gap-y-1 rounded-[14px] border border-borda bg-vidro p-4 transition-colors has-[:checked]:border-mostarda/60 has-[:checked]:bg-mostarda/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-mostarda' %}
+      {% set ponto = 'row-span-2 mt-px grid size-5 place-items-center rounded-full border-[1.5px] border-borda after:size-2.5 after:rounded-full after:bg-mostarda after:opacity-0 after:shadow-[0_0_8px_rgba(213,161,26,.7)] peer-checked:border-mostarda peer-checked:after:opacity-100' %}
+      {# produção marcada fica em barro, não em mostarda: é a escolha com consequência fiscal #}
+      {% set opcao_producao = opcao|replace('has-[:checked]:border-mostarda/60 has-[:checked]:bg-mostarda/10', 'has-[:checked]:border-perigo/50 has-[:checked]:bg-perigo/10') %}
+      {% set ponto_producao = ponto|replace('after:bg-mostarda', 'after:bg-barro')|replace('after:shadow-[0_0_8px_rgba(213,161,26,.7)]', 'after:shadow-[0_0_8px_rgba(207,111,91,.7)]')|replace('peer-checked:border-mostarda', 'peer-checked:border-barro') %}
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="{{ opcao }}">
+          <input type="radio" name="ambiente" value="2" {{ 'checked' if cfg.ambiente=='2' }} class="peer sr-only">
+          <span class="{{ ponto }}" aria-hidden="true"></span>
+          <span class="flex items-center gap-2 font-display text-[15px] leading-6 font-semibold text-texto peer-checked:text-acento">{{ icone('flask', 'size-[17px]') }}Produção restrita</span>
+          <span class="text-[13px] text-rotulo">Para testes. Notas sem validade jurídica.</span>
+        </label>
+        <label class="{{ opcao_producao }}">
+          <input type="radio" name="ambiente" value="1" {{ 'checked' if cfg.ambiente=='1' }} class="peer sr-only">
+          <span class="{{ ponto_producao }}" aria-hidden="true"></span>
+          <span class="flex items-center gap-2 font-display text-[15px] leading-6 font-semibold text-texto">{{ icone('alert-triangle', 'size-[17px] text-perigo') }}Produção</span>
+          <span class="text-[13px] text-rotulo">Notas reais, com validade fiscal. Só cancelamento ou substituição desfazem.</span>
         </label>
       </div>
+    </fieldset>
+    <div class="grid gap-6 sm:grid-cols-2">
+      {{ field('serie', 'Série da DPS', cfg.serie, hint='Faixa de aplicativo próprio: 1 a 49999. O Emissor Web usa outra faixa, então a numeração deste app não colide com a dele.') }}
+      {# chave liga/desliga: trilho musgo desligado, mostarda ligado #}
+      <label class="flex cursor-pointer items-start gap-3.5 self-center text-sm">
+        <input type="checkbox" name="verificar_tls" value="1" {{ 'checked' if cfg.verificar_tls }} class="peer sr-only">
+        <span aria-hidden="true" class="relative mt-0.5 h-6 w-10 shrink-0 rounded-full border border-borda bg-musgo/60 transition-colors
+              after:absolute after:top-0.5 after:left-0.5 after:size-[18px] after:rounded-full after:bg-papel after:shadow after:transition-transform after:duration-300
+              peer-checked:border-transparent peer-checked:bg-[linear-gradient(180deg,var(--color-mostarda-clara),var(--color-mostarda-escura))] peer-checked:after:translate-x-4
+              peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-mostarda"></span>
+        <span><b class="block font-semibold text-texto">Verificar o certificado TLS do servidor da Sefin</b>
+          <span class="text-[13px] text-rotulo">Desative só se a conexão falhar por cadeia de certificado desconhecida.</span></span>
+      </label>
     </div>
-    <div class="mt-5 flex justify-end border-t border-slate-100 dark:border-slate-800 pt-5">
+    <div class="flex justify-end border-t border-dashed border-borda pt-5">
       <button class="btn-primary">{{ icone('device-floppy') }}Salvar</button>
     </div>
   </form>
 </section>
 
 {# ------------------------------------------------------------ certificados #}
-{% set icones_estado = {'valido': 'certificate', 'vencendo': 'clock-exclamation', 'vencido': 'alert-triangle', 'erro': 'alert-circle'} %}
-{% set cores_estado = {
-  'valido': 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-200 dark:ring-emerald-500/30',
-  'vencendo': 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-200 dark:ring-amber-500/30',
-  'vencido': 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-200 dark:ring-rose-500/30',
-  'erro': 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-200 dark:ring-rose-500/30',
-} %}
-<section class="card mt-6 min-w-0">
-  <div class="p-6">
-    <h2 class="section-title flex items-center gap-2">{{ icone('certificate', 'size-5 text-slate-400 dark:text-slate-500') }}Certificados digitais A1
-      {% if linhas %}<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">{{ linhas|length }}</span>{% endif %}</h2>
-    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Arquivos .pfx/.p12 ICP-Brasil dos prestadores. Cada
-      prestador usa o certificado do seu CNPJ/CPF (o de validade mais longa, se houver mais de um) ou o escolhido no
-      <a href="/cadastros/prestadores" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">cadastro dele</a>.
-      A numeração da DPS é de cada CNPJ/CPF, no ambiente e na série atuais.</p>
+{% set icones_estado = {'valido': 'certificate', 'vencendo': 'clock-exclamation', 'vencido': 'certificate-off', 'erro': 'alert-circle'} %}
+{% set selo_estado = {'valido': 'border-sucesso/35 bg-sucesso/10 text-sucesso', 'vencendo': 'border-mostarda/35 bg-mostarda/10 text-acento',
+                      'vencido': 'border-perigo/35 bg-perigo/10 text-perigo', 'erro': 'border-perigo/35 bg-perigo/10 text-perigo'} %}
+{% set regua_estado = {'valido': 'bg-[linear-gradient(90deg,#5E8F67,#7FB889)]', 'vencendo': 'bg-[linear-gradient(90deg,var(--color-mostarda-escura),var(--color-mostarda-clara))]',
+                       'vencido': 'bg-barro/70', 'erro': 'bg-barro/70'} %}
+<section class="pousa mt-10 min-w-0">
+  <h2 class="flex items-center gap-2 text-xl font-semibold text-texto">Certificados digitais A1
+    {% if linhas %}<span class="rounded-full border border-borda bg-vidro px-2 py-px font-sans text-xs font-semibold text-texto-2">{{ linhas|length }}</span>{% endif %}</h2>
+  <p class="mt-1 max-w-[80ch] text-sm text-rotulo">Arquivos .pfx ou .p12 ICP-Brasil dos prestadores. Cada prestador usa o
+    certificado do seu CNPJ ou CPF, o de validade mais longa se houver mais de um, ou o escolhido no
+    <a href="/cadastros/prestadores" class="font-medium text-acento underline underline-offset-2">cadastro dele</a>.
+    A numeração da DPS é de cada CNPJ ou CPF, no ambiente e na série atuais.</p>
 
-    <form class="mt-5 grid gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-4 ring-1 ring-slate-200 dark:ring-slate-800 sm:grid-cols-[1fr_14rem_auto] sm:items-end"
-          method="post" action="/configuracoes/certificados" enctype="multipart/form-data">
-      <div class="min-w-0">
-        <label class="label" for="arquivo">Adicionar certificado</label>
-        <input
-          class="block w-full text-sm text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 dark:file:bg-indigo-500/10 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-500/20"
-          type="file" id="arquivo" name="arquivo" accept=".pfx,.p12" required>
-      </div>
-      {{ field('senha', 'Senha do certificado', '', type='password', attrs='autocomplete="off"') }}
-      <button class="btn-primary">{{ icone('upload') }}Adicionar</button>
-    </form>
-  </div>
+  {# adicionar: área tracejada, como a bandeja de importação #}
+  <form class="mt-4 grid items-end gap-3 rounded-2xl border-[1.5px] border-dashed border-mostarda/35 bg-mostarda/5 p-4 sm:grid-cols-[minmax(0,1fr)_14rem_auto] sm:p-5"
+        method="post" action="/configuracoes/certificados" enctype="multipart/form-data">
+    <div class="min-w-0">
+      <label class="label" for="arquivo">Adicionar certificado</label>
+      <input class="block w-full text-sm text-texto-2 file:mr-3 file:cursor-pointer file:rounded-[10px] file:border file:border-borda file:bg-vidro file:px-3 file:py-2 file:text-sm file:font-semibold file:text-texto hover:file:bg-mostarda/10"
+             type="file" id="arquivo" name="arquivo" accept=".pfx,.p12" required>
+    </div>
+    {{ field('senha', 'Senha do certificado', '', type='password', attrs='autocomplete="off"') }}
+    <button class="btn-ghost">{{ icone('plus') }}Adicionar</button>
+  </form>
 
   {% if linhas %}
-  <div data-filtro class="border-t border-slate-100 dark:border-slate-800">
+  <div data-filtro class="mt-5">
     {% if linhas|length > 1 %}
-    <div class="flex flex-wrap items-center gap-3 px-6 py-4">
-      <label class="relative min-w-48 flex-1">
+    <div class="mb-3 flex flex-wrap items-center gap-2.5">
+      <label class="relative w-full min-w-0 sm:w-[300px]">
         <span class="sr-only">Buscar certificado</span>
-        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-apagado">{{ icone('search') }}</span>
         <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por titular, CNPJ/CPF ou prestador">
       </label>
-      <label class="flex items-center gap-2">
-        <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar por estado</span></span>
+      <label class="flex items-center">
+        <span class="sr-only">Filtrar por estado</span>
         <select data-filtro-por="estado" class="input w-auto py-2">
-          <option value="">Todos</option>
+          <option value="">Todos os estados</option>
           <option value="valido">Válidos</option>
           <option value="vencendo">Vencem em 30 dias</option>
           <option value="vencido">Expirados</option>
@@ -100,79 +101,87 @@
           <option value="sem-uso">Sem prestador</option>
         </select>
       </label>
-      <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
+      <span data-filtro-contagem class="text-xs text-rotulo"></span>
     </div>
     {% endif %}
-    <ul class="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
+    <ul class="grid gap-3">
       {% for c in linhas %}
-      {% set cor = cores_estado[c.estado] %}
       <li data-busca="{{ c.titular }} {{ c.documento }} {{ c.documento|doc }} {{ c.arquivo }} {{ c.usos|join(' ') }}"
           data-estado="{{ c.estado }}{{ ' sem-uso' if not c.usos }}"
-          class="flex flex-wrap items-center gap-x-5 gap-y-3 px-6 py-4">
-        <span class="grid size-10 shrink-0 place-items-center rounded-xl ring-1 {{ cor }}">{{ icone(icones_estado[c.estado], 'size-5') }}</span>
-        <div class="min-w-0 flex-1 basis-56">
-          <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
-            <p class="min-w-0 break-words font-semibold sm:truncate" title="{{ c.titular if c.ok else c.arquivo }}">{{ c.titular if c.ok else c.arquivo }}</p>
-            {% if c.estado == 'vencendo' %}<span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">vence em {{ c.dias }} dia{{ 's' if c.dias != 1 }}</span>
-            {% elif c.estado == 'vencido' %}<span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">expirado</span>
-            {% elif c.estado == 'erro' %}<span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 {{ cor }}">não abre</span>{% endif %}
-          </div>
-          {% if c.ok %}
-          <p class="text-sm text-slate-600 dark:text-slate-400">{{ c.documento|doc or 'Documento não identificado' }} ·
-            {{ 'expirou em' if c.vencido else 'válido até' }} {{ c.validade|data }}</p>
-          {% else %}
-          <p class="text-sm text-rose-700 dark:text-rose-300">{{ c.erro }}</p>
-          {% endif %}
-          <p class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-            {{ icone('building', 'size-3.5 shrink-0') }}<span class="truncate">{{ c.usos|join(', ') if c.usos else 'Nenhum prestador usa' }}</span></p>
+          class="card grid grid-cols-[44px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 p-5 md:grid-cols-[44px_minmax(0,1.3fr)_minmax(0,1fr)_auto] {{ 'opacity-75' if c.estado == 'vencido' }}">
+        <span class="grid size-11 place-items-center rounded-xl border border-borda bg-vidro text-texto-2">{{ icone(icones_estado[c.estado], 'size-[21px]') }}</span>
+        <div class="min-w-0">
+          <p class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span class="min-w-0 truncate font-display text-base font-semibold text-texto" title="{{ c.titular if c.ok else c.arquivo }}">{{ c.titular if c.ok else c.arquivo }}</span>
+            <span class="shrink-0 rounded-md border px-1.5 py-px text-[11px] font-semibold {{ selo_estado[c.estado] }}">
+              {%- if c.estado == 'vencendo' %}vence em {{ c.dias }} dia{{ 's' if c.dias != 1 }}{% elif c.estado == 'vencido' %}expirado{% elif c.estado == 'erro' %}não abre{% else %}válido{% endif -%}
+            </span>
+          </p>
+          {% if c.ok %}<p class="mt-0.5 truncate text-sm text-rotulo tabular-nums">{{ c.documento|doc or 'Documento não identificado' }}</p>
+          {% else %}<p class="mt-0.5 text-sm text-perigo">{{ c.erro }}</p>{% endif %}
+          <p class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-rotulo">{{ icone('building', 'size-3.5 shrink-0') }}<span class="truncate">{{ c.usos|join(', ') if c.usos else 'Nenhum prestador usa' }}</span></p>
         </div>
-        {% if c.numeracao %}
-        <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2"
-              title="Avança sozinha a cada nota aceita. Ajuste só se este CNPJ/CPF já usou esta série em outro sistema.">
-          <input type="hidden" name="chave" value="{{ c.numeracao.chave }}">
-          <div class="text-right text-xs leading-tight text-slate-500 dark:text-slate-400">Próxima DPS<br>
-            <b class="text-sm tabular-nums text-slate-900 dark:text-slate-100">nº {{ c.numeracao.proximo }}</b></div>
-          <label class="sr-only" for="ultimo-{{ c.id }}">Último número usado</label>
-          <input id="ultimo-{{ c.id }}" name="ultimo" type="number" min="0" value="{{ c.numeracao.ultimo }}" class="input w-20 py-1.5" title="Último número usado">
-          <button class="btn-ghost px-3 py-1.5">Ajustar</button>
-        </form>
-        {% endif %}
-        <div class="flex shrink-0 items-center gap-1.5">
+        {# validade como régua: o certificado A1 vale 1 ano; a barra mostra quanto desse ano já passou #}
+        <div class="col-span-2 min-w-0 md:col-span-1">
           {% if c.ok %}
-          <button class="btn-ghost px-2.5 py-1.5" hx-post="/configuracoes/certificados/{{ c.id }}/testar" hx-target="#teste-{{ c.id }}"
-                  hx-disabled-elt="this" title="Testar conexão com a Sefin" aria-label="Testar conexão com a Sefin">
-            <span class="htmx-hide-on-request inline-flex">{{ icone('plug-connected') }}</span>
-            <span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>
-          </button>
+          {% set passado = [[100 - (c.dias / 365 * 100)|round|int, 0]|max, 100]|min %}
+          <div class="flex justify-between gap-2 text-xs text-rotulo"><span>{{ 'Expirou em' if c.vencido else 'Válido até' }}</span><span class="tabular-nums">{{ c.validade|data }}</span></div>
+          <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-borda" role="img" aria-label="{{ passado }}% do prazo do certificado já passou">
+            <i class="block h-full rounded-full {{ regua_estado[c.estado] }}" style="width: {{ passado }}%"></i></div>
+          <p class="mt-1.5 text-xs {{ 'text-acento' if c.estado == 'vencendo' else 'text-rotulo' }}">
+            {%- if c.estado == 'vencendo' %}Renove e adicione o novo: o prestador troca sozinho.
+            {%- elif c.vencido %}Pode ser removido, se já houver outro do mesmo CNPJ.
+            {%- else %}Vence em {{ c.dias }} dias.{% endif %}</p>
           {% endif %}
-          <form method="post" action="/configuracoes/certificados/{{ c.id }}/excluir">
-            <button class="btn-ghost px-2.5 py-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
-                    title="Remover certificado" aria-label="Remover certificado"
-                    data-confirm="O certificado {{ c.titular if c.ok else c.arquivo }} será apagado da pasta de dados.{% if c.usos %} Os prestadores que o usam ficarão sem certificado até você adicionar outro deles.{% endif %}"
-                    data-confirm-titulo="Remover certificado?" data-confirm-acao="Remover" data-confirm-perigo>{{ icone('trash') }}</button>
+        </div>
+        <div class="col-span-2 flex flex-wrap items-center justify-between gap-3 md:col-span-1 md:justify-end">
+          {% if c.numeracao %}
+          <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2"
+                title="Avança sozinha a cada nota aceita. Ajuste só se este CNPJ/CPF já usou esta série em outro sistema.">
+            <input type="hidden" name="chave" value="{{ c.numeracao.chave }}">
+            <span class="text-right text-xs leading-tight text-rotulo">Próxima DPS<b class="block font-display text-xl font-normal text-texto tabular-nums">{{ c.numeracao.proximo }}</b></span>
+            <label class="sr-only" for="ultimo-{{ c.id }}">Último número usado</label>
+            <input id="ultimo-{{ c.id }}" name="ultimo" type="number" min="0" value="{{ c.numeracao.ultimo }}" class="input w-20 py-1.5" title="Último número usado">
+            <button class="btn-ghost px-3 py-1.5">Ajustar</button>
           </form>
+          {% endif %}
+          <div class="flex shrink-0 items-center gap-1">
+            {% if c.ok %}
+            <button class="grid size-9 place-items-center rounded-lg text-rotulo hover:bg-vidro hover:text-texto" hx-post="/configuracoes/certificados/{{ c.id }}/testar" hx-target="#teste-{{ c.id }}"
+                    hx-disabled-elt="this" title="Testar conexão com a Sefin" aria-label="Testar conexão com a Sefin">
+              <span class="htmx-hide-on-request inline-flex">{{ icone('plug-connected', 'size-[18px]') }}</span>
+              <span class="htmx-indicator">{{ icone('loader-2', 'size-[18px] animate-spin') }}</span>
+            </button>
+            {% endif %}
+            <form method="post" action="/configuracoes/certificados/{{ c.id }}/excluir">
+              <button class="grid size-9 place-items-center rounded-lg text-rotulo hover:bg-perigo/10 hover:text-perigo"
+                      title="Remover certificado" aria-label="Remover certificado"
+                      data-confirm="O certificado {{ c.titular if c.ok else c.arquivo }} será apagado da pasta de dados.{% if c.usos %} Os prestadores que o usam ficarão sem certificado até você adicionar outro deles.{% endif %}"
+                      data-confirm-titulo="Remover certificado?" data-confirm-acao="Remover" data-confirm-perigo>{{ icone('trash', 'size-[18px]') }}</button>
+            </form>
+          </div>
         </div>
-        <div id="teste-{{ c.id }}" class="basis-full empty:hidden"></div>
+        <div id="teste-{{ c.id }}" class="col-span-full empty:hidden"></div>
       </li>
       {% endfor %}
     </ul>
-    <p data-filtro-vazio class="hidden border-t border-slate-100 dark:border-slate-800 px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum certificado encontrado.</p>
+    <p data-filtro-vazio class="mt-3 hidden rounded-2xl border border-dashed border-borda px-6 py-8 text-center text-sm text-rotulo">Nenhum certificado encontrado.</p>
   </div>
   {% else %}
-  <p class="border-t border-slate-100 dark:border-slate-800 px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+  <p class="mt-5 rounded-2xl border border-dashed border-borda px-6 py-8 text-center text-sm text-rotulo">
     Nenhum certificado ainda. Adicione o A1 de cada prestador que vai emitir.</p>
   {% endif %}
 
   {% if sem_cert %}
-  <div class="border-t border-slate-100 dark:border-slate-800 px-6 py-4">
-    <p class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">{{ icone('certificate-off', 'size-4') }}Prestadores sem certificado</p>
-    <ul class="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
+  <div class="card mt-3 p-5">
+    <p class="flex items-center gap-2 text-[13px] font-semibold text-texto-2">{{ icone('certificate-off', 'size-4 text-perigo') }}Prestadores sem certificado</p>
+    <ul class="mt-2 divide-y divide-borda">
       {% for n in sem_cert %}
-      <li class="flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
-        <span>{% if n.nome %}{{ n.nome }} · {% endif %}{{ n.doc|doc }}</span>
+      <li class="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+        <span class="min-w-0 text-texto">{% if n.nome %}{{ n.nome }}, {% endif %}<span class="text-rotulo tabular-nums">{{ n.doc|doc }}</span></span>
         <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2">
           <input type="hidden" name="chave" value="{{ n.chave }}">
-          <span class="text-xs text-slate-500 dark:text-slate-400">Próxima DPS <b class="tabular-nums text-slate-900 dark:text-slate-100">nº {{ n.proximo }}</b></span>
+          <span class="text-xs text-rotulo">Próxima DPS <b class="font-display text-base font-normal text-texto tabular-nums">{{ n.proximo }}</b></span>
           <input name="ultimo" type="number" min="0" value="{{ n.ultimo }}" class="input w-20 py-1.5" aria-label="Último número usado">
           <button class="btn-ghost px-3 py-1.5">Ajustar</button>
         </form>
@@ -182,23 +191,22 @@
   </div>
   {% endif %}
 
-  <div class="space-y-2 border-t border-slate-100 dark:border-slate-800 px-6 py-4">
-    <p class="hint mt-0">Numeração ({{ 'produção' if cfg.ambiente == '1' else 'produção restrita' }}, série {{ cfg.serie }}):
-      avança sozinha a cada nota aceita pela Sefin (e quando ela avisa que o número já foi usado, E0014). Nota rejeitada
-      não consome número.</p>
+  <div class="mt-5 grid max-w-[85ch] gap-2 text-xs text-rotulo">
+    <p class="flex items-start gap-2">{{ icone('info-circle', 'mt-px size-4 shrink-0') }}<span>Numeração ({{ 'produção' if cfg.ambiente == '1' else 'produção restrita' }}, série {{ cfg.serie }}):
+      avança sozinha a cada nota aceita pela Sefin, e também quando ela avisa que o número já foi usado (E0014). Nota rejeitada
+      não consome número.</span></p>
     {% if numeracao_outros %}
-    <details class="text-xs text-slate-500 dark:text-slate-400">
-      <summary>Outros ambientes/séries ({{ numeracao_outros|length }})</summary>
+    <details class="pl-6">
+      <summary class="cursor-pointer">Outros ambientes e séries ({{ numeracao_outros|length }})</summary>
       <ul class="mt-2 space-y-1">
         {% for chave, ultimo in numeracao_outros %}{% set pt = chave.split('|') %}
-        <li>{{ 'Produção' if pt[0] == '1' else 'Produção restrita' }} · {{ pt[1]|doc }} · série {{ pt[2] }}: último
-          nº {{ ultimo }}</li>
+        <li>{{ 'Produção' if pt[0] == '1' else 'Produção restrita' }}, {{ pt[1]|doc }}, série {{ pt[2] }}: último nº {{ ultimo }}</li>
         {% endfor %}
       </ul>
     </details>
     {% endif %}
-    <p class="hint">Certificados ficam em <code class="break-all">{{ data_dir }}</code> (permissão 600), junto com as senhas.
-      Alternativa: deixe a senha vazia e defina a variável de ambiente <code>EASY_NFSE_CERT_SENHA</code>.</p>
+    <p class="flex items-start gap-2">{{ icone('shield-check', 'mt-px size-4 shrink-0') }}<span>Certificados ficam em <code class="break-all text-texto-2">{{ data_dir }}</code> (permissão 600), junto com as senhas.
+      Alternativa: deixe a senha vazia e defina a variável de ambiente <code class="text-texto-2">EASY_NFSE_CERT_SENHA</code>.</span></p>
   </div>
 </section>
 {% endblock %}

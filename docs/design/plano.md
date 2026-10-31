@@ -23,7 +23,8 @@ exige redesenhar cada tela.
 | 0, 1, 2 | Feitas no branch `feat/identidade-visual` |
 | 3, 4 | Feitas (Início com boas-vindas e cards iguais; emissão na folha de papel) |
 | 5 | Feita (Templates com a bandeja de importação; Cadastros com abas, chips e fichas; formulários e diálogo) |
-| 6 a 8 | A fazer |
+| 6 | Feita (Histórico como livro-razão agrupado por mês; Configurações com cartões de ambiente, chave de TLS e régua de validade) |
+| 7, 8 | A fazer |
 
 ## Etapa 0 — Fontes locais
 
