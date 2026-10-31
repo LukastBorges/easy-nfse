@@ -71,13 +71,15 @@
         <img src="/static/logo.svg" alt="" class="size-8 drop-shadow-sm sm:size-9">
         <span class="hidden text-[17px] font-medium tracking-tight text-slate-900 dark:text-slate-100 sm:inline">easy<span class="font-bold text-indigo-600 dark:text-indigo-400">nfse</span></span>
       </a>
+      {# no celular, os itens ficam só com o ícone (o nome segue para leitores de tela e no title) #}
       <nav class="flex min-w-0 items-center gap-0.5 overflow-x-auto text-[13px] sm:gap-1 sm:text-sm">
         {% set path = request.url.path %}
         {% set em_templates = path == '/templates' or path.endswith('/editar') %}
         <a href="/" class="hidden shrink-0 rounded-lg px-2 py-1.5 font-medium sm:inline-flex sm:items-center sm:gap-1.5 sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path == '/' or (path.startswith('/templates/') and not em_templates) else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('home', 'size-4 shrink-0') }}Início</a>
-        <a href="/templates" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if em_templates else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('template', 'hidden size-4 shrink-0 sm:block') }}Templates</a>
-        <a href="/historico" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/historico') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('history', 'hidden size-4 shrink-0 sm:block') }}Histórico</a>
-        <a href="/configuracoes" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/configuracoes') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('settings', 'hidden size-4 shrink-0 sm:block') }}<span class="sm:hidden">Ajustes</span><span class="hidden sm:inline">Configurações</span></a>
+        <a href="/templates" title="Templates" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if em_templates else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('template', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Templates</span></a>
+        <a href="/cadastros" title="Cadastros" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/cadastros') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('address-book', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Cadastros</span></a>
+        <a href="/historico" title="Histórico" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/historico') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('history', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Histórico</span></a>
+        <a href="/configuracoes" title="Configurações" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/configuracoes') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('settings', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Configurações</span></a>
       </nav>
       <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Alternar tema">
         <span data-icone="sistema">{{ icone('device-desktop', 'size-[18px]') }}</span>
@@ -193,6 +195,11 @@
     <div class="border-t border-slate-100 dark:border-slate-800 px-6 py-3 text-right text-sm">
       <a href="https://github.com/LukastBorges/easy-nfse/releases" target="_blank" rel="noopener" class="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Todas as versões no GitHub{{ icone('external-link', 'size-3.5') }}</a>
     </div>
+  </dialog>
+  {# cadastro de prestador/tomador aberto do template ou da emissão; altura definida pelo mesmo motivo das notas #}
+  <dialog id="cadastro" aria-labelledby="cadastro-titulo"
+          class="m-auto flex h-[min(46rem,calc(100dvh-2rem))] w-[min(46rem,calc(100%-2rem))] flex-col rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm [&:not([open])]:hidden">
+    <div id="cadastro-conteudo" class="flex min-h-0 flex-1 flex-col"></div>
   </dialog>
   <script src="/static/app.js"></script>
 </body>

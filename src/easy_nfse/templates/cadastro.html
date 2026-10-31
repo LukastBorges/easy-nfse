@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import alert %}
+{% set novo = not c.id %}
+{% block title %}{{ ('Novo ' ~ cad.papel) if novo else cad.rotulo(c) }} · easy-nfse{% endblock %}
+{% block content %}
+<form method="post" action="/cadastros/{{ cad.tipo }}{{ '/' ~ c.id if c.id }}" class="space-y-6 pb-24">
+  <input type="hidden" name="voltar" value="{{ voltar }}">
+  <div>
+    <a href="{{ voltar or '/cadastros/' ~ cad.tipo }}" class="inline-flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">{{ icone('arrow-left') }}{{ 'Voltar' if voltar else cad.titulo }}</a>
+    <h1 class="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{{ ('Novo ' ~ cad.papel) if novo else (c.nome or cad.rotulo(c)) }}</h1>
+    {% if usos %}<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Usado {{ 'pelo template' if usos|length == 1 else 'pelos ' ~ usos|length ~ ' templates' }}
+      {{ usos|map(attribute='nome')|join(', ') }}: as mudanças valem para {{ 'ele' if usos|length == 1 else 'todos' }}.</p>{% endif %}
+  </div>
+
+  {% if erros %}{{ alert('error', 'Não foi possível salvar', erros) }}{% endif %}
+  {% if salvo and pendencias %}{{ alert('warn', 'Cadastro salvo, mas ainda há pendências para emitir', pendencias) }}{% endif %}
+  {% if salvo and afetados %}{{ alert('warn', 'Cadastro salvo. Estes templates ficaram com pendências', afetados) }}{% endif %}
+  {% if not salvo and pendencias %}{{ alert('warn', 'Pendências para emitir', pendencias) }}{% endif %}
+
+  <section class="card p-6">
+    <h2 class="section-title flex items-center gap-2">{{ icone('building' if cad.papel == 'prestador' else 'user', 'size-5 text-slate-400 dark:text-slate-500') }}{{ 'Prestador (emitente)' if cad.papel == 'prestador' else 'Tomador' }}</h2>
+    <div class="mt-5">{% include "_" ~ cad.papel ~ "_campos.html" %}</div>
+  </section>
+
+  <div class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:px-6">
+      {% if c.id %}
+      <button class="btn-danger" formaction="/cadastros/{{ cad.tipo }}/{{ c.id }}/excluir" formnovalidate {{ 'disabled title="Usado por templates: troque-o neles antes de excluir"'|safe if usos }}
+              data-confirm="O cadastro {{ cad.rotulo(c) }} será excluído. As notas já emitidas continuam no histórico."
+              data-confirm-titulo="Excluir cadastro?" data-confirm-acao="Excluir" data-confirm-perigo>{{ icone('trash') }}Excluir</button>
+      {% endif %}
+      <a href="{{ voltar or '/cadastros/' ~ cad.tipo }}" class="btn-ghost ml-auto">Cancelar</a>
+      <button class="btn-primary">{{ icone('device-floppy') }}Salvar</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

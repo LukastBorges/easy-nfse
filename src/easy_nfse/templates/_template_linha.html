@@ -1,5 +1,7 @@
 {# Linha da lista de templates (página /templates). Precisa de: t #}
-<li class="flex flex-wrap items-center transition-opacity [&.htmx-swapping]:opacity-0 gap-x-4 gap-y-3 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
+<li data-busca="{{ t.nome }} {{ t.tomador.nome if t.tomador else '' }} {{ t.prestador.nome }} {{ t.prestador.documento }}"
+    data-prestador="{{ t.prestador_id }}" data-tomador="{{ t.tomador_id or 'sem' }}"
+    class="flex flex-wrap items-center transition-opacity [&.htmx-swapping]:opacity-0 gap-x-4 gap-y-3 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
   <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">
     {% if t.tomador_exterior %}{{ icone('world', 'size-5') }}{% else %}{{ ((t.tomador.nome if t.tomador else '') or t.nome)[:1]|upper }}{% endif %}
   </span>
@@ -10,6 +12,7 @@
         {% if t.tomador_exterior %}{{ t.tomador.nome }} · {{ PAISES.get(t.tomador.endereco.pais, 'Exterior') }}
         {% elif t.tomador %}{{ t.tomador.nome }} · {{ t.tomador.documento|doc }}{% else %}Sem tomador identificado{% endif %}
       </span>
+      {% if filtro_prestadores|length > 1 %}<span class="inline-flex min-w-0 items-center gap-1">{{ icone('building', 'size-3.5 shrink-0') }}<span class="truncate">{{ t.prestador.nome or (t.prestador.documento|doc) }}</span></span>{% endif %}
       <span class="rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 dark:text-slate-400">{{ t.servico.c_trib_nac[:2] }}.{{ t.servico.c_trib_nac[2:4] }}.{{ t.servico.c_trib_nac[4:] }}</span>
       {% if t.exige_com_ext %}<span class="rounded-md bg-sky-50 dark:bg-sky-500/10 px-1.5 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-500/30">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, 'Exportação') }}</span>{% endif %}
     </p>

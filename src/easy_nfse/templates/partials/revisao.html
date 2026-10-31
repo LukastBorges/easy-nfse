@@ -44,7 +44,9 @@
   <input type="hidden" name="descricao" value="{{ d.descricao }}">
   <input type="hidden" name="n_dps" value="{{ d.n_dps }}">
   <input type="hidden" name="ambiente" value="{{ cfg.ambiente }}">
-  <a href="/templates/{{ t.id }}" class="btn-ghost">{{ icone('arrow-left') }}Voltar</a>
+  <input type="hidden" name="prestador_id" value="{{ t.prestador_id }}">
+  <input type="hidden" name="tomador_id" value="{{ t.tomador_id or 'sem' }}">
+  <a href="{{ url_emissao(t) }}" class="btn-ghost">{{ icone('arrow-left') }}Voltar</a>
   <button class="btn-success" {{ 'disabled' if not pode_emitir }}>
     <span class="htmx-indicator">{{ icone('loader-2', 'size-4 animate-spin') }}</span>
     <span class="htmx-hide-on-request inline-flex">{{ icone('signature') }}</span>Assinar e emitir NFS-e

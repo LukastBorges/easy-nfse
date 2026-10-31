@@ -86,17 +86,32 @@
 
 {% include "_aviso_emissao.html" %}
 
+{# vindo de Cadastros → Emitir: o cadastro escolhido substitui o do template nesta nota #}
+{% set pre_prestador = escolhido.prestador.id if escolhido.prestador and escolhido.prestador.id in filtro_prestadores|map(attribute='id')|list else '' %}
+{% set pre_tomador = escolhido.tomador.id if escolhido.tomador and escolhido.tomador.id in filtro_tomadores|map(attribute='id')|list else '' %}
+{% if escolhido.prestador or escolhido.tomador %}
+<div class="mt-6 flex flex-wrap items-start gap-3 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 p-4 text-sm text-indigo-900 dark:text-indigo-200 ring-1 ring-indigo-200 dark:ring-indigo-500/30">
+  {{ icone('info-circle', 'mt-px size-5 shrink-0') }}
+  <p class="min-w-0 flex-1">
+    {% if escolhido.prestador %}Emitindo por <b>{{ rotulo_prestador(escolhido.prestador) }}</b>: escolha o template. Nesta nota, ele substitui o prestador do template.
+    {% else %}Emitindo para <b>{{ rotulo_tomador(escolhido.tomador) }}</b>: escolha o template. Nesta nota, ele substitui o tomador do template.{% endif %}
+    {% if not (pre_prestador or pre_tomador) %}Nenhum template usa este cadastro ainda: qualquer um serve.{% endif %}
+  </p>
+  <a href="/" class="font-medium underline underline-offset-2">Cancelar</a>
+</div>
+{% endif %}
+
 <div data-filtro class="mt-6">
   {% if templates|length > 1 %}
   <div class="mb-4 flex flex-wrap items-center gap-3">
     <label class="relative min-w-48 flex-1">
       <span class="sr-only">Buscar template</span>
       <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
-      <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por template, tomador ou CNPJ/CPF do prestador">
+      <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por template, tomador ou prestador">
     </label>
     <label class="flex items-center gap-2">
       <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar templates</span></span>
-      <select data-filtro-estado class="input w-auto py-2">
+      <select data-filtro-por="estado" class="input w-auto py-2">
         <option value="">Todos</option>
         <option value="problema">Certificado com problema</option>
         <option value="vencendo">Certificado vence em 30 dias</option>
@@ -104,6 +119,25 @@
         <option value="exportacao">Exportação</option>
       </select>
     </label>
+    {% if filtro_prestadores|length > 1 %}
+    <label class="flex min-w-0 items-center gap-2">
+      <span class="text-slate-400 dark:text-slate-500">{{ icone('building') }}<span class="sr-only">Filtrar por prestador</span></span>
+      <select data-filtro-por="prestador" class="input w-auto max-w-56 py-2">
+        <option value="">Todos os prestadores</option>
+        {% for c in filtro_prestadores %}<option value="{{ c.id }}" {{ 'selected' if pre_prestador == c.id }}>{{ c.nome or (c.documento|doc) }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    {% if filtro_tomadores|length + (1 if filtro_sem_tomador else 0) > 1 %}
+    <label class="flex min-w-0 items-center gap-2">
+      <span class="text-slate-400 dark:text-slate-500">{{ icone('user') }}<span class="sr-only">Filtrar por tomador</span></span>
+      <select data-filtro-por="tomador" class="input w-auto max-w-56 py-2">
+        <option value="">Todos os tomadores</option>
+        {% for c in filtro_tomadores %}<option value="{{ c.id }}" {{ 'selected' if pre_tomador == c.id }}>{{ c.nome }}</option>{% endfor %}
+        {% if filtro_sem_tomador %}<option value="sem">Sem tomador</option>{% endif %}
+      </select>
+    </label>
+    {% endif %}
     <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
   </div>
   {% endif %}
@@ -115,7 +149,7 @@
   {% if problema %}
     {% set estado_cert = 'problema' %}
     {% set tom, icone_cert = 'text-rose-700 dark:text-rose-300', 'certificate-off' %}
-    {% if not c %}{% set texto = 'Sem certificado para ' ~ (t.prestador.documento|doc or 'o prestador') %}
+    {% if not c %}{% set texto = 'Sem certificado para ' ~ ((escolhido.prestador or t.prestador).documento|doc or 'o prestador') %}
     {% elif not c.ok %}{% set texto = 'O certificado não abre: veja Configurações' %}
     {% elif c.vencido %}{% set texto = 'Certificado vencido em ' ~ c.validade|data %}{% set icone_cert = 'alert-triangle' %}
     {% else %}{% set texto = 'Certificado de outro CNPJ (' ~ c.documento|doc ~ ')' %}{% set icone_cert = 'alert-triangle' %}{% endif %}
@@ -128,8 +162,8 @@
     {% set tom, icone_cert = 'text-slate-500 dark:text-slate-400', 'certificate' %}
     {% set texto = 'Certificado válido até ' ~ c.validade|data %}
   {% endif %}
-  <a href="/templates/{{ t.id }}" data-busca="{{ t.nome }} {{ t.tomador.nome if t.tomador else '' }} {{ t.prestador.documento }} {{ t.prestador.documento|doc }}"
-     data-estado="{{ estado_cert }}{{ ' exportacao' if t.exige_com_ext }}"
+  <a href="/templates/{{ t.id }}{{ escolhido.query }}" data-busca="{{ t.nome }} {{ t.tomador.nome if t.tomador else '' }} {{ t.prestador.nome }} {{ t.prestador.documento }} {{ t.prestador.documento|doc }}"
+     data-estado="{{ estado_cert }}{{ ' exportacao' if t.exige_com_ext }}" data-prestador="{{ t.prestador_id }}" data-tomador="{{ t.tomador_id or 'sem' }}"
      class="card group flex min-w-0 flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-300">
     <div class="flex items-start gap-3">
       <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-lg font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">

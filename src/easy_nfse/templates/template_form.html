@@ -2,7 +2,7 @@
 {% from "_macros.html" import field, select, alert %}
 {% block title %}Editar template · easy-nfse{% endblock %}
 {% block content %}
-{% set p = t.prestador %}{% set to = t.tomador %}{% set s = t.servico %}{% set tr = t.tributacao %}{% set c = t.com_ext %}
+{% set s = t.servico %}{% set tr = t.tributacao %}{% set c = t.com_ext %}
 <form method="post" action="/templates/{{ t.id }}" class="space-y-6 pb-24">
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div class="min-w-0 flex-1">
@@ -28,83 +28,32 @@
     {{ alert('error', ('Template salvo, mas ' if salvo else '') ~ 'ainda há pendências para emitir', erros) }}
   {% endif %}
 
-  {# ---------------------------------------------------------------- prestador #}
+  {# ------------------------------------------------- prestador e tomador (cadastros) #}
+  {% for papel, tipo, titulo, icone_secao, atual, opcoes in [
+       ('prestador', 'prestadores', 'Prestador (emitente)', 'building', t.prestador if t.prestador.id else none, prestadores),
+       ('tomador', 'tomadores', 'Tomador', 'user', t.tomador, tomadores)] %}
   <section class="card p-6">
-    <div class="flex items-center justify-between">
-      <h2 class="section-title flex items-center gap-2">{{ icone('building', 'size-5 text-slate-400 dark:text-slate-500') }}Prestador (emitente)</h2>
-      {% if p.nome %}<span class="text-sm text-slate-500 dark:text-slate-400">{{ p.nome }}</span>{% endif %}
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h2 class="section-title flex items-center gap-2">{{ icone(icone_secao, 'size-5 text-slate-400 dark:text-slate-500') }}{{ titulo }}</h2>
+      <div class="flex gap-1.5">
+        <button type="button" class="btn-ghost px-3 py-1.5" data-abrir-cadastro="{{ tipo }}" data-editar="{{ papel }}_id">{{ icone('pencil') }}Editar cadastro</button>
+        <button type="button" class="btn-ghost px-3 py-1.5" data-abrir-cadastro="{{ tipo }}">{{ icone('plus') }}Novo</button>
+      </div>
     </div>
-    <div class="mt-5 grid gap-4 sm:grid-cols-6">
-      {{ select('prestador.tipo_doc', 'Tipo', {'CNPJ': 'CNPJ', 'CPF': 'CPF'}, p.tipo_doc, cls='sm:col-span-1') }}
-      {{ field('prestador.documento', 'CNPJ/CPF', p.documento|doc, cls='sm:col-span-2') }}
-      {{ field('prestador.im', 'Inscrição municipal', p.im, cls='sm:col-span-3', hint='Só se o município exigir (cadastro no CNC).') }}
-      {{ field('prestador.municipio', 'Município do emitente', p.municipio, placeholder='Cidade/UF', cls='sm:col-span-4') }}
-      {{ field('prestador.cod_municipio', 'Código IBGE', p.cod_municipio, cls='sm:col-span-2', hint='Deixe vazio para buscar pelo nome.') }}
-      {{ field('prestador.fone', 'Telefone', p.fone, cls='sm:col-span-2') }}
-      {{ field('prestador.email', 'E-mail', p.email, cls='sm:col-span-4', type='email') }}
-      {{ select('prestador.op_simp_nac', 'Simples Nacional', OP_SIMP_NAC, p.op_simp_nac, cls='sm:col-span-2') }}
-      {{ select('prestador.reg_ap_trib_sn', 'Regime de apuração (só ME/EPP)', REG_AP_TRIB_SN, p.reg_ap_trib_sn, cls='sm:col-span-2', blank='—') }}
-      {{ select('prestador.reg_esp_trib', 'Regime especial de tributação', REG_ESP_TRIB, p.reg_esp_trib, cls='sm:col-span-2') }}
-      {% set opcoes_cert = {} %}
-      {% for c in certs %}{% set _ = opcoes_cert.update({c.id: (c.titular ~ ' · ' ~ (c.documento|doc or 'sem documento') ~ (' · expirado' if c.vencido else ' · até ' ~ c.validade|data)) if c.ok else (c.arquivo ~ ' · não abre')}) %}{% endfor %}
-      {% set dica_cert %}{% if cert_automatico %}No automático, usa o de <b>{{ cert_automatico.titular }}</b>{% if cert_automatico.vencido %} (expirado em {{ cert_automatico.validade|data }}){% endif %}.
-        Escolha outro só se o prestador assinar com um certificado diferente.{% else %}Nenhum certificado de {{ p.documento|doc or 'este prestador' }}
-        em <a href="/configuracoes" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Configurações</a>: adicione o A1 do prestador para emitir.{% endif %}{% endset %}
-      {{ select('certificado_id', 'Certificado digital', opcoes_cert, t.certificado_id, cls='sm:col-span-6', blank='Automático (pelo CNPJ/CPF do prestador)', hint=dica_cert) }}
+    <div class="mt-5">
+      <label class="label" for="{{ papel }}_id">{{ 'Prestador' if papel == 'prestador' else 'Tomador' }}</label>
+      <select class="input" id="{{ papel }}_id" name="{{ papel }}_id" hx-get="/cadastros/{{ tipo }}/resumo" hx-trigger="change" hx-target="#resumo-{{ papel }}">
+        {% if papel == 'tomador' %}<option value="">Sem tomador identificado</option>
+        {% elif not atual %}<option value="">Selecione…</option>{% endif %}
+        {% for c in opcoes %}
+        <option value="{{ c.id }}" data-tipo="{{ c.tipo_doc }}" {{ 'selected' if atual and c.id == atual.id }}>{{ (rotulo_prestador if papel == 'prestador' else rotulo_tomador)(c) }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint">O cadastro é compartilhado: editá-lo muda todos os templates que o usam. Na emissão dá para trocar só para aquela nota.</p>
     </div>
-    <p class="hint mt-4">O nome e o endereço do prestador não vão na DPS: a Sefin usa o cadastro nacional.</p>
+    <div id="resumo-{{ papel }}" class="mt-4">{% with ctx = ctx_resumo(papel, atual) %}{% with papel = ctx.papel, c = ctx.c, pendencias = ctx.pendencias, cert = ctx.cert, problema_cert = ctx.problema_cert %}{% include "partials/resumo_cadastro.html" %}{% endwith %}{% endwith %}</div>
   </section>
-
-  {# ---------------------------------------------------------------- tomador #}
-  <section class="card p-6">
-    <div class="flex items-center justify-between">
-      <h2 class="section-title flex items-center gap-2">{{ icone('user', 'size-5 text-slate-400 dark:text-slate-500') }}Tomador</h2>
-      <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-        <input type="checkbox" name="tem_tomador" value="1" data-toggle="#tomador-campos" {{ 'checked' if to }}
-               class="size-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-600">
-        Identificar tomador
-      </label>
-    </div>
-    {% set e = to.endereco if to else none %}
-    <div id="tomador-campos" class="{{ '' if to else 'hidden' }}">
-      <div class="mt-5 grid gap-4 sm:grid-cols-6">
-        {{ select('tomador.tipo_doc', 'Tipo', {'CPF': 'CPF', 'CNPJ': 'CNPJ', 'NIF': 'Exterior (NIF)'}, to.tipo_doc if to else 'CPF', cls='sm:col-span-2') }}
-        {{ field('tomador.documento', 'Documento', ((to.documento|doc) if to.tipo_doc != 'NIF' else to.documento) if to else '', cls='sm:col-span-2') }}
-        <div class="sm:col-span-2" data-show-if="tomador.tipo_doc:NIF">
-          {{ select('tomador.c_nao_nif', 'Sem NIF? Motivo', C_NAO_NIF, to.c_nao_nif if to else '', blank='— (informei o NIF)') }}
-        </div>
-        {{ field('tomador.nome', 'Nome / razão social', to.nome if to else '', cls='sm:col-span-6') }}
-        <div class="sm:col-span-2" data-show-if="tomador.tipo_doc:CPF|CNPJ">
-          {{ field('tomador.im', 'Inscrição municipal', to.im if to else '') }}
-        </div>
-        {{ field('tomador.fone', 'Telefone', to.fone if to else '', cls='sm:col-span-2') }}
-        {{ field('tomador.email', 'E-mail', to.email if to else '', cls='sm:col-span-2', type='email') }}
-      </div>
-
-      <h3 class="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Endereço
-        <span class="font-normal normal-case tracking-normal" data-show-if="tomador.tipo_doc:CPF|CNPJ">(opcional; se preencher, preencha tudo)</span>
-        <span class="font-normal normal-case tracking-normal" data-show-if="tomador.tipo_doc:NIF">no exterior (obrigatório)</span>
-      </h3>
-      <div class="mt-3 grid gap-4 sm:grid-cols-6" data-show-if="tomador.tipo_doc:CPF|CNPJ">
-        {{ field('tomador.endereco.cep', 'CEP', e.cep if e else '', cls='sm:col-span-2') }}
-        {{ field('tomador.endereco.municipio', 'Município', e.municipio if e else '', placeholder='Cidade/UF', cls='sm:col-span-2') }}
-        {{ field('tomador.endereco.cod_municipio', 'Código IBGE', e.cod_municipio if e else '', cls='sm:col-span-2') }}
-      </div>
-      <div class="mt-3 grid gap-4 sm:grid-cols-6" data-show-if="tomador.tipo_doc:NIF">
-        {{ select('tomador.endereco.pais', 'País', PAISES_EXT, e.pais if e else '', cls='sm:col-span-2', blank='Selecione…') }}
-        {{ field('tomador.endereco.cidade', 'Cidade', e.cidade if e else '', cls='sm:col-span-2') }}
-        {{ field('tomador.endereco.estado_prov', 'Estado / província / região', e.estado_prov if e else '', cls='sm:col-span-2') }}
-        {{ field('tomador.endereco.cod_postal', 'Código postal (ZIP)', e.cod_postal if e else '', cls='sm:col-span-2') }}
-      </div>
-      <div class="mt-4 grid gap-4 sm:grid-cols-6">
-        {{ field('tomador.endereco.logradouro', 'Logradouro', e.logradouro if e else '', cls='sm:col-span-4') }}
-        {{ field('tomador.endereco.numero', 'Número', e.numero if e else '', cls='sm:col-span-2') }}
-        {{ field('tomador.endereco.complemento', 'Complemento', e.complemento if e else '', cls='sm:col-span-3') }}
-        {{ field('tomador.endereco.bairro', 'Bairro', e.bairro if e else '', cls='sm:col-span-3') }}
-      </div>
-      <p class="hint mt-3" data-show-if="tomador.tipo_doc:NIF">Sem número ou bairro no endereço estrangeiro? Deixe vazio: enviamos "S/N" e "-".</p>
-    </div>
-  </section>
+  {% endfor %}
 
   {# ---------------------------------------------------------------- serviço #}
   <section class="card p-6">
@@ -157,7 +106,7 @@
   </section>
 
   {# ---------------------------------------------------------------- comércio exterior #}
-  <section class="card p-6" data-show-if="tomador.tipo_doc:NIF;tributacao.trib_issqn:3;servico.local_tipo:exterior">
+  <section class="card p-6" data-show-if="tomador_id@tipo:NIF;tributacao.trib_issqn:3;servico.local_tipo:exterior">
     <h2 class="section-title flex items-center gap-2">{{ icone('world', 'size-5 text-slate-400 dark:text-slate-500') }}Comércio exterior</h2>
     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Obrigatório para tomador do exterior / exportação. O valor na moeda estrangeira é pedido a cada emissão.</p>
     <div class="mt-5 grid gap-4 sm:grid-cols-6">

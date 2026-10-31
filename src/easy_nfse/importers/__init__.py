@@ -6,7 +6,7 @@ import re
 
 from .. import ibge, storage
 from ..models import Endereco, Origem, Prestador, Servico, Template, Tomador, Tributacao
-from ..util import digits, empty_if_dash, fmt_money, norm, parse_money, parse_percent, split_municipio_uf
+from ..util import digits, empty_if_dash, fmt_doc, fmt_money, norm, parse_money, parse_percent, split_municipio_uf
 from .. import dominios
 from . import danfse_pdf, nfse_xml
 
@@ -319,12 +319,31 @@ def _completar_nomes_municipios(kwargs: dict) -> None:
         t.endereco.municipio = ibge.nome(t.endereco.cod_municipio)
 
 
+def _aviso_cadastro(papel: str, nome: str, criado: bool, dif: list[str]) -> str:
+    if criado:
+        return f"{papel.capitalize()} {nome} cadastrado a partir da nota: confira os dados do cadastro."
+    if dif:
+        return (f"{papel.capitalize()} {nome} já estava cadastrado, mas a nota traz dados diferentes ({', '.join(dif)}). "
+                "O cadastro não foi alterado: edite-o se a nota estiver mais atual.")
+    return f"{papel.capitalize()} {nome} já estava cadastrado: o template usa o cadastro existente."
+
+
 def criar_template(kwargs: dict, arquivo: str) -> Template:
+    """Grava o template, ligando-o aos cadastros do prestador e do tomador (procurados pelo documento ou criados)."""
     _completar_nomes_municipios(kwargs)
     kwargs["origem"].arquivo = arquivo
-    t = Template(id=storage.new_id(), nome=_nome_padrao(kwargs), **kwargs)
+    nome = _nome_padrao(kwargs)
+    avisos = kwargs.setdefault("avisos", [])
+    prestador, criado, dif = storage.vincular_prestador(kwargs.pop("prestador"))
+    avisos.append(_aviso_cadastro("prestador", prestador.nome or fmt_doc(prestador.documento), criado, dif))
+    tomador = kwargs.pop("tomador", None)
+    if tomador:
+        tomador, criado, dif = storage.vincular_tomador(tomador)
+        avisos.append(_aviso_cadastro("tomador", tomador.nome or tomador.documento, criado, dif))
+    t = Template(id=storage.new_id(), nome=nome, prestador_id=prestador.id,
+                 tomador_id=tomador.id if tomador else "", **kwargs)
     storage.save_template(t)
-    return t
+    return storage.get_template(t.id)
 
 
 def de_arquivo(data: bytes, nome_arquivo: str, baixar_xml=None) -> Template:

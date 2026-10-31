@@ -63,8 +63,9 @@
     <h2 class="section-title flex items-center gap-2">{{ icone('certificate', 'size-5 text-slate-400 dark:text-slate-500') }}Certificados digitais A1
       {% if linhas %}<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">{{ linhas|length }}</span>{% endif %}</h2>
     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Arquivos .pfx/.p12 ICP-Brasil dos prestadores. Cada
-      template usa o certificado do CNPJ/CPF do seu prestador (o de validade mais longa, se houver mais de um) ou o
-      escolhido no template. A numeração da DPS é de cada CNPJ/CPF, no ambiente e na série atuais.</p>
+      prestador usa o certificado do seu CNPJ/CPF (o de validade mais longa, se houver mais de um) ou o escolhido no
+      <a href="/cadastros/prestadores" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">cadastro dele</a>.
+      A numeração da DPS é de cada CNPJ/CPF, no ambiente e na série atuais.</p>
 
     <form class="mt-5 grid gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-4 ring-1 ring-slate-200 dark:ring-slate-800 sm:grid-cols-[1fr_14rem_auto] sm:items-end"
           method="post" action="/configuracoes/certificados" enctype="multipart/form-data">
@@ -86,17 +87,17 @@
       <label class="relative min-w-48 flex-1">
         <span class="sr-only">Buscar certificado</span>
         <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
-        <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por titular, CNPJ/CPF ou template">
+        <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por titular, CNPJ/CPF ou prestador">
       </label>
       <label class="flex items-center gap-2">
         <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar por estado</span></span>
-        <select data-filtro-estado class="input w-auto py-2">
+        <select data-filtro-por="estado" class="input w-auto py-2">
           <option value="">Todos</option>
           <option value="valido">Válidos</option>
           <option value="vencendo">Vencem em 30 dias</option>
           <option value="vencido">Expirados</option>
           <option value="erro">Com erro</option>
-          <option value="sem-uso">Sem template</option>
+          <option value="sem-uso">Sem prestador</option>
         </select>
       </label>
       <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
@@ -123,7 +124,7 @@
           <p class="text-sm text-rose-700 dark:text-rose-300">{{ c.erro }}</p>
           {% endif %}
           <p class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-            {{ icone('template', 'size-3.5 shrink-0') }}<span class="truncate">{{ c.usos|join(', ') if c.usos else 'Nenhum template usa' }}</span></p>
+            {{ icone('building', 'size-3.5 shrink-0') }}<span class="truncate">{{ c.usos|join(', ') if c.usos else 'Nenhum prestador usa' }}</span></p>
         </div>
         {% if c.numeracao %}
         <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2"
@@ -147,7 +148,7 @@
           <form method="post" action="/configuracoes/certificados/{{ c.id }}/excluir">
             <button class="btn-ghost px-2.5 py-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400"
                     title="Remover certificado" aria-label="Remover certificado"
-                    data-confirm="O certificado {{ c.titular if c.ok else c.arquivo }} será apagado da pasta de dados.{% if c.usos %} Os templates que o usam ficarão sem certificado até você adicionar outro do mesmo prestador.{% endif %}"
+                    data-confirm="O certificado {{ c.titular if c.ok else c.arquivo }} será apagado da pasta de dados.{% if c.usos %} Os prestadores que o usam ficarão sem certificado até você adicionar outro deles.{% endif %}"
                     data-confirm-titulo="Remover certificado?" data-confirm-acao="Remover" data-confirm-perigo>{{ icone('trash') }}</button>
           </form>
         </div>
@@ -164,11 +165,11 @@
 
   {% if sem_cert %}
   <div class="border-t border-slate-100 dark:border-slate-800 px-6 py-4">
-    <p class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">{{ icone('certificate-off', 'size-4') }}Prestadores de templates sem certificado</p>
+    <p class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400">{{ icone('certificate-off', 'size-4') }}Prestadores sem certificado</p>
     <ul class="mt-2 divide-y divide-slate-100 dark:divide-slate-800">
       {% for n in sem_cert %}
       <li class="flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
-        <span>{{ n.doc|doc }}</span>
+        <span>{% if n.nome %}{{ n.nome }} · {% endif %}{{ n.doc|doc }}</span>
         <form method="post" action="/configuracoes/numeracao" class="flex items-center gap-2">
           <input type="hidden" name="chave" value="{{ n.chave }}">
           <span class="text-xs text-slate-500 dark:text-slate-400">Próxima DPS <b class="tabular-nums text-slate-900 dark:text-slate-100">nº {{ n.proximo }}</b></span>
