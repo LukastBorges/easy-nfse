@@ -92,7 +92,10 @@ document.addEventListener("click", (e) => {
   if (!btn) return;
   navigator.clipboard.writeText(btn.dataset.copy);
   const old = btn.innerHTML;
-  btn.textContent = "Copiado!";
+  // botão só com ícone: troca pelo ícone de confirmação que vem escondido nele ([data-copiado])
+  const confirma = btn.querySelector("[data-copiado]");
+  if (confirma) btn.innerHTML = confirma.innerHTML;
+  else btn.textContent = "Copiado!";
   setTimeout(() => (btn.innerHTML = old), 1200);
 });
 
