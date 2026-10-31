@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.1](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.5.0...easy-nfse-v0.5.1) (2026-10-31)
+
+
+### Correções
+
+* **atualizacao:** impedir instalações simultâneas e recuperar de uma troca que falhou ([1df759a](https://github.com/LukastBorges/easy-nfse/commit/1df759a8a30a0bf0814079df7c3aeda4f25ac30a))
+* **atualizacao:** impedir instalações simultâneas e recuperar de uma troca que falhou ([b8dbab7](https://github.com/LukastBorges/easy-nfse/commit/b8dbab719e8015a478b11dfa1dcbb9f5b6f9edaf))
+
+
+### Documentação
+
+* adicionar contribuição com PIX e Patreon ([2454c2d](https://github.com/LukastBorges/easy-nfse/commit/2454c2dde14b8248bc72d0a2b47bb86b789ff7a7))
+
+
+### Manutenção
+
+* adicionar o botão de apoio pelo GitHub Sponsors ([b0717c3](https://github.com/LukastBorges/easy-nfse/commit/b0717c39701c5005162c2616fffe51545ba2e357))
+* lançar a correção da atualização como 0.5.1 ([c95887d](https://github.com/LukastBorges/easy-nfse/commit/c95887dab37b3387dcc66cc164c9a9f5ecd412c4))
+
 ## [0.5.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.4.2...easy-nfse-v0.5.0) (2026-10-31)
 
 
