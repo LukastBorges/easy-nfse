@@ -16,6 +16,13 @@ exige redesenhar cada tela.
    resumo "Emitidas em outubro" na Início, resumo do mês e barras dos últimos 12 meses no Histórico, histórico
    agrupado por mês, e o valor em moeda estrangeira na lista do histórico. Podem entrar depois da etapa 6 ou ficar de fora.
 
+## Andamento
+
+| Etapa | Estado |
+|---|---|
+| 0, 1, 2 | Feitas no branch `feat/identidade-visual` |
+| 3 a 8 | A fazer |
+
 ## Etapa 0 — Fontes locais
 
 O app roda sem internet (desktop empacotado) e hoje carrega a Inter do Google Fonts.
@@ -29,6 +36,14 @@ O app roda sem internet (desktop empacotado) e hoje carrega a Inter do Google Fo
 Commit: `build(ui): empacotar Bricolage Grotesque e Public Sans`.
 
 ## Etapa 1 — Tokens e utilitários
+
+**Estratégia adotada:** em vez de trocar as classes de cor de todas as telas de uma vez, o `@theme` de `base.html`
+**remapeia as paletas do Tailwind que as telas já usam** (`slate` vai do papel à mata, `indigo`/`violet`/`amber`
+viram mostarda, `emerald` vira folha, `rose` vira barro, `sky` vira água). O app inteiro muda de cor sem editar
+marcação; cada tela troca para as cores e variáveis definitivas na sua etapa. Os materiais que mudam com o tema
+(vidro, campos, textos) são variáveis CSS (`--texto`, `--rotulo`, `--vidro-1`…) redefinidas em `[data-theme=dark]`.
+
+O que estava previsto:
 
 O maior salto visual com a menor mudança de marcação: as telas já usam `btn-primary`, `btn-ghost`, `card`, `input`,
 `label`, `hint`, `menu-item`, `kv`, `section-title`.

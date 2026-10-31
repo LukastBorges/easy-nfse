@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import alert %}
 {% set novo = not c.id %}
-{% block title %}{{ ('Novo ' ~ cad.papel) if novo else cad.rotulo(c) }} · easy-nfse{% endblock %}
+{% block title %}{{ ('Novo ' ~ cad.papel) if novo else cad.rotulo(c) }} · easyNFSe{% endblock %}
 {% block content %}
 <form method="post" action="/cadastros/{{ cad.tipo }}{{ '/' ~ c.id if c.id }}" class="space-y-6 pb-24">
   <input type="hidden" name="voltar" value="{{ voltar }}">

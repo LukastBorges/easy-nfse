@@ -7,13 +7,13 @@
 <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm"
      {% if acompanhar %}hx-get="/atualizacao/estado" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
   {% if instalando %}
-    {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Instalando a versão <b>{{ st.nova }}</b>. O easy-nfse vai fechar e reabrir em instantes.{% endcall %}
+    {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Instalando a versão <b>{{ st.nova }}</b>. O easyNFSe vai fechar e reabrir em instantes.{% endcall %}
   {% elif erro %}
     {% call linha('alert-circle', 'text-rose-600 dark:text-rose-400') %}<span class="text-rose-700 dark:text-rose-300">{{ erro }}</span>{% endcall %}
   {% elif st.nova and st.pronta %}
     {% call linha('circle-check', 'text-emerald-600 dark:text-emerald-400') %}Versão <b>{{ st.nova }}</b> baixada e verificada.{% endcall %}
     <button class="btn-primary px-3 py-1.5" hx-post="/atualizacao/instalar" hx-target="closest div" hx-swap="outerHTML"
-            hx-disabled-elt="this" hx-confirm="O easy-nfse vai fechar e reabrir na versão {{ st.nova }}. Seus certificados, templates e notas não são alterados."
+            hx-disabled-elt="this" hx-confirm="O easyNFSe vai fechar e reabrir na versão {{ st.nova }}. Seus certificados, templates e notas não são alterados."
             data-confirm-titulo="Atualizar agora?" data-confirm-acao="Reiniciar e atualizar">{{ icone('refresh') }}Reiniciar e atualizar</button>
   {% elif acompanhar %}
     {% call linha('loader-2', 'animate-spin text-indigo-600 dark:text-indigo-400') %}Versão <b>{{ st.nova }}</b> disponível. Baixando em segundo plano…{% endcall %}

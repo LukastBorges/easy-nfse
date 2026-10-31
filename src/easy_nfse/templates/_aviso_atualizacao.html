@@ -10,7 +10,7 @@
 <div class="border-b border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-950 dark:text-emerald-100">
   <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 text-sm sm:px-6">
     {{ icone('circle-check', 'size-5 shrink-0 text-emerald-600 dark:text-emerald-400') }}
-    <p class="min-w-0 flex-1">easy-nfse atualizado para a versão <b>{{ st.atualizado_para }}</b>.
+    <p class="min-w-0 flex-1">easyNFSe atualizado para a versão <b>{{ st.atualizado_para }}</b>.
       <button type="button" data-abrir-notas class="font-medium underline underline-offset-2">Ver novidades</button></p>
     <button type="button" class="rounded-lg p-1 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
             hx-post="/atualizacao/dispensar" hx-target="closest div.border-b" hx-swap="outerHTML" title="Fechar" aria-label="Fechar">{{ icone('x') }}</button>

@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}easy-nfse{% endblock %}</title>
+  <title>{% block title %}easyNFSe{% endblock %}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="/static/vendor/fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/vendor/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
   <script>
     // Aplica o tema antes de pintar a página (evita "piscar" branco no modo escuro).
     (() => {
@@ -20,13 +20,109 @@
   </script>
   <script src="/static/vendor/tailwind-browser.js"></script>
   <script src="/static/vendor/htmx.min.js"></script>
+  <style>
+    /* Fontes da identidade (scripts/fontes.py): o app funciona sem internet. */
+    @font-face { font-family: "Public Sans"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/static/vendor/fonts/public-sans.woff2") format("woff2"); }
+    @font-face { font-family: "Public Sans"; font-style: italic; font-weight: 100 900; font-display: swap; src: url("/static/vendor/fonts/public-sans-italic.woff2") format("woff2"); }
+    @font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("/static/vendor/fonts/bricolage-grotesque.woff2") format("woff2"); }
+  </style>
   <style type="text/tailwindcss">
+    /* Identidade "Mata, mostarda e papel" (docs/design/README.md). */
     @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
     @theme {
-      --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+      --font-display: "Bricolage Grotesque", "Public Sans", ui-sans-serif, system-ui, sans-serif;
+      --ease-mesa: cubic-bezier(.22, .72, .18, 1);
+
+      /* Cores da identidade, para marcação nova. */
+      --color-mata-0: #0A150F; --color-mata-1: #10211A; --color-mata-2: #172D22; --color-mata-3: #1F3C2C;
+      --color-musgo: #2A4E39;
+      --color-mostarda: #D5A11A; --color-mostarda-clara: #EBC247; --color-mostarda-escura: #AE8210;
+      --color-papel: #EEE6D0; --color-papel-2: #C8C4AD; --color-erva: #8E9B8B; --color-erva-escura: #5E6E60;
+      --color-tinta: #15170F; --color-barro: #CF6F5B; --color-folha: #7FB889;
+
+      /* Transição: as paletas do Tailwind que as telas já usam são remapeadas para a identidade, para o app
+         inteiro mudar de uma vez. Cada tela troca para as cores acima na sua etapa (docs/design/plano.md).
+         slate: do papel (50) à mata (950); indigo, violet e amber: mostarda; emerald: folha; rose: barro; sky: água. */
+      --color-white: #FBF7EC;
+      --color-slate-50: #F3EEDF; --color-slate-100: #E9E2CC; --color-slate-200: #D9D1B8; --color-slate-300: #BDB89F;
+      --color-slate-400: #8E9B8B; --color-slate-500: #6F7F70; --color-slate-600: #55665A; --color-slate-700: #3A4E41;
+      --color-slate-800: #22382B; --color-slate-900: #172D22; --color-slate-950: #10211A;
+      --color-indigo-50: #F8EFCF; --color-indigo-100: #F1E2A8; --color-indigo-200: #E8D07A; --color-indigo-300: #E2C25A;
+      --color-indigo-400: #EBC247; --color-indigo-500: #D5A11A; --color-indigo-600: #8A6508; --color-indigo-700: #6E5106;
+      --color-indigo-800: #54400A; --color-indigo-900: #3D2F08; --color-indigo-950: #261D05;
+      --color-violet-50: #F8EFCF; --color-violet-100: #F1E2A8; --color-violet-400: #EBC247; --color-violet-500: #D5A11A;
+      --color-violet-600: #8A6508; --color-violet-700: #6E5106;
+      --color-amber-50: #F8EFCF; --color-amber-100: #F1E2A8; --color-amber-200: #E8D07A; --color-amber-300: #E8D07A;
+      --color-amber-400: #EBC247; --color-amber-500: #D5A11A; --color-amber-600: #8A6508; --color-amber-700: #6E5106;
+      --color-amber-800: #54400A; --color-amber-900: #3D2F08; --color-amber-950: #261D05;
+      --color-emerald-50: #E6F0E2; --color-emerald-100: #D3E6CE; --color-emerald-200: #B5D4AE; --color-emerald-300: #9CCB9F;
+      --color-emerald-400: #7FB889; --color-emerald-500: #5E9E6B; --color-emerald-600: #3F7F4E; --color-emerald-700: #2F663D;
+      --color-emerald-800: #234F2F; --color-emerald-900: #1A3B24; --color-emerald-950: #0F2416;
+      --color-rose-50: #F8E6E0; --color-rose-100: #F2D2C8; --color-rose-200: #E8B5A6; --color-rose-300: #E9A08F;
+      --color-rose-400: #DD8672; --color-rose-500: #CF6F5B; --color-rose-600: #B4523F; --color-rose-700: #923F30;
+      --color-rose-800: #6E3024; --color-rose-900: #4D2219; --color-rose-950: #2E140F;
+      --color-sky-50: #E4EEEA; --color-sky-100: #CFE0DA; --color-sky-200: #B0CBC3; --color-sky-300: #A9C9BF;
+      --color-sky-400: #8DB5A9; --color-sky-500: #6F9A8E; --color-sky-600: #557F73; --color-sky-700: #41665C;
+      --color-sky-800: #304D45; --color-sky-900: #213731; --color-sky-950: #13221E;
     }
-    :root { color-scheme: light; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E"); }
-    [data-theme=dark] { color-scheme: dark; --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E"); }
+
+    /* Materiais que mudam com o tema. O escuro é a mesa à noite; o claro (provisório até a etapa 7) é papel. */
+    :root {
+      color-scheme: light;
+      --fundo: #EFE8D4;
+      --luz-1: rgba(255, 252, 240, .7); --luz-2: rgba(213, 161, 26, .08); --vinheta: rgba(80, 60, 20, .14);
+      --grao-opacidade: .16; --grao-mistura: multiply;
+      --vidro-1: rgba(255, 253, 246, .72); --vidro-2: rgba(255, 252, 242, .55);
+      --vidro-borda: rgba(23, 45, 34, .12); --vidro-brilho: rgba(255, 255, 255, .7); --vidro-sombra: rgba(40, 50, 30, .22);
+      --campo-fundo: rgba(255, 253, 246, .8); --campo-borda: rgba(23, 45, 34, .2); --campo-sombra: rgba(40, 40, 20, .06);
+      --texto: #172D22; --texto-2: #3A4E41; --rotulo: #55665A; --placeholder: #8E9B8B;
+      --cabecalho: rgba(243, 238, 223, .78);
+      --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2355665A'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
+    }
+    [data-theme=dark] {
+      color-scheme: dark;
+      --fundo: #10211A;
+      --luz-1: rgba(74, 124, 90, .55); --luz-2: rgba(213, 161, 26, .10); --vinheta: rgba(0, 0, 0, .35);
+      --grao-opacidade: .24; --grao-mistura: soft-light;
+      --vidro-1: rgba(238, 230, 208, .075); --vidro-2: rgba(238, 230, 208, .02);
+      --vidro-borda: rgba(238, 230, 208, .11); --vidro-brilho: rgba(255, 250, 235, .09); --vidro-sombra: rgba(0, 0, 0, .7);
+      --campo-fundo: rgba(10, 21, 15, .45); --campo-borda: rgba(238, 230, 208, .1); --campo-sombra: rgba(0, 0, 0, .35);
+      --texto: #EEE6D0; --texto-2: #C8C4AD; --rotulo: #8E9B8B; --placeholder: #5E6E60;
+      --cabecalho: rgba(16, 33, 26, .7);
+      --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238E9B8B'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
+    }
+
+    /* A mesa: luz, vinheta, grão fino e fibras largas, fixos atrás de tudo. */
+    /* O <html> também precisa do fundo: sem ele o navegador leva o fundo do body para a tela inteira, e o grão e
+       as fibras (mix-blend-mode) se misturam com transparência, clareando a página em vez de texturizá-la. */
+    html { background: var(--fundo); }
+    body { background: var(--fundo); isolation: isolate; }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(1100px 700px at 14% -8%, var(--luz-1) 0%, transparent 60%),
+        radial-gradient(900px 600px at 92% 110%, var(--luz-2) 0%, transparent 55%),
+        radial-gradient(1400px 900px at 50% 50%, transparent 40%, var(--vinheta) 100%);
+    }
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      opacity: var(--grao-opacidade); mix-blend-mode: var(--grao-mistura);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+      background-size: 300px 300px;
+    }
+    :root:not([data-theme=dark]) body::after { filter: invert(1) sepia(.4); }
+    .fibras {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .8; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .012' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .70 0 0 0 0 .50 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+      background-size: 900px 900px;
+    }
+
+    /* Títulos em Bricolage (os rótulos pequenos em caixa alta ficam na fonte da interface até a etapa de cada tela). */
+    :is(h1, h2, h3):not(.text-xs, .text-sm) { font-family: var(--font-display); letter-spacing: -.02em; }
+    h1 { letter-spacing: -.03em; }
+    .tabular-nums { font-variant-numeric: tabular-nums lining-nums; }
+
     /* seta própria nos selects: alinhada e com respiro, igual nos dois temas */
     select.input {
       appearance: none; -webkit-appearance: none;
@@ -34,27 +130,131 @@
       background-position: right 0.75rem center; background-size: 1.1rem;
       padding-right: 2.5rem; text-overflow: ellipsis;
     }
-    [data-theme=dark] select.input option { background: #0f172a; }
+    select.input option { background: var(--color-slate-50); color: var(--texto); }
+    [data-theme=dark] select.input option { background: var(--color-mata-2); }
     /* cursor de clique em tudo que é clicável (o preflight do Tailwind v4 usa o cursor padrão) */
     button, select, summary, [role=button], label:has(> input[type=file]),
     input[type=checkbox], input[type=radio], input[type=file], input[type=file]::file-selector-button,
     input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
     button:disabled, select:disabled, input:disabled { cursor: not-allowed; }
-    @utility btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed; }
-    @utility btn-primary { @apply btn bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600; }
-    @utility btn-success { @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-500; }
-    @utility btn-ghost { @apply btn bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40; }
-    @utility btn-danger { @apply btn text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10; }
-    @utility menu-item { @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800 focus-visible:outline-none; }
-    @utility card { @apply rounded-2xl bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-800; }
-    @utility label { @apply mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400; }
-    @utility input { @apply block w-full rounded-xl border-0 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 ring-1 ring-slate-300 dark:ring-slate-700 ring-inset placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-600 focus:ring-inset focus:outline-none; }
-    @utility hint { @apply mt-1 text-xs text-slate-500 dark:text-slate-400; }
-    @utility section-title { @apply text-sm font-semibold text-slate-900 dark:text-slate-100; }
-    @utility kv {
-      & dt { @apply text-xs text-slate-500 dark:text-slate-400; }
-      & dd { @apply text-sm font-medium break-words text-slate-900 dark:text-slate-100; }
+    [data-theme=dark] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.85) sepia(.3); }
+    :focus-visible { outline-color: var(--color-mostarda); }
+    :root { accent-color: var(--color-mostarda); }
+
+    /* ---------- botões ---------- */
+    @utility btn {
+      @apply inline-flex items-center justify-center gap-2 rounded-[11px] px-4 py-2.5 text-sm font-semibold whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed;
+      transition: transform .18s var(--ease-mesa), box-shadow .3s var(--ease-mesa), background-color .3s var(--ease-mesa), color .3s var(--ease-mesa), filter .3s var(--ease-mesa);
     }
+    /* Mostarda: a ação principal. Um brilho atravessa no hover; pressionado, afunda como um carimbo. */
+    @utility btn-primary {
+      @apply btn relative overflow-hidden text-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mostarda;
+      background: linear-gradient(180deg, var(--color-mostarda-clara) 0%, var(--color-mostarda) 55%, var(--color-mostarda-escura) 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 245, 200, .55), inset 0 -1px 0 rgba(90, 60, 0, .35), 0 10px 22px -10px rgba(213, 161, 26, .55), 0 1px 2px rgba(0, 0, 0, .3);
+      &::after {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(110deg, transparent 30%, rgba(255, 250, 220, .45) 50%, transparent 70%);
+        transform: translateX(-120%); transition: transform .7s var(--ease-mesa);
+      }
+      &:hover:not(:disabled) { filter: brightness(1.04); }
+      &:hover:not(:disabled)::after { transform: translateX(120%); }
+      &:active:not(:disabled) { transform: translateY(1px) scale(.995); box-shadow: inset 0 2px 4px rgba(90, 60, 0, .35); }
+    }
+    @utility btn-success { @apply btn-primary; }
+    /* Vidro: ação secundária. */
+    @utility btn-ghost {
+      @apply btn;
+      color: var(--texto-2); background: var(--vidro-2); border: 1px solid var(--vidro-borda);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho);
+      &:hover:not(:disabled) { color: var(--texto); background: var(--vidro-1); }
+    }
+    @utility btn-danger { @apply btn text-barro hover:bg-barro/10; }
+    @utility menu-item {
+      @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm focus-visible:outline-none;
+      color: var(--texto-2);
+      &:hover, &:focus-visible { background: var(--vidro-1); color: var(--texto); }
+    }
+
+    /* ---------- vidro fosco ---------- */
+    @utility vidro {
+      position: relative; border-radius: 18px; border: 1px solid var(--vidro-borda);
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .93 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 220px 220px,
+        linear-gradient(165deg, var(--vidro-1) 0%, var(--vidro-2) 100%);
+      -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
+      box-shadow: inset 0 1px 0 var(--vidro-brilho), 0 30px 50px -30px var(--vidro-sombra);
+      transition: border-color .35s var(--ease-mesa), box-shadow .35s var(--ease-mesa), transform .35s var(--ease-mesa);
+    }
+    @utility card { @apply vidro; }
+    /* Hover de card clicável: sobe 2 px e um anel de luz acende só na borda. */
+    :is(a, button).card:hover, .card.toque:hover { transform: translateY(-2px); }
+    :is(a, button).card::before, .card.toque::before {
+      content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; padding: 1.5px;
+      background: conic-gradient(from 215deg at 50% 50%, transparent 0%, rgba(255, 250, 235, .7) 12%, rgba(235, 194, 71, .45) 22%, transparent 34%, transparent 50%, rgba(255, 250, 235, .35) 62%, transparent 74%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+      opacity: 0; transition: opacity .55s var(--ease-mesa);
+    }
+    :root:not([data-theme=dark]) :is(a, button).card::before, :root:not([data-theme=dark]) .card.toque::before {
+      background: conic-gradient(from 215deg at 50% 50%, transparent 0%, rgba(174, 130, 16, .6) 14%, transparent 34%, transparent 50%, rgba(23, 45, 34, .25) 62%, transparent 74%);
+    }
+    :is(a, button).card:hover::before, .card.toque:hover::before { opacity: 1; }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .vidro, .card { background: var(--color-slate-50); }
+      [data-theme=dark] :is(.vidro, .card) { background: rgba(23, 45, 34, .92); }
+    }
+
+    /* ---------- campos e textos ---------- */
+    @utility label { @apply mb-1.5 block text-xs font-medium; color: var(--rotulo); }
+    @utility input {
+      @apply block w-full rounded-[11px] px-3.5 py-2.5 text-sm focus:outline-none;
+      color: var(--texto); background: var(--campo-fundo); border: 1px solid var(--campo-borda);
+      box-shadow: inset 0 2px 6px var(--campo-sombra);
+      transition: border-color .2s, box-shadow .2s;
+      &::placeholder { color: var(--placeholder); }
+      &:focus { border-color: rgba(213, 161, 26, .7); box-shadow: inset 0 2px 6px var(--campo-sombra), 0 0 0 3px rgba(213, 161, 26, .18); }
+    }
+    @utility hint { @apply mt-1 text-xs; color: var(--rotulo); }
+    @utility section-title { @apply font-display text-base font-semibold; color: var(--texto); }
+    @utility kv {
+      & dt { @apply text-xs; color: var(--rotulo); }
+      & dd { @apply text-sm font-medium break-words; color: var(--texto); }
+    }
+    @utility dialogo {
+      @apply m-auto rounded-[20px] p-0 shadow-2xl;
+      color: var(--texto); border: 1px solid var(--vidro-borda);
+      background: linear-gradient(165deg, color-mix(in srgb, var(--fundo) 88%, white 4%), var(--fundo));
+      box-shadow: inset 0 1px 0 var(--vidro-brilho), 0 40px 80px -30px rgba(0, 0, 0, .6);
+      &::backdrop { background: rgba(10, 21, 15, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    }
+
+    /* ---------- cabeçalho ---------- */
+    /* sem font-size aqui: o tamanho vem das classes (CSS fora de camada ganharia dos utilitários do Tailwind) */
+    .marca { display: inline-flex; align-items: baseline; font-family: var(--font-display); font-weight: 700; line-height: 1; letter-spacing: -.02em; color: var(--texto); font-variation-settings: "opsz" 96; }
+    .marca span { font-weight: 800; color: var(--color-mostarda-escura); }
+    [data-theme=dark] .marca span { color: var(--color-mostarda-clara); }
+    .marca i { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 2px; background: var(--color-mostarda); box-shadow: 0 0 10px -2px rgba(213, 161, 26, .8); }
+    .nav-luz {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 0; opacity: 0; border-radius: .5rem; pointer-events: none;
+      background: var(--vidro-1); box-shadow: inset 0 1px 0 var(--vidro-brilho), inset 0 -2px 0 rgba(213, 161, 26, .85);
+      transition: transform .42s var(--ease-mesa), width .42s var(--ease-mesa), opacity .2s;
+    }
+    .nav-luz.sem-transicao { transition: none; }
+    nav.com-luz a[aria-current=page] { background: transparent; }
+
+    /* ---------- entrada da página: os blocos pousam na mesa (só na carga, não em trocas htmx) ---------- */
+    @keyframes pousar { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: none; } }
+    .pousa { animation: pousar .7s var(--ease-mesa) both; }
+    .pousa:nth-child(2) { animation-delay: .08s; } .pousa:nth-child(3) { animation-delay: .16s; }
+    .pousa:nth-child(4) { animation-delay: .24s; } .pousa:nth-child(5) { animation-delay: .32s; }
+    .pousa:nth-child(n+6) { animation-delay: .4s; }
+    @media (prefers-reduced-motion: reduce) {
+      .pousa { animation: none; }
+      .nav-luz { transition: none; }
+      :is(a, button).card::before, .card.toque::before, .btn-primary::after { display: none; }
+      :is(a, button).card:hover, .card.toque:hover { transform: none; }
+    }
+
     [data-tema] #tema-btn [data-icone] { display: none; }
     [data-tema=sistema] #tema-btn [data-icone=sistema], [data-tema=claro] #tema-btn [data-icone=claro],
     [data-tema=escuro] #tema-btn [data-icone=escuro] { display: block; }
@@ -64,24 +264,31 @@
     .htmx-request .htmx-hide-on-request { display: none; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased">
-  <header class="sticky top-0 z-30 border-b border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur">
+<body class="min-h-screen font-sans text-[var(--texto)] antialiased">
+  <div class="fibras" aria-hidden="true"></div>
+  <header class="sticky top-0 z-30 border-b border-[var(--vidro-borda)] bg-[var(--cabecalho)] backdrop-blur-xl backdrop-saturate-150">
     <div class="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-6 sm:px-6">
-      <a href="/" class="flex items-center gap-2.5">
-        <img src="/static/logo.svg" alt="" class="size-8 drop-shadow-sm sm:size-9">
-        <span class="hidden text-[17px] font-medium tracking-tight text-slate-900 dark:text-slate-100 sm:inline">easy<span class="font-bold text-indigo-600 dark:text-indigo-400">nfse</span></span>
-      </a>
-      {# no celular, os itens ficam só com o ícone (o nome segue para leitores de tela e no title) #}
-      <nav class="flex min-w-0 items-center gap-0.5 overflow-x-auto text-[13px] sm:gap-1 sm:text-sm">
+      <a href="/" class="marca shrink-0 text-[18px] sm:text-[21px]" aria-label="easyNFSe: início">easy<span>NFSe</span><i></i></a>
+      {# no celular, os itens ficam só com o ícone (o nome segue para leitores de tela e no title).
+         A página atual é marcada pelo .nav-luz, que desliza entre os itens (app.js); sem JS, o próprio item tem fundo. #}
+      <nav data-nav aria-label="Seções" class="relative flex min-w-0 items-center gap-0.5 overflow-x-auto text-[13px] sm:gap-1 sm:text-sm">
+        <span class="nav-luz" aria-hidden="true"></span>
         {% set path = request.url.path %}
         {% set em_templates = path == '/templates' or path.endswith('/editar') %}
-        <a href="/" class="hidden shrink-0 rounded-lg px-2 py-1.5 font-medium sm:inline-flex sm:items-center sm:gap-1.5 sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path == '/' or (path.startswith('/templates/') and not em_templates) else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('home', 'size-4 shrink-0') }}Início</a>
-        <a href="/templates" title="Templates" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if em_templates else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('template', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Templates</span></a>
-        <a href="/cadastros" title="Cadastros" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/cadastros') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('address-book', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Cadastros</span></a>
-        <a href="/historico" title="Histórico" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/historico') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('history', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Histórico</span></a>
-        <a href="/configuracoes" title="Configurações" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium sm:px-3 {{ 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100' if path.startswith('/configuracoes') else 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100' }}">{{ icone('settings', 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">Configurações</span></a>
+        {% set icones_nav = {'Início': 'home', 'Templates': 'template', 'Cadastros': 'address-book', 'Histórico': 'history', 'Configurações': 'settings'} %}
+        {% set itens_nav = [
+          ('/', 'Início', path == '/' or (path.startswith('/templates/') and not em_templates)),
+          ('/templates', 'Templates', em_templates),
+          ('/cadastros', 'Cadastros', path.startswith('/cadastros')),
+          ('/historico', 'Histórico', path.startswith('/historico')),
+          ('/configuracoes', 'Configurações', path.startswith('/configuracoes')),
+        ] %}
+        {% for href, nome, ativo in itens_nav %}
+        <a href="{{ href }}" title="{{ nome }}" data-nav-item="{{ nome }}" {{ 'aria-current=page' if ativo }}
+           class="relative z-[1] inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium transition-colors duration-300 sm:px-3 {{ 'bg-[var(--vidro-1)] text-[var(--texto)]' if ativo else 'text-[var(--rotulo)] hover:text-[var(--texto)]' }}">{{ icone(icones_nav[nome], 'size-4 shrink-0') }}<span class="sr-only sm:not-sr-only">{{ nome }}</span></a>
+        {% endfor %}
       </nav>
-      <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100" aria-label="Alternar tema">
+      <button type="button" id="tema-btn" class="ml-auto grid size-8 shrink-0 sm:size-9 place-items-center rounded-lg text-[var(--rotulo)] hover:bg-[var(--vidro-1)] hover:text-[var(--texto)]" aria-label="Alternar tema">
         <span data-icone="sistema">{{ icone('device-desktop', 'size-[18px]') }}</span>
         <span data-icone="claro">{{ icone('sun', 'size-[18px]') }}</span>
         <span data-icone="escuro">{{ icone('moon', 'size-[18px]') }}</span>
@@ -100,7 +307,7 @@
       {% set versao = atualizacao.atual if atualizacao else '' %}
       <div class="relative shrink-0" data-menu>
         <button type="button" data-menu-botao aria-haspopup="menu" aria-expanded="false" aria-controls="menu-app"
-                class="relative grid size-8 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 sm:size-9"
+                class="relative grid size-8 place-items-center rounded-lg text-[var(--rotulo)] hover:bg-[var(--vidro-1)] hover:text-[var(--texto)] sm:size-9"
                 title="Mais opções" aria-label="Mais opções">
           {{ icone('dots-vertical', 'size-[18px]') }}
           {% if atualizacao and atualizacao.nova %}<span class="absolute top-1 right-1 size-2 rounded-full bg-indigo-500 ring-2 ring-white dark:ring-slate-950" aria-hidden="true"></span>{% endif %}
@@ -115,7 +322,7 @@
             {{ icone('bug', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Reportar um problema{{ icone('external-link', 'ml-auto size-3.5 shrink-0 text-slate-400 dark:text-slate-500') }}</a>
           <div class="my-1 border-t border-slate-100 dark:border-slate-800" role="separator"></div>
           <button role="menuitem" type="button" data-abrir-sobre class="menu-item">
-            {{ icone('info-circle', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Sobre o easy-nfse
+            {{ icone('info-circle', 'size-4 shrink-0 text-slate-400 dark:text-slate-500') }}Sobre o easyNFSe
             {% if atualizacao and atualizacao.nova %}<span class="ml-auto rounded-full bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300" title="Versão nova disponível">{{ atualizacao.nova }}</span>
             {% else %}<span class="ml-auto text-xs tabular-nums text-slate-400 dark:text-slate-500">v{{ versao }}</span>{% endif %}</button>
         </div>
@@ -129,7 +336,7 @@
   </main>
 
   <dialog id="confirmar" aria-labelledby="confirmar-titulo"
-          class="m-auto w-[min(28rem,calc(100%-2rem))] rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm">
+          class="w-[min(28rem,calc(100%-2rem))] dialogo">
     <form method="dialog" class="p-6">
       <div class="flex gap-4">
         <span data-icone-perigo class="grid size-10 shrink-0 place-items-center rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400">
@@ -147,12 +354,11 @@
     </form>
   </dialog>
   <dialog id="sobre" aria-labelledby="sobre-titulo"
-          class="m-auto w-[min(28rem,calc(100%-2rem))] rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm">
+          class="w-[min(28rem,calc(100%-2rem))] dialogo">
     <div class="p-6">
       <div class="flex items-center gap-4">
-        <img src="/static/logo.svg" alt="" class="size-14 drop-shadow-sm">
         <div>
-          <h2 id="sobre-titulo" class="text-lg font-semibold">easy<span class="text-indigo-600 dark:text-indigo-400">nfse</span></h2>
+          <h2 id="sobre-titulo" class="marca text-[28px]">easy<span>NFSe</span><i></i></h2>
           <p class="text-sm text-slate-500 dark:text-slate-400">Versão {{ versao }}</p>
         </div>
       </div>
@@ -186,7 +392,7 @@
   </dialog>
   {# altura definida (não só max-h): o WKWebView do macOS não recalcula a altura do diálogo quando as notas chegam #}
   <dialog id="notas" aria-labelledby="notas-titulo"
-          class="m-auto flex h-[min(44rem,calc(100dvh-2rem))] w-[min(40rem,calc(100%-2rem))] flex-col rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm [&:not([open])]:hidden">
+          class="flex h-[min(44rem,calc(100dvh-2rem))] w-[min(40rem,calc(100%-2rem))] flex-col dialogo [&:not([open])]:hidden">
     <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4">
       <h2 id="notas-titulo" class="flex items-center gap-2 text-base font-semibold">{{ icone('notes', 'size-5 text-slate-400 dark:text-slate-500') }}Notas de atualização</h2>
       <form method="dialog"><button class="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fechar" title="Fechar">{{ icone('x') }}</button></form>
@@ -198,7 +404,7 @@
   </dialog>
   {# cadastro de prestador/tomador aberto do template ou da emissão; altura definida pelo mesmo motivo das notas #}
   <dialog id="cadastro" aria-labelledby="cadastro-titulo"
-          class="m-auto flex h-[min(46rem,calc(100dvh-2rem))] w-[min(46rem,calc(100%-2rem))] flex-col rounded-2xl bg-white dark:bg-slate-900 p-0 text-slate-900 dark:text-slate-100 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm [&:not([open])]:hidden">
+          class="flex h-[min(46rem,calc(100dvh-2rem))] w-[min(46rem,calc(100%-2rem))] flex-col dialogo [&:not([open])]:hidden">
     <div id="cadastro-conteudo" class="flex min-h-0 flex-1 flex-col"></div>
   </dialog>
   <script src="/static/app.js"></script>

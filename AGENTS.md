@@ -118,7 +118,15 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 
 - Especificação em `docs/design/README.md`, plano de implantação em etapas em `docs/design/plano.md`, telas de
   referência em `docs/design/telas/` (fontes HTML em `docs/design/conceitos/`, regerar com `renderizar.py --png`).
-  **Em implantação**: telas ainda não migradas seguem com as classes antigas até a etapa delas.
+  **Em implantação** (etapas 0 a 2 feitas: fontes, tokens, utilitários, cabeçalho e diálogos).
+- **Paletas remapeadas**: o `@theme` de `base.html` redefine `slate`, `indigo`, `violet`, `amber`, `emerald`, `rose`,
+  `sky` e `white` com as cores da identidade, para as telas antigas já saírem no visual novo. Em marcação nova, prefira
+  as cores da identidade (`text-mostarda`, `bg-mata-2`…) e as variáveis de tema (`text-[var(--texto)]`,
+  `text-[var(--rotulo)]`, `bg-[var(--vidro-1)]`), que já mudam com o tema e **dispensam o par `dark:`**.
+- Utilitários: `btn-primary` (mostarda, um por área de decisão), `btn-ghost` (vidro), `card`/`vidro` (vidro fosco; em
+  `<a>`/`<button>` ou com `.toque`, o hover acende a borda), `dialogo` (todo `<dialog>`), `input`, `label`, `hint`.
+- Fontes locais em `static/vendor/fonts` (`uv run python scripts/fontes.py`), nunca do Google Fonts: o app roda sem
+  internet. Dados fictícios para conferir telas: `EASY_NFSE_DATA=/tmp/x uv run python scripts/dados_demo.py`.
 - Tela nova ou alterada segue a especificação: fundo verde-floresta com grão, painéis em vidro fosco, mostarda só na
   ação principal e na marca, a nota em emissão como folha de papel. Nada de `slate`/`indigo`/`emerald` em telas novas.
 - Fontes: **Bricolage Grotesque** em títulos, valores e marca; **Public Sans** no resto. A marca é o lettering
@@ -137,9 +145,17 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 - **signxml** não serve: no modo sem prefixo cria elementos fora do namespace ds. A assinatura é feita à mão em
   `Certificado.assinar` (enveloped, RSA-SHA256, C14N 1.0, `Signature` sem prefixo, irmã de `infDPS`).
   Qualquer mudança na assinatura **precisa** passar no teste com `xmlsec` (`test_assinatura_valida_com_xmlsec`).
+- **Fundo com textura**: o `<html>` precisa de `background` próprio. Sem ele o navegador leva o fundo do `body` para
+  a tela inteira, e o grão e as fibras (com `mix-blend-mode`) se misturam com transparência: a página inteira fica
+  ~30 pontos mais clara em vez de texturizada.
+- **CSS fora de camada ganha dos utilitários**: regras soltas no `<style type="text/tailwindcss">` (ex.: `.marca`)
+  vencem classes como `text-[18px]`, que ficam em `@layer utilities`. Não ponha nelas o que deve variar por classe
+  (o tamanho da marca vem das classes).
+- **Animação de entrada usa `translate`**, não `transform`: `transform` no keyframe apagaria a rotação das folhas de
+  papel (`.pousa` + `rotate`).
 - **Tailwind v4**: classes reutilizáveis são `@utility` (não `@layer components` + `@apply` de classe custom — quebra
   todo o CSS). Modo escuro via `@custom-variant dark` + `data-theme` no `<html>`; **toda classe de cor nova precisa do par
-  `dark:`**. Preflight remove `cursor: pointer` (regra global em `base.html`).
+  `dark:`**, exceto as variáveis de tema (`var(--texto)` etc., ver "Identidade visual"). Preflight remove `cursor: pointer` (regra global em `base.html`).
 - **htmx**: formulários com `hx-*` recebem fragmentos (`templates/partials/`); formulários sem htmx precisam de página completa
   (ex.: erro em `/danfse` renderiza `historico.html`). Redirecionamento após htmx: header `HX-Redirect`.
 - **Ícones**: só [Tabler](https://tabler.io/icons) (outline), via `{{ icone('nome', 'classes') }}` (helper em `app.py`, SVG

@@ -297,3 +297,61 @@ document.addEventListener("cadastro-salvo", (e) => {
   });
   document.getElementById("cadastro")?.close();
 });
+
+// Menu do cabeçalho: a página atual é marcada por um único realce (.nav-luz) que desliza até o item clicado e só
+// então troca de página. Quando a página muda por outro caminho (link, card, voltar), o realce nasce no item da
+// página anterior (guardado em sessionStorage) e desliza até o atual. Ctrl/Cmd+clique segue abrindo nova aba.
+(() => {
+  const ler = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+  const gravar = (k, v) => {
+    try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch {}
+  };
+  const iniciar = () => {
+    const nav = document.querySelector("[data-nav]");
+    const luz = nav && nav.querySelector(".nav-luz");
+    if (!luz) return;
+    const itens = [...nav.querySelectorAll("[data-nav-item]")];
+    const ativo = itens.find((a) => a.getAttribute("aria-current") === "page");
+    const calmo = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const por = (a, animar) => {
+      luz.classList.toggle("sem-transicao", !animar || calmo);
+      luz.style.width = a.offsetWidth + "px";
+      luz.style.transform = `translateX(${a.offsetLeft}px)`;
+      void luz.offsetWidth; // aplica a posição antes da próxima transição
+    };
+    nav.classList.add("com-luz");
+    const anterior = itens.find((a) => a.dataset.navItem === ler("nav-anterior"));
+    const jaMovido = ativo && ler("nav-movido") === ativo.dataset.navItem;
+    gravar("nav-movido", null);
+    if (ativo) {
+      luz.style.opacity = 1;
+      if (anterior && anterior !== ativo && !jaMovido && !calmo) {
+        por(anterior, false);
+        requestAnimationFrame(() => por(ativo, true));
+      } else por(ativo, false);
+      gravar("nav-anterior", ativo.dataset.navItem);
+    } else gravar("nav-anterior", null);
+
+    itens.forEach((a) => a.addEventListener("click", (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button || a === ativo) return;
+      e.preventDefault();
+      itens.forEach((i) => (i === a ? i.setAttribute("aria-current", "page") : i.removeAttribute("aria-current")));
+      if (!ativo) { por(a, false); luz.style.opacity = 1; }
+      por(a, true);
+      gravar("nav-anterior", a.dataset.navItem);
+      gravar("nav-movido", a.dataset.navItem);
+      setTimeout(() => { location.href = a.href; }, calmo ? 0 : 420);
+    }));
+    addEventListener("resize", () => {
+      const atual = itens.find((a) => a.getAttribute("aria-current") === "page");
+      if (atual) por(atual, false);
+    });    // voltar pelo histórico pode restaurar esta página da memória (bfcache) com o item clicado marcado
+    addEventListener("pageshow", (e) => {
+      if (!e.persisted) return;
+      itens.forEach((i) => (i === ativo ? i.setAttribute("aria-current", "page") : i.removeAttribute("aria-current")));
+      if (ativo) { por(ativo, false); gravar("nav-anterior", ativo.dataset.navItem); }
+    });
+  };
+  // espera as fontes: a largura dos itens muda quando a Public Sans carrega
+  document.addEventListener("DOMContentLoaded", () => (document.fonts ? document.fonts.ready : Promise.resolve()).then(iniciar));
+})();
