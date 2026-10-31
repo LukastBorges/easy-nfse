@@ -46,7 +46,7 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `desktop.py` | Modo desktop: servidor em thread + janela pywebview, porta fixa 47318 (segunda instância só mostra a primeira), logs em `<dados>/logs/` |
 | `packaging/` | `easy-nfse.spec` (PyInstaller), `launcher.py` e ícones `.icns`/`.ico` |
 | `templates/`, `static/` | Jinja + htmx + Tailwind; `app.js` com comportamentos pequenos (dropzone, condicionais, PTAX, tema, diálogo de cadastro) |
-| Páginas | `/` home (boas-vindas sem templates; com templates: aviso global do ambiente + busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão, com troca do prestador/tomador só para a nota), `/templates/{id}/editar`, `/cadastros/{prestadores|tomadores}` (lista, `/novo`, `/{id}`; `?dialogo=1` devolve o formulário para o diálogo), `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
+| Páginas | `/` home (boas-vindas sem templates; com templates: busca/filtro + cards de emissão (até 3 linhas, depois rola), cada um com o estado do seu certificado + últimas emissões), `/templates` (importador + lista de templates), `/templates/{id}` (emissão, com troca do prestador/tomador só para a nota), `/templates/{id}/editar`, `/cadastros/{prestadores|tomadores}` (lista, `/novo`, `/{id}`; `?dialogo=1` devolve o formulário para o diálogo), `/historico`, `/configuracoes` (Emissão global no topo; abaixo, adicionar certificado + busca/filtro + lista com a numeração da DPS de cada CNPJ) |
 | Blocos reutilizáveis | `templates/_importador.html`, `_checklist.html`, `_template_linha.html`, `_emissoes.html`, `_macros.html`, `_prestador_campos.html`, `_tomador_campos.html`, `partials/resumo_cadastro.html` |
 
 ## Regras que NÃO podem ser quebradas
@@ -125,6 +125,13 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `text-[var(--rotulo)]`, `bg-[var(--vidro-1)]`), que já mudam com o tema e **dispensam o par `dark:`**.
 - Utilitários: `btn-primary` (mostarda, um por área de decisão), `btn-ghost` (vidro), `card`/`vidro` (vidro fosco; em
   `<a>`/`<button>` ou com `.toque`, o hover acende a borda), `dialogo` (todo `<dialog>`), `input`, `label`, `hint`.
+- **Cores por variável como classes**: `text-texto`, `text-texto-2`, `text-rotulo`, `text-apagado`, `bg-vidro`,
+  `border-borda`, `text-acento` (mostarda legível no tema), `text-perigo`, `text-sucesso` (e `/10`, `/40`…). Mudam
+  com o tema e **dentro da folha de papel**, então dispensam `dark:`.
+- **Folha de papel** (`papel`, na emissão): redefine as variáveis de tema (texto, rótulos, campos, vidro, estados) para
+  tinta sobre papel nos dois temas. Tudo que o htmx põe no `#painel` (revisão, sucesso, erro, DPS já usada) precisa
+  usar essas classes, nunca `slate`/`dark:`, senão fica claro sobre claro no tema escuro. O carimbo do ambiente fica
+  fora do `#painel` (sobrevive às trocas); aviso que abre a folha recebe margem para não passar por baixo dele.
 - Fontes locais em `static/vendor/fonts` (`uv run python scripts/fontes.py`), nunca do Google Fonts: o app roda sem
   internet. Dados fictícios para conferir telas: `EASY_NFSE_DATA=/tmp/x uv run python scripts/dados_demo.py`.
 - Tela nova ou alterada segue a especificação: fundo verde-floresta com grão, painéis em vidro fosco, mostarda só na
@@ -170,13 +177,15 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   `uv run python scripts/icones_tabler.py` (baixa os usados da versão fixada, apaga os sem uso). O script só enxerga nomes
   em linhas que contêm `icone`: ao escolher o ícone por variável/dicionário, nomeie-a `icone_*`/`icones_*`.
   `test_icones_dos_templates_existem` confere os nomes literais.
-- **Aviso da home** é só para o que é global (ambiente). Estado de certificado vai no card do template (e na página de
-  emissão), nunca numa lista no alerta.
+- **Sem aviso de ambiente na home**: o selo do cabeçalho já mostra produção/produção restrita em toda página (e a
+  folha da emissão leva o carimbo). Estado de certificado vai no card do template (e na página de emissão), nunca num
+  alerta global.
 - **Busca/filtro de listas** (home, Templates, Cadastros e Configurações): `[data-filtro]` com `[data-filtro-busca]`,
   selects `[data-filtro-por="campo"]`, `[data-filtro-contagem]`, `[data-filtro-vazio]` e itens `data-busca`/`data-<campo>`
   (vários valores separados por espaço; ex.: `data-filtro-por="tomador"` + `data-tomador="<id>"`). A busca ignora acentos;
   `option[selected]` vinda do servidor já filtra ao abrir. Grade com `data-max-linhas="N"` mostra N linhas e rola: a altura é medida em `app.js`
-  (depende das colunas e da altura dos cards), não fixe em CSS.
+  (depende das colunas e da altura dos cards), não fixe em CSS. Não combine com `auto-rows-fr`: com a altura limitada, as linhas `1fr` dividem
+  essa altura e achatam os cards (o conteúdo vaza e é cortado).
 - **Salvar sozinho** (campo fora de formulário com botão, ex.: opção de atualização no Sobre): `hx-post` + `hx-trigger="change"`
   + `data-salva-sozinho`; a rota responde a confirmação. Se a gravação falhar, `app.js` desfaz a mudança e avisa.
 - **WKWebView (janela do app no macOS)** não recalcula a altura de um `<dialog>` em coluna flex (`max-h` + filho

@@ -21,7 +21,8 @@ exige redesenhar cada tela.
 | Etapa | Estado |
 |---|---|
 | 0, 1, 2 | Feitas no branch `feat/identidade-visual` |
-| 3 a 8 | A fazer |
+| 3, 4 | Feitas (Início com boas-vindas e cards iguais; emissão na folha de papel) |
+| 5 a 8 | A fazer |
 
 ## Etapa 0 — Fontes locais
 

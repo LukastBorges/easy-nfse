@@ -85,6 +85,14 @@
       --color-sky-800: #304D45; --color-sky-900: #213731; --color-sky-950: #13221E;
     }
 
+    /* Cores que mudam com o tema, como classes (text-texto, text-rotulo, bg-vidro, border-borda…): apontam para as
+       variáveis abaixo, então dispensam o par dark:. */
+    @theme inline {
+      --color-texto: var(--texto); --color-texto-2: var(--texto-2); --color-rotulo: var(--rotulo);
+      --color-apagado: var(--placeholder); --color-vidro: var(--vidro-1); --color-borda: var(--vidro-borda);
+      --color-acento: var(--acento); --color-perigo: var(--perigo); --color-sucesso: var(--sucesso);
+    }
+
     /* Materiais que mudam com o tema. O escuro é a mesa à noite; o claro (provisório até a etapa 7) é papel. */
     :root {
       color-scheme: light;
@@ -97,6 +105,9 @@
       --texto: #172D22; --texto-2: #3A4E41; --rotulo: #55665A; --placeholder: #8E9B8B;
       --cabecalho: rgba(243, 238, 223, .78);
       --luz-realce: rgba(213, 161, 26, .15);
+      --acento: #8A6508;
+      --perigo: #923F30; --sucesso: #2F663D;
+      --folha: #F8F2E1;
       --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2355665A'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
     }
     [data-theme=dark] {
@@ -110,6 +121,9 @@
       --texto: #EEE6D0; --texto-2: #C8C4AD; --rotulo: #8E9B8B; --placeholder: #5E6E60;
       --cabecalho: rgba(16, 33, 26, .7);
       --luz-realce: rgba(235, 194, 71, .11);
+      --acento: #EBC247;
+      --perigo: #E9A08F; --sucesso: #9CCB9F;
+      --folha: #EEE7D3;
       --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238E9B8B'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
     }
 
@@ -158,6 +172,7 @@
     input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
     button:disabled, select:disabled, input:disabled { cursor: not-allowed; }
     [data-theme=dark] input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.85) sepia(.3); }
+    [data-theme=dark] .papel input[type=date]::-webkit-calendar-picker-indicator { filter: none; }
     :focus-visible { outline-color: var(--color-mostarda); }
     :root { accent-color: var(--color-mostarda); }
 
@@ -224,6 +239,40 @@
       [data-theme=dark] :is(.vidro, .card) { background: rgba(23, 45, 34, .92); }
     }
 
+    /* ---------- papel: a nota (folha clara com grão), nos dois temas ---------- */
+    @utility papel {
+      --texto: #15170F; --texto-2: #3A3A28; --rotulo: #6B6A52; --placeholder: #9A9880;
+      --campo-fundo: rgba(255, 253, 246, .62); --campo-borda: rgba(23, 23, 15, .2); --campo-sombra: rgba(23, 23, 15, .06);
+      --vidro-1: rgba(23, 23, 15, .06); --vidro-2: rgba(23, 23, 15, .025); --vidro-borda: rgba(23, 23, 15, .17);
+      --vidro-brilho: rgba(255, 255, 255, .45); --acento: #7E5E06; --perigo: #923F30; --sucesso: #2F663D;
+      --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236B6A52'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z'/%3E%3C/svg%3E");
+      color-scheme: light;
+      position: relative; border-radius: 6px; color: var(--texto); background: var(--folha);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 40px 60px -30px rgba(0, 0, 0, .75), 0 2px 6px rgba(0, 0, 0, .3);
+      &::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: .55; mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .5 0 0 0 0 .38 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+      }
+      & > * { position: relative; }
+    }
+    /* Carimbo do ambiente sobre a folha: círculo duplo de tinta, levemente girado. */
+    .carimbo {
+      display: grid; place-content: center; width: 88px; height: 88px; padding: 10px; border-radius: 50%; text-align: center;
+      border: 2px solid currentColor; box-shadow: inset 0 0 0 3px var(--folha), inset 0 0 0 4px currentColor;
+      font: 600 8px/1.25 var(--font-sans); letter-spacing: .03em; text-transform: uppercase;
+      transform: rotate(8deg); mix-blend-mode: multiply; opacity: .85; pointer-events: none;
+    }
+    .carimbo b { display: block; margin: 1px 0 2px; font: 600 16px/1 var(--font-display); letter-spacing: 0; text-transform: none; }
+
+    /* Marca-texto mostarda sobre o papel: desenha da esquerda para a direita (atraso em --atraso). */
+    .marca-texto { position: relative; }
+    .marca-texto::before {
+      content: ""; position: absolute; left: -3px; right: -3px; top: 52%; height: 62%; border-radius: 2px 6px 3px 7px;
+      background: rgba(213, 161, 26, .5); mix-blend-mode: multiply; transform-origin: left;
+      transform: translateY(-50%) scaleX(0); animation: marcar .55s var(--ease-mesa) var(--atraso, .6s) forwards;
+    }
+    @keyframes marcar { to { transform: translateY(-50%) scaleX(1); } }
+
     /* ---------- campos e textos ---------- */
     @utility label { @apply mb-1.5 block text-xs font-medium; color: var(--rotulo); }
     @utility input {
@@ -278,6 +327,7 @@
     .pousa:nth-child(n+6) { animation-delay: .4s; }
     @media (prefers-reduced-motion: reduce) {
       .pousa { animation: none; }
+      .marca-texto::before { animation: none; transform: translateY(-50%) scaleX(1); }
       :is(a, button).card::before, .card.toque::before, .btn-primary::after { display: none; }
       :is(a, button).card:hover, .card.toque:hover { transform: none; }
     }

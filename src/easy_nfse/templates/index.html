@@ -2,115 +2,125 @@
 {% block content %}
 {% if not templates %}
 {# ================================================================== boas-vindas #}
-<section class="mx-auto max-w-3xl pt-4 text-center sm:pt-8">
-  <img src="/static/logo.svg" alt="" class="mx-auto size-16 drop-shadow">
-  <h1 class="mt-6 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-    Emita sua <span class="whitespace-nowrap">NFS-e</span> em segundos, a partir de uma nota que você já emitiu
-  </h1>
-  <p class="mx-auto mt-4 max-w-2xl text-base text-pretty text-slate-600 dark:text-slate-400 sm:text-lg">
-    Envie o PDF ou o XML de uma nota anterior. O easyNFSe guarda tudo o que se repete
-    num template, e nas próximas emissões você só informa a data e o valor.
-  </p>
-  <div class="mt-8 flex flex-wrap justify-center gap-3">
-    <a href="/templates" class="btn-primary px-5 py-3 text-base">
-      Criar meu primeiro template
-      {{ icone('arrow-right', 'size-4') }}
-    </a>
-    {% if not certs|selectattr('ok')|rejectattr('vencido')|list %}
-    <a href="/configuracoes" class="btn-ghost px-5 py-3 text-base">{{ icone('certificate', 'size-5') }}Configurar certificado</a>
-    {% endif %}
+{% set sem_certificado = not certs|selectattr('ok')|rejectattr('vencido')|list %}
+<section class="grid items-center gap-12 pt-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:gap-14 lg:pt-6">
+  <div class="pousa">
+    <h1 class="max-w-[16ch] text-4xl font-semibold leading-[1.05] text-balance text-texto sm:text-5xl">
+      Emita sua <span class="whitespace-nowrap">NFS-e</span> em segundos, a partir de uma nota que você já emitiu
+    </h1>
+    <p class="mt-5 max-w-[46ch] text-base leading-relaxed text-pretty text-texto-2 sm:text-lg">
+      Envie o PDF ou o XML de uma nota anterior. O easyNFSe guarda tudo o que se repete num template, e nas próximas
+      emissões você só informa a data e o valor.
+    </p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/templates" class="btn-primary px-5 py-3 text-base">{{ icone('file-import', 'size-5') }}Importar minha primeira nota</a>
+      {% if sem_certificado %}
+      <a href="/configuracoes" class="btn-ghost px-5 py-3 text-base">{{ icone('certificate', 'size-5') }}Configurar certificado</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Ilustração: a nota anterior, com o que vira template marcado a marca-texto, e a ficha das próximas notas. #}
+  <div class="relative mx-auto h-[400px] w-full max-w-[500px] sm:h-[430px]" aria-hidden="true">
+    <div class="papel pousa absolute top-2 left-0 w-[86%] max-w-[330px] -rotate-3 px-5 pt-5 pb-4 sm:px-6">
+      <div class="flex items-baseline justify-between gap-3 border-b-[1.5px] border-tinta/50 pb-2.5">
+        <b class="font-display text-[15px] font-bold tracking-tight">NFS-e de setembro</b>
+        <small class="text-[10.5px] text-[#6B6A52]">nota anterior</small>
+      </div>
+      <dl class="mt-3 grid gap-2.5 text-[11.5px]">
+        <div><dt class="text-[10px] text-[#6B6A52]">Prestador</dt><dd><span class="marca-texto" style="--atraso:.7s">Sua empresa, com CNPJ e inscrição</span></dd></div>
+        <div><dt class="text-[10px] text-[#6B6A52]">Tomador</dt><dd><span class="marca-texto" style="--atraso:.9s">Seu cliente, no Brasil ou no exterior</span></dd></div>
+        <div><dt class="text-[10px] text-[#6B6A52]">Serviço</dt><dd><span class="marca-texto" style="--atraso:1.1s">Código nacional, NBS e descrição</span></dd></div>
+        <div><dt class="text-[10px] text-[#6B6A52]">Tributação</dt><dd><span class="marca-texto" style="--atraso:1.3s">Regime, ISSQN e retenções</span></dd></div>
+      </dl>
+      <div class="mt-3 flex justify-between border-t border-dashed border-tinta/30 pt-2.5 text-[11.5px] text-[#6B6A52]">
+        <span>Competência 30/09</span><span>R$ 38.420,00</span>
+      </div>
+    </div>
+    <div class="pousa absolute right-0 bottom-0 w-[62%] max-w-[260px] rounded-[18px] border border-borda p-4 shadow-2xl
+                bg-[linear-gradient(165deg,rgba(31,60,44,.95),rgba(23,45,34,.97))] text-papel sm:p-[18px]"
+         style="animation-delay:.5s">
+      <span class="flex items-center gap-1.5 text-xs font-medium text-mostarda-clara">{{ icone('template', 'size-4') }}Próximas notas</span>
+      <p class="mt-2 font-display text-[15px] leading-tight font-semibold">O resto já está no template</p>
+      <span class="mt-3 block text-[11.5px] text-erva">Data de competência</span>
+      <span class="mt-1 flex items-center gap-2 rounded-[10px] border border-papel/10 bg-mata-0/50 px-2.5 py-2 text-[13px]">{{ icone('calendar', 'size-4 text-erva-escura') }}31/10</span>
+      <span class="mt-2.5 block text-[11.5px] text-erva">Valor do serviço</span>
+      <span class="mt-1 block rounded-[10px] border border-mostarda/60 bg-mata-0/50 px-2.5 py-2 font-display text-[16px] shadow-[0_0_0_3px_rgba(213,161,26,.15)]">R$ 38.420,00</span>
+    </div>
   </div>
 </section>
 
-<section class="mt-14">
-  <h2 class="text-center text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Como funciona</h2>
-  <ol class="mt-6 grid gap-4 md:grid-cols-3">
-    <li class="card relative p-6">
-      <span class="grid size-11 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">
-        {{ icone('upload', 'size-6') }}
-      </span>
-      <span class="absolute top-6 right-6 text-sm font-semibold text-slate-400 dark:text-slate-500 tabular-nums">01</span>
-      <h3 class="mt-5 font-semibold">Importe uma nota anterior</h3>
-      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">PDF (DANFSe ou impressão do Emissor Nacional) ou XML. Os dados são lidos automaticamente.</p>
+<section class="mt-16">
+  <h2 class="pousa text-xl font-semibold text-texto">Como funciona</h2>
+  {# uma sequência real: os passos são numerados #}
+  <ol class="mt-5 grid gap-4 md:grid-cols-3">
+    {% for titulo, texto in [
+      ('Importe uma nota anterior', 'PDF (DANFSe ou impressão do Emissor Nacional) ou XML. Os dados são lidos automaticamente.'),
+      ('Revise e salve o template', 'Prestador, tomador (inclusive do exterior), serviço e tributação ficam salvos para as próximas notas.'),
+      ('Informe data e valor e emita', 'Assine com seu certificado e envie direto à Sefin Nacional. O PDF da nota fica pronto para baixar.'),
+    ] %}
+    <li class="card pousa relative p-6">
+      <span class="grid size-9 place-items-center rounded-full bg-[linear-gradient(180deg,var(--color-mostarda-clara),var(--color-mostarda-escura))] font-display text-[15px] font-bold text-tinta shadow-[inset_0_1px_0_rgba(255,245,200,.55),0_6px_14px_-6px_rgba(213,161,26,.6)]">{{ loop.index }}</span>
+      {% if not loop.last %}<span aria-hidden="true" class="absolute top-[42px] right-0 left-[72px] hidden h-px bg-[linear-gradient(90deg,rgba(213,161,26,.5),transparent)] md:block"></span>{% endif %}
+      <h3 class="mt-4 text-[17px] font-semibold text-texto">{{ titulo }}</h3>
+      <p class="mt-2 text-sm leading-relaxed text-rotulo">{{ texto }}</p>
     </li>
-    <li class="card relative p-6">
-      <span class="grid size-11 place-items-center rounded-xl bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-1 ring-violet-100 dark:ring-violet-500/20">
-        {{ icone('file-text', 'size-6') }}
-      </span>
-      <span class="absolute top-6 right-6 text-sm font-semibold text-slate-400 dark:text-slate-500 tabular-nums">02</span>
-      <h3 class="mt-5 font-semibold">Revise e salve o template</h3>
-      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Prestador, tomador (inclusive do exterior), serviço e tributação ficam salvos para as próximas notas.</p>
-    </li>
-    <li class="card relative p-6">
-      <span class="grid size-11 place-items-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-100">
-        {{ icone('circle-check', 'size-6') }}
-      </span>
-      <span class="absolute top-6 right-6 text-sm font-semibold text-slate-400 dark:text-slate-500 tabular-nums">03</span>
-      <h3 class="mt-5 font-semibold">Informe data e valor e emita</h3>
-      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Revise, assine com seu certificado e envie direto à Sefin Nacional. O PDF da nota fica pronto para baixar.</p>
-    </li>
+    {% endfor %}
   </ol>
 </section>
 
-<section class="mt-12 grid gap-6 lg:grid-cols-5">
-  <div class="lg:col-span-3">
-    <ul class="grid gap-3 text-sm sm:grid-cols-3 lg:grid-cols-1">
-      <li class="flex gap-3 rounded-2xl bg-white dark:bg-slate-900 p-4 ring-1 ring-slate-200 dark:ring-slate-800">
-        {{ icone('shield-check', 'mt-0.5 size-5 shrink-0 text-indigo-600 dark:text-indigo-400') }}
-        <span><b class="font-semibold">API oficial da Sefin Nacional.</b> <span class="text-slate-600 dark:text-slate-400">Sem intermediários: a DPS é assinada com o seu certificado A1.</span></span>
-      </li>
-      <li class="flex gap-3 rounded-2xl bg-white dark:bg-slate-900 p-4 ring-1 ring-slate-200 dark:ring-slate-800">
-        {{ icone('device-laptop', 'mt-0.5 size-5 shrink-0 text-indigo-600 dark:text-indigo-400') }}
-        <span><b class="font-semibold">Tudo no seu computador.</b> <span class="text-slate-600 dark:text-slate-400">Certificado, templates e notas ficam na pasta <code>data/</code>.</span></span>
-      </li>
-      <li class="flex gap-3 rounded-2xl bg-white dark:bg-slate-900 p-4 ring-1 ring-slate-200 dark:ring-slate-800">
-        {{ icone('flask', 'mt-0.5 size-5 shrink-0 text-indigo-600 dark:text-indigo-400') }}
-        <span><b class="font-semibold">Teste sem risco.</b> <span class="text-slate-600 dark:text-slate-400">Comece em produção restrita: as notas não têm validade jurídica.</span></span>
-      </li>
-    </ul>
-  </div>
-  <aside class="lg:col-span-2">
-    {% include "_checklist.html" %}
-  </aside>
+<section class="mt-5 grid items-start gap-5 lg:grid-cols-2">
+  <div class="pousa">{% include "_checklist.html" %}</div>
+  <ul class="grid gap-3">
+    {% set icones_garantia = ['shield-check', 'device-laptop', 'flask'] %}
+    {% for titulo, texto in [
+      ('API oficial da Sefin Nacional', 'Sem intermediários: a DPS é assinada com o seu certificado A1.'),
+      ('Tudo no seu computador', 'Certificado, templates e notas ficam na pasta <code class="font-mono text-xs text-texto-2">data/</code>.'),
+      ('Teste sem risco', 'Comece em produção restrita: as notas não têm validade jurídica.'),
+    ] %}
+    <li class="card pousa flex gap-4 p-4">
+      <span class="grid size-10 shrink-0 place-items-center rounded-[11px] border border-borda bg-vidro text-texto-2">{{ icone(icones_garantia[loop.index0], 'size-5') }}</span>
+      <span><b class="block font-semibold text-texto">{{ titulo }}</b><span class="text-sm text-rotulo">{{ texto|safe }}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
 </section>
 
 {% else %}
 {# ================================================================== emissão #}
-<div class="flex flex-wrap items-end justify-between gap-4">
+<div class="pousa flex flex-wrap items-end justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Emitir nota</h1>
-    <p class="mt-1 text-slate-600 dark:text-slate-400">Escolha o template. Só falta a data e o valor.</p>
+    <h1 class="text-3xl font-semibold text-texto sm:text-[34px]">Emitir nota</h1>
+    <p class="mt-1.5 text-texto-2">Escolha o template. Só falta a data e o valor.</p>
   </div>
   <a href="/templates" class="btn-ghost">{{ icone('template') }}Gerenciar templates</a>
 </div>
-
-{% include "_aviso_emissao.html" %}
 
 {# vindo de Cadastros → Emitir: o cadastro escolhido substitui o do template nesta nota #}
 {% set pre_prestador = escolhido.prestador.id if escolhido.prestador and escolhido.prestador.id in filtro_prestadores|map(attribute='id')|list else '' %}
 {% set pre_tomador = escolhido.tomador.id if escolhido.tomador and escolhido.tomador.id in filtro_tomadores|map(attribute='id')|list else '' %}
 {% if escolhido.prestador or escolhido.tomador %}
-<div class="mt-6 flex flex-wrap items-start gap-3 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 p-4 text-sm text-indigo-900 dark:text-indigo-200 ring-1 ring-indigo-200 dark:ring-indigo-500/30">
-  {{ icone('info-circle', 'mt-px size-5 shrink-0') }}
+<div class="mt-6 flex flex-wrap items-start gap-3 rounded-2xl border border-mostarda/35 bg-mostarda/10 p-4 text-sm text-texto">
+  {{ icone('info-circle', 'mt-px size-5 shrink-0 text-acento') }}
   <p class="min-w-0 flex-1">
     {% if escolhido.prestador %}Emitindo por <b>{{ rotulo_prestador(escolhido.prestador) }}</b>: escolha o template. Nesta nota, ele substitui o prestador do template.
     {% else %}Emitindo para <b>{{ rotulo_tomador(escolhido.tomador) }}</b>: escolha o template. Nesta nota, ele substitui o tomador do template.{% endif %}
     {% if not (pre_prestador or pre_tomador) %}Nenhum template usa este cadastro ainda: qualquer um serve.{% endif %}
   </p>
-  <a href="/" class="font-medium underline underline-offset-2">Cancelar</a>
+  <a href="/" class="font-medium text-acento underline underline-offset-2">Cancelar</a>
 </div>
 {% endif %}
 
 <div data-filtro class="mt-6">
   {% if templates|length > 1 %}
-  <div class="mb-4 flex flex-wrap items-center gap-3">
+  <div class="pousa mb-4 flex flex-wrap items-center gap-3">
     <label class="relative min-w-48 flex-1">
       <span class="sr-only">Buscar template</span>
-      <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 dark:text-slate-500">{{ icone('search') }}</span>
+      <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-apagado">{{ icone('search') }}</span>
       <input type="search" data-filtro-busca class="input pl-9" placeholder="Buscar por template, tomador ou prestador">
     </label>
     <label class="flex items-center gap-2">
-      <span class="text-slate-400 dark:text-slate-500">{{ icone('filter') }}<span class="sr-only">Filtrar templates</span></span>
+      <span class="text-rotulo">{{ icone('filter') }}<span class="sr-only">Filtrar templates</span></span>
       <select data-filtro-por="estado" class="input w-auto py-2">
         <option value="">Todos</option>
         <option value="problema">Certificado com problema</option>
@@ -121,7 +131,7 @@
     </label>
     {% if filtro_prestadores|length > 1 %}
     <label class="flex min-w-0 items-center gap-2">
-      <span class="text-slate-400 dark:text-slate-500">{{ icone('building') }}<span class="sr-only">Filtrar por prestador</span></span>
+      <span class="text-rotulo">{{ icone('building') }}<span class="sr-only">Filtrar por prestador</span></span>
       <select data-filtro-por="prestador" class="input w-auto max-w-56 py-2">
         <option value="">Todos os prestadores</option>
         {% for c in filtro_prestadores %}<option value="{{ c.id }}" {{ 'selected' if pre_prestador == c.id }}>{{ c.nome or (c.documento|doc) }}</option>{% endfor %}
@@ -130,7 +140,7 @@
     {% endif %}
     {% if filtro_tomadores|length + (1 if filtro_sem_tomador else 0) > 1 %}
     <label class="flex min-w-0 items-center gap-2">
-      <span class="text-slate-400 dark:text-slate-500">{{ icone('user') }}<span class="sr-only">Filtrar por tomador</span></span>
+      <span class="text-rotulo">{{ icone('user') }}<span class="sr-only">Filtrar por tomador</span></span>
       <select data-filtro-por="tomador" class="input w-auto max-w-56 py-2">
         <option value="">Todos os tomadores</option>
         {% for c in filtro_tomadores %}<option value="{{ c.id }}" {{ 'selected' if pre_tomador == c.id }}>{{ c.nome }}</option>{% endfor %}
@@ -138,72 +148,78 @@
       </select>
     </label>
     {% endif %}
-    <span data-filtro-contagem class="text-xs text-slate-500 dark:text-slate-400"></span>
+    <span data-filtro-contagem class="text-xs text-rotulo"></span>
   </div>
   {% endif %}
-  {# até 3 linhas de cards; passando disso, rola (app.js ajusta a altura conforme as colunas) #}
-  <div data-max-linhas="3" class="-m-2 grid gap-4 overflow-y-auto overscroll-contain p-2 sm:grid-cols-2 lg:grid-cols-3">
+  {# Cards do mesmo tamanho: colunas iguais, a mesma estrutura em todos e textos de uma linha (reticências, texto
+     completo no title), botão sempre no pé. Até 3 linhas; passando disso, rola (app.js mede a altura).
+     Não use auto-rows-fr: com a altura limitada pelo app.js, as linhas "1fr" dividem essa altura e achatam os cards. #}
+  {# folga em volta dos cards (compensada com margem negativa): a área de rolagem cortaria a sombra e o hover #}
+  <div data-max-linhas="3" class="-mx-4 -mt-3 -mb-8 grid gap-5 overflow-y-auto overscroll-contain px-4 pt-3 pb-12 sm:grid-cols-2 lg:grid-cols-3">
   {% for t in templates %}
   {% set ult = ultimas.get(t.id) %}
   {% set c, problema = cert_templates[t.id] %}
   {% if problema %}
     {% set estado_cert = 'problema' %}
-    {% set tom, icone_cert = 'text-rose-700 dark:text-rose-300', 'certificate-off' %}
+    {% set tom, icone_cert = 'text-barro', 'certificate-off' %}
     {% if not c %}{% set texto = 'Sem certificado para ' ~ ((escolhido.prestador or t.prestador).documento|doc or 'o prestador') %}
     {% elif not c.ok %}{% set texto = 'O certificado não abre: veja Configurações' %}
     {% elif c.vencido %}{% set texto = 'Certificado vencido em ' ~ c.validade|data %}{% set icone_cert = 'alert-triangle' %}
     {% else %}{% set texto = 'Certificado de outro CNPJ (' ~ c.documento|doc ~ ')' %}{% set icone_cert = 'alert-triangle' %}{% endif %}
   {% elif c.vence_em_breve %}
     {% set estado_cert = 'vencendo' %}
-    {% set tom, icone_cert = 'text-amber-700 dark:text-amber-300', 'clock-exclamation' %}
+    {% set tom, icone_cert = 'text-acento', 'clock-exclamation' %}
     {% set texto = 'Certificado vence em ' ~ c.dias ~ (' dia' if c.dias == 1 else ' dias') ~ ' (' ~ c.validade|data ~ ')' %}
   {% else %}
     {% set estado_cert = 'valido' %}
-    {% set tom, icone_cert = 'text-slate-500 dark:text-slate-400', 'certificate' %}
+    {% set tom, icone_cert = 'text-rotulo', 'certificate' %}
     {% set texto = 'Certificado válido até ' ~ c.validade|data %}
   {% endif %}
+  {% set nome_tomador = t.tomador.nome if t.tomador else 'Sem tomador identificado' %}
   <a href="/templates/{{ t.id }}{{ escolhido.query }}" data-busca="{{ t.nome }} {{ t.tomador.nome if t.tomador else '' }} {{ t.prestador.nome }} {{ t.prestador.documento }} {{ t.prestador.documento|doc }}"
      data-estado="{{ estado_cert }}{{ ' exportacao' if t.exige_com_ext }}" data-prestador="{{ t.prestador_id }}" data-tomador="{{ t.tomador_id or 'sem' }}"
-     class="card group flex min-w-0 flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-indigo-300">
-    <div class="flex items-start gap-3">
-      <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-lg font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-500/20">
+     class="card pousa group flex h-full min-w-0 flex-col p-5">
+    <div class="flex items-center gap-3">
+      <span class="grid size-11 shrink-0 place-items-center rounded-xl border border-mostarda/25 bg-mostarda/10 font-display text-lg font-semibold text-acento shadow-[inset_0_1px_0_rgba(255,245,200,.1)]">
         {% if t.tomador_exterior %}{{ icone('world', 'size-5') }}{% else %}{{ ((t.tomador.nome if t.tomador else '') or t.nome)[:1]|upper }}{% endif %}
       </span>
       <div class="min-w-0 flex-1">
-        <h3 class="truncate font-semibold" title="{{ t.nome }}">{{ t.nome }}</h3>
-        <p class="truncate text-sm text-slate-500 dark:text-slate-400">{{ t.tomador.nome if t.tomador else 'Sem tomador identificado' }}</p>
+        <h3 class="truncate text-[17px] leading-snug font-semibold text-texto" title="{{ t.nome }}">{{ t.nome }}</h3>
+        <p class="truncate text-sm text-rotulo" title="{{ nome_tomador }}">{{ nome_tomador }}</p>
       </div>
       {% if t.exige_com_ext %}
-      <span class="shrink-0 rounded-md bg-sky-50 dark:bg-sky-500/10 px-1.5 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-500/30">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, 'Exportação') }}</span>
+      <span class="shrink-0 self-start rounded-md border border-borda bg-vidro px-1.5 py-0.5 text-[11px] font-semibold text-texto-2">{{ MOEDA_ISO.get(t.com_ext.tp_moeda, 'Exportação') }}</span>
       {% endif %}
     </div>
 
-    <dl class="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 p-3 text-sm">
-      <div>
-        <dt class="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'Última emissão' if ult else 'Valor de referência' }}</dt>
-        <dd class="mt-0.5 font-semibold tabular-nums">{{ (ult.valor if ult else t.ultimo_valor)|money or '—' }}</dd>
+    <dl class="mt-5 flex items-end justify-between gap-3 border-t border-dashed border-borda pt-4">
+      <div class="min-w-0">
+        <dt class="text-xs text-rotulo">{{ 'Última emissão' if ult else 'Valor de referência' }}</dt>
+        <dd class="mt-1 truncate font-display text-[28px] leading-none text-texto tabular-nums">
+          {%- set valor = (ult.valor if ult else t.ultimo_valor)|money -%}
+          {% if valor %}<small class="mr-1 font-sans text-sm text-rotulo">R$</small>{{ valor|replace('R$', '')|trim }}{% else %}—{% endif %}
+        </dd>
       </div>
-      <div>
-        <dt class="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ 'Competência' if ult else 'Origem' }}</dt>
-        <dd class="mt-0.5 font-medium text-slate-700 dark:text-slate-300">
-          {% if ult %}{{ ult.competencia[8:10] }}/{{ ult.competencia[5:7] }}/{{ ult.competencia[:4] }}{% if ult.ambiente == '2' %} <span class="text-xs text-amber-600 dark:text-amber-400">teste</span>{% endif %}
+      <div class="shrink-0 text-right">
+        <dt class="text-xs text-rotulo">{{ 'Competência' if ult else 'Origem' }}</dt>
+        <dd class="mt-1 text-sm font-medium whitespace-nowrap text-texto-2">
+          {% if ult %}{{ ult.competencia[8:10] }}/{{ ult.competencia[5:7] }}/{{ ult.competencia[:4] }}{% if ult.ambiente == '2' %} <span class="ml-1 rounded border border-mostarda/30 bg-mostarda/10 px-1.5 py-px text-[11px] font-semibold text-acento">teste</span>{% endif %}
           {% else %}NFS-e {{ t.origem.numero_nfse or 'importada' }}{% endif %}
         </dd>
       </div>
     </dl>
 
-    <p class="mt-4 flex items-start gap-1.5 text-xs font-medium {{ tom }}" {% if c and c.ok %}title="{{ c.titular }} · {{ c.documento|doc }}"{% endif %}>
-      {{ icone(icone_cert, 'mt-px size-4 shrink-0') }}<span class="min-w-0">{{ texto }}</span>
+    <p class="mt-4 mb-5 flex items-center gap-1.5 text-xs font-medium {{ tom }}" title="{{ texto }}{% if c and c.ok %} · {{ c.titular }} · {{ c.documento|doc }}{% endif %}">
+      {{ icone(icone_cert, 'size-4 shrink-0') }}<span class="min-w-0 truncate">{{ texto }}</span>
     </p>
 
-    <span class="btn-primary mt-4 w-full group-hover:bg-indigo-500">
-      Emitir nota
-      {{ icone('arrow-right', 'size-4 transition group-hover:translate-x-0.5') }}
+    <span class="btn-primary mt-auto w-full">
+      {{ icone('send', 'size-4') }}Emitir nota
     </span>
   </a>
   {% endfor %}
   </div>
-  <p data-filtro-vazio class="hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Nenhum template encontrado.</p>
+  <p data-filtro-vazio class="hidden rounded-2xl border border-dashed border-borda px-6 py-10 text-center text-sm text-rotulo">Nenhum template encontrado.</p>
 </div>
 
 {% include "_emissoes.html" %}

@@ -1,32 +1,40 @@
 {# Checklist "Antes de emitir". Precisa de: certs, templates, cfg #}
 {% set validos = certs|selectattr('ok')|rejectattr('vencido')|list %}
-<div class="card p-5">
-  <h2 class="section-title">Antes de emitir</h2>
-  <ol class="mt-4 space-y-3 text-sm">
-    <li class="flex gap-3">
+{# marcadores: feito (folha), pendente (número em borda tracejada mostarda) e aviso de ambiente #}
+{% set feito = 'grid size-[26px] shrink-0 place-items-center rounded-lg border border-folha/40 bg-folha/15 text-emerald-700 dark:text-folha' %}
+{% set pendente = 'grid size-[26px] shrink-0 place-items-center rounded-lg border border-dashed border-mostarda/60 text-xs font-bold text-acento' %}
+<div class="card p-6">
+  <h2 class="text-[17px] font-semibold text-texto">Antes de emitir</h2>
+  <ol class="mt-3 divide-y divide-borda text-sm text-texto-2">
+    <li class="flex gap-3 py-3">
       {% if validos|length == 1 %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{{ icone('check', 'size-3.5') }}</span>
-        <span>Certificado de <b>{{ validos[0].titular }}</b> <span class="text-slate-500 dark:text-slate-400">· válido até {{ validos[0].validade|data }}</span></span>
+        <span class="{{ feito }}">{{ icone('check', 'size-3.5') }}</span>
+        <span>Certificado de <b class="font-semibold text-texto">{{ validos[0].titular }}</b>, válido até {{ validos[0].validade|data }}</span>
       {% elif validos %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{{ icone('check', 'size-3.5') }}</span>
-        <span>{{ validos|length }} certificados válidos: <b>{{ validos|map(attribute='titular')|join(', ') }}</b></span>
+        <span class="{{ feito }}">{{ icone('check', 'size-3.5') }}</span>
+        <span>{{ validos|length }} certificados válidos: <b class="font-semibold text-texto">{{ validos|map(attribute='titular')|join(', ') }}</b></span>
       {% else %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">1</span>
-        <span><a href="/configuracoes" class="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Configure o certificado A1</a> (.pfx) do prestador. Ele é exigido pela API da Sefin.</span>
+        <span class="{{ pendente }}">1</span>
+        <span><a href="/configuracoes" class="font-medium text-acento underline underline-offset-2">Configure o certificado A1</a> (.pfx) do prestador. Ele é exigido pela API da Sefin.</span>
       {% endif %}
     </li>
-    <li class="flex gap-3">
+    <li class="flex gap-3 py-3">
       {% if templates %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{{ icone('check', 'size-3.5') }}</span>
+        <span class="{{ feito }}">{{ icone('check', 'size-3.5') }}</span>
         <span>{{ templates|length }} template{{ 's' if templates|length > 1 }} salvo{{ 's' if templates|length > 1 }}</span>
       {% else %}
-        <span class="grid size-6 shrink-0 place-items-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">2</span>
+        <span class="{{ pendente }}">2</span>
         <span>Importe uma nota anterior para criar o primeiro template.</span>
       {% endif %}
     </li>
-    <li class="flex gap-3">
-      <span class="grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300' if cfg.ambiente == '2' else 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300' }}">{{ icone('flask' if cfg.ambiente == '2' else 'alert-triangle', 'size-3.5') }}</span>
-      <span>{% if cfg.ambiente == '2' %}Você está em <b>produção restrita</b>: as notas são de teste, sem validade jurídica.{% else %}Você está em <b>produção</b>: as notas emitidas têm validade fiscal.{% endif %}</span>
+    <li class="flex gap-3 py-3">
+      {% if cfg.ambiente == '2' %}
+        <span class="grid size-[26px] shrink-0 place-items-center rounded-lg border border-mostarda/30 bg-mostarda/10 text-acento">{{ icone('flask', 'size-3.5') }}</span>
+        <span>Você está em <b class="font-semibold text-texto">produção restrita</b>: as notas são de teste, sem validade jurídica.</span>
+      {% else %}
+        <span class="grid size-[26px] shrink-0 place-items-center rounded-lg border border-barro/35 bg-barro/10 text-barro">{{ icone('alert-triangle', 'size-3.5') }}</span>
+        <span>Você está em <b class="font-semibold text-texto">produção</b>: as notas emitidas têm validade fiscal.</span>
+      {% endif %}
     </li>
   </ol>
 </div>
