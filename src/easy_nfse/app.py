@@ -22,7 +22,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 from pydantic import ValidationError
 
-from . import atualizacao, danfse, dominios, dps, ibge, importers, ptax, storage
+from . import atualizacao, danfse, dominios, dps, estatisticas, ibge, importers, ptax, storage
 from .certificado import Certificado, CertificadoError
 from .models import CertificadoSalvo, Config, Emissao, Prestador, Template, Tomador
 from .sefin import CONSULTA_PUBLICA, SefinClient, SefinError
@@ -854,9 +854,35 @@ def cotacao(moeda: str, data: str):
 # histórico e arquivos
 # --------------------------------------------------------------------------------------
 
+def _data(texto: str) -> date | None:
+    try:
+        return date.fromisoformat(texto)
+    except ValueError:
+        return None
+
+
+def _proxima_dps(cfg: Config, emissoes: list[Emissao]) -> dict | None:
+    """Próximo nº da DPS do prestador da última nota no ambiente atual (ou do primeiro cadastrado)."""
+    prestadores = {p.id: p for p in storage.list_prestadores() if digits(p.documento)}
+    if not prestadores:
+        return None
+    ultima = next((e.prestador_id for e in emissoes if e.ambiente == cfg.ambiente and e.prestador_id in prestadores),
+                  None)
+    p = prestadores[ultima] if ultima else next(iter(prestadores.values()))
+    return {"prestador": p, "outros": len(prestadores) - 1, **_numeracao(cfg, digits(p.documento))}
+
+
+def _historico(request: Request, periodo: str = "ano", de: str = "", ate: str = "", **ctx: Any) -> HTMLResponse:
+    cfg = storage.load_config()
+    emissoes = storage.list_emissoes()
+    resumo = estatisticas.resumir(emissoes, periodo, de=_data(de), ate=_data(ate))
+    return render(request, "historico.html", cfg=cfg, emissoes=emissoes, resumo=resumo,
+                  periodos=estatisticas.PERIODOS, proxima=_proxima_dps(cfg, emissoes), **ctx)
+
+
 @app.get("/historico", response_class=HTMLResponse)
-def historico(request: Request):
-    return render(request, "historico.html", emissoes=storage.list_emissoes())
+def historico(request: Request, periodo: str = "ano", de: str = "", ate: str = ""):
+    return _historico(request, periodo, de, ate)
 
 
 @app.get("/emissoes/{chave}/{arquivo}")
@@ -889,8 +915,8 @@ async def danfse_de_xml(request: Request, arquivo: UploadFile):
     try:
         pdf = danfse.gerar(data)
     except Exception:  # noqa: BLE001
-        return render(request, "historico.html", emissoes=storage.list_emissoes(), status_code=422,
-                      erro="Não consegui gerar o PDF: o arquivo não parece ser o XML de uma NFS-e do padrão nacional.")
+        return _historico(request, status_code=422,
+                          erro="Não consegui gerar o PDF: o arquivo não parece ser o XML de uma NFS-e do padrão nacional.")
     nome = (arquivo.filename or "nfse").rsplit(".", 1)[0] + ".pdf"
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'attachment; filename="{nome}"'})

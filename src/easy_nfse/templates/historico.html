@@ -17,9 +17,61 @@
 </div>
 {% if erro %}<div class="mt-6">{{ alert('error', erro, []) }}</div>{% endif %}
 
+{# resumo do período: o seletor fica fora do #resumo para o campo de data não perder o foco na troca #}
+<form class="pousa mt-7 flex flex-wrap items-center justify-end gap-2" action="/historico"
+      hx-get="/historico" hx-trigger="change" hx-target="#resumo" hx-select="#resumo" hx-swap="outerHTML" hx-push-url="true">
+  <span class="mr-auto text-xs text-rotulo">Notas de Produção, pela data de competência.</span>
+  <div data-show-if="periodo:personalizado" class="flex items-center gap-2 {{ '' if resumo.periodo == 'personalizado' else 'hidden' }}">
+    <input type="date" name="de" class="input w-auto py-2" value="{{ resumo.inicio.isoformat() }}" aria-label="De">
+    <span class="text-xs text-rotulo">a</span>
+    <input type="date" name="ate" class="input w-auto py-2" value="{{ resumo.fim.isoformat() }}" aria-label="Até">
+  </div>
+  <label class="sr-only" for="periodo">Período</label>
+  <select id="periodo" name="periodo" class="input w-auto py-2">
+    {% for valor, nome in periodos.items() %}<option value="{{ valor }}" {{ 'selected' if valor == resumo.periodo }}>{{ nome }}</option>{% endfor %}
+  </select>
+</form>
+
+<div id="resumo" class="mt-3 grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
+  <div class="card p-5">
+    <span class="text-xs font-medium text-rotulo">{{ resumo.titulo }}</span>
+    <span class="mt-2 block font-display text-[40px] leading-none font-light text-texto tabular-nums"><small class="mr-1 font-sans text-[15px] font-normal text-rotulo">R$</small>{{ (resumo.total|money)[3:] }}</span>
+    <p class="mt-3 text-[13px] text-rotulo">
+      <b class="font-medium text-texto-2">{{ resumo.notas }} {{ 'nota' if resumo.notas == 1 else 'notas' }}</b> {{ 'autorizada' if resumo.notas == 1 else 'autorizadas' }}{% if resumo.testes %}, {{ resumo.testes }} em teste{% endif %}.
+      {% for moeda, v in resumo.moedas.items() %}{{ moeda }} {{ (v|money)[3:] }} em exportação. {% endfor %}
+      {% if resumo.anterior %}{{ resumo.anterior_nome[:1]|upper ~ resumo.anterior_nome[1:] }}: {{ resumo.anterior|money }}.{% endif %}
+    </p>
+  </div>
+  <div class="card p-5">
+    <span class="text-xs font-medium text-rotulo">{{ 'Por dia' if resumo.por_dia else 'Por mês' }}</span>
+    <div class="mt-3.5 flex h-[42px] items-end {{ 'gap-0.5' if resumo.barras|length > 20 else 'gap-[5px]' }}" role="img"
+         aria-label="Valor emitido {{ 'por dia' if resumo.por_dia else 'por mês' }} no período">
+      {% for b in resumo.barras %}
+      <i class="block h-full flex-1 rounded-t-[3px] rounded-b-[1px] {{ 'bg-linear-to-b from-mostarda-clara to-mostarda-escura' if b is sameas resumo.maior else 'bg-texto/15' }}"
+         style="height: {{ b.altura or 4 }}%{{ '; opacity: .45' if not b.valor }}" title="{{ b.rotulo }}: {{ b.valor|money }}"></i>
+      {% endfor %}
+    </div>
+    <p class="mt-3 text-[13px] text-rotulo">
+      {% if resumo.maior %}{{ resumo.maior.nome[:1]|upper ~ resumo.maior.nome[1:] }} foi {{ 'o dia' if resumo.por_dia else 'o mês' }} mais alto do período.
+      {% else %}Nenhuma nota de Produção no período.{% endif %}
+    </p>
+  </div>
+  <div class="card p-5">
+    <span class="text-xs font-medium text-rotulo">Próximo número da DPS</span>
+    {% if proxima %}
+    <span class="mt-2 block font-display text-[40px] leading-none font-light text-texto tabular-nums">{{ proxima.proximo }}</span>
+    <p class="mt-3 text-[13px] text-rotulo">Série {{ cfg.serie }}, {{ proxima.prestador.nome }}{% if cfg.ambiente == '2' %}, em Produção restrita{% endif %}.
+      {% if proxima.outros %}<a class="text-acento hover:underline" href="/configuracoes">{{ "Outro prestador" if proxima.outros == 1 else "Outros " ~ proxima.outros ~ " prestadores" }} em Configurações.</a>
+      {% else %}Avança só quando a Sefin aceita.{% endif %}</p>
+    {% else %}
+    <p class="mt-3 text-[13px] text-rotulo">Cadastre um prestador para começar a numeração.</p>
+    {% endif %}
+  </div>
+</div>
+
 {% if emissoes %}
 {# livro-razão: linhas dentro de um vidro, agrupadas pelo mês em que a nota foi emitida (lista já vem da mais nova) #}
-<div class="card pousa mt-7 overflow-x-auto">
+<div class="card pousa mt-6 overflow-x-auto">
   <table class="w-full min-w-[760px] text-sm">
     <thead class="border-b border-borda text-left text-xs text-rotulo">
       <tr>

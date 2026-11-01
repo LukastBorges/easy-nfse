@@ -39,6 +39,7 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
 | `danfse.py` | Gera o PDF **DANFSe v2.0** (NT 008/2026) a partir do XML da NFS-e (reportlab) |
 | `importers/` | `nfse_xml.py` (fiel), `danfse_pdf.py` (heurístico: grade v1/v2 + lista da Consulta Pública), `__init__.py` (campos → Template, ligando aos cadastros) |
 | `dominios.py` | Países ISO2 (`paises.json`, do Anexo A oficial), moedas BACEN, enums lidos do XSD |
+| `estatisticas.py` | Resumo do Histórico por período (este ano, último mês, 6 meses, personalizado): soma só notas de Produção, pela competência, com barras por dia/mês e comparação com o período anterior |
 | `ibge.py`, `ptax.py` | Códigos IBGE (API do IBGE, cache em `data/cache`) e cotação PTAX (BCB) |
 | `storage.py` | JSON em `data/`: `config.json`, `templates/*.json`, `prestadores/*.json`, `tomadores/*.json`, `emissoes/` + `emissoes.jsonl`, `certificados/<id>.pfx`; chave única e migração dos cadastros |
 | `xsd/` | XSDs oficiais **v1.01** (com um patch, ver abaixo) |
@@ -168,6 +169,10 @@ Variáveis de ambiente: `EASY_NFSE_DATA` (pasta de dados), `EASY_NFSE_CERT_SENHA
   do app.
 - **Animação de entrada usa `translate`**, não `transform`: `transform` no keyframe apagaria a rotação das folhas de
   papel (`.pousa` + `rotate`).
+- **Vidro dos cards clicáveis e `clip-path`**: no Chrome, com 3 cards na grade, o hover no terceiro redesenhava parte
+  do `backdrop-filter` do primeiro com o fundo errado (faixa clara na borda direita). Só `clip-path` no card resolve
+  (`will-change`, `isolation`, `contain` não); ele é folgado (`inset(-24px -24px -64px)`) para não cortar a sombra nem
+  o anel do hover. O Playwright headless não reproduz: use o Chrome com janela e mouse real (`screencapture`).
 - **Tailwind v4**: classes reutilizáveis são `@utility` (não `@layer components` + `@apply` de classe custom — quebra
   todo o CSS). Modo escuro via `@custom-variant dark` + `data-theme` no `<html>`; **toda classe de cor nova precisa do par
   `dark:`**, exceto as variáveis de tema (`var(--texto)` etc., ver "Identidade visual"). Preflight remove `cursor: pointer` (regra global em `base.html`).
