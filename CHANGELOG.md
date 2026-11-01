@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v1.0.0...easy-nfse-v1.1.0) (2026-11-01)
+
+
+### Funcionalidades
+
+* **ui:** mostrar resumo das notas por período no histórico ([d1dce18](https://github.com/LukastBorges/easy-nfse/commit/d1dce18661f49f14d56fa91e32f81beced122687))
+* **ui:** mostrar resumo das notas por período no histórico ([3059e5a](https://github.com/LukastBorges/easy-nfse/commit/3059e5a655efee18c5e2250926848a0de6e35ab9))
+
+
+### Correções
+
+* **ui:** evitar faixa clara no vidro dos cards ao passar o mouse ([0f16ed4](https://github.com/LukastBorges/easy-nfse/commit/0f16ed4c792e244da13c758545c488093479aa98))
+
 ## [1.0.0](https://github.com/LukastBorges/easy-nfse/compare/easy-nfse-v0.5.1...easy-nfse-v1.0.0) (2026-10-31)
 
 
