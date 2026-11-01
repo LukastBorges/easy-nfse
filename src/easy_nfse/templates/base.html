@@ -205,6 +205,10 @@
     }
     @utility card { @apply vidro; }
     /* Hover de card clicável: sobe 2 px e um anel de luz acende só na borda. */
+    /* clip-path (folgado, para caber a sombra e o anel) limita o vidro ao card: sem ele, redesenhar um card (hover)
+       redesenhava parte do backdrop-filter de outro com o fundo errado (faixa clara na borda direita do primeiro
+       card ao passar o mouse no terceiro; Chrome, com 3 cards). will-change, isolation e contain não resolvem. */
+    :is(a, button).card, .card.toque { clip-path: inset(-24px -24px -64px); }
     :is(a, button).card:hover, .card.toque:hover { transform: translateY(-2px); }
     :is(a, button).card::before, .card.toque::before {
       content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; padding: 1.5px;
